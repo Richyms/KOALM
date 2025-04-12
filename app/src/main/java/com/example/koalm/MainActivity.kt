@@ -30,23 +30,38 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack // Ícono de flecha para regresar
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavHostController
+import androidx.compose.foundation.clickable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            KoalmTheme { // Usa el tema personalizado
-                Surface(modifier = Modifier.fillMaxSize(), color = Blanco) { // Fondo de pantalla completo con color blanco
-                    PantallaLogin() // Llama al Composable de login
+            KoalmTheme {
+                val navController = rememberNavController()
+
+                Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+                    NavHost(navController = navController, startDestination = "login") {
+                        composable("login") {
+                            PantallaLogin(navController)
+                        }
+                        composable("registro") {
+                            PantallaRegistro(navController)
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaLogin() {
+fun PantallaLogin(navController: NavHostController) {
     val context = LocalContext.current // Para mostrar Toast
     var email by remember { mutableStateOf("") } // Estado para el correo
     var password by remember { mutableStateOf("") } // Estado para la contraseña
@@ -56,7 +71,7 @@ fun PantallaLogin() {
 
     // Scaffold: estructura base con barra superior
     Scaffold(
-        topBar = {
+        /*topBar = {
             TopAppBar(
                 title = { Text("Iniciar sesión") }, // Título de la barra
                 navigationIcon = { // Ícono de regresar
@@ -67,7 +82,13 @@ fun PantallaLogin() {
                     }
                 }
             )
+        }*/
+        topBar = {
+            TopAppBar(
+                title = { Text("Iniciar sesión") }
+            )
         }
+
     ) { innerPadding -> // innerPadding: espacio que deja la TopAppBar
 
         // Contenido principal centrado
@@ -137,7 +158,8 @@ fun PantallaLogin() {
             // Botón principal de inicio de sesión
             Button(
                 onClick = {
-                    Toast.makeText(context, "Bienvenido $email", Toast.LENGTH_SHORT).show() // muestra Toast
+                    Toast.makeText(context, "Bienvenido $email", Toast.LENGTH_SHORT)
+                        .show() // muestra Toast
                 },
                 modifier = buttonModifier, // ancho común
                 colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal) // fondo verde
@@ -176,14 +198,15 @@ fun PantallaLogin() {
             // Texto interactivo "¿No tienes cuenta?"
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(color = Negro)) {
-                        append("¿No tienes una cuenta? ")
-                    }
+                    append("¿No tienes una cuenta? ")
                     withStyle(SpanStyle(color = VerdeSecundario)) {
                         append("Regístrate")
                     }
                 },
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                modifier = Modifier.clickable {
+                    navController.navigate("registro")
+                }
             )
         }
     }
