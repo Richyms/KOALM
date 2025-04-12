@@ -177,7 +177,7 @@ fun PantallaLogin(navController: NavHostController) {
                 modifier = buttonModifier,
                 border = BorderStroke(1.dp, Color.Gray) // borde gris
             ) {
-                Text("Sign in with Google", color = Negro) // texto negro
+                Text("Iniciar con Google", color = Negro) // texto negro
             }
 
             Spacer(modifier = Modifier.height(24.dp)) // espacio

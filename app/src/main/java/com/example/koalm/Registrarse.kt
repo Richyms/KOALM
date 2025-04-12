@@ -26,6 +26,8 @@ import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.foundation.clickable
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,7 +156,23 @@ fun PantallaRegistro(navController: NavController) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Términos y condiciones")
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(
+                        SpanStyle(
+                            color = VerdeSecundario,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append("Términos y condiciones")
+                    }
+                },
+                fontSize = 14.sp,
+                modifier = Modifier.clickable {
+                    // Aquí puedes agregar una acción, como abrir una nueva pantalla o URL
+                    Toast.makeText(context, "Mostrando términos y condiciones", Toast.LENGTH_SHORT).show()
+                }
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -177,7 +195,7 @@ fun PantallaRegistro(navController: NavController) {
                 modifier = buttonModifier,
                 border = BorderStroke(1.dp, Color.Gray)
             ) {
-                Text("Sign in with Google", color = Negro)
+                Text("Inciar con Google", color = Negro)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -188,7 +206,7 @@ fun PantallaRegistro(navController: NavController) {
                         append("¿Ya tienes una cuenta? ")
                     }
                     withStyle(SpanStyle(color = VerdeSecundario)) {
-                        append("Inicia sesión")
+                        append("Iniciar sesión")
                     }
                 },
                 fontSize = 14.sp
