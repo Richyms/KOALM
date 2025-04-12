@@ -74,56 +74,56 @@ fun PantallaLogin() {
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize() // ocupatodo el espacio disponible
+                .padding(horizontal = 24.dp), // margen lateral
+            horizontalAlignment = Alignment.CenterHorizontally, // centra elementos horizontalmente
+            verticalArrangement = Arrangement.Center // centra elementos verticalmente
         ) {
             // Logo de koala
             Image(
                 painter = painterResource(id = R.drawable.koala),
-                contentDescription = "Koala",
-                modifier = Modifier.size(150.dp)
+                contentDescription = "Koala", // descripción para accesibilidad
+                modifier = Modifier.size(150.dp) // tamaño de la imagen
             )
 
-            Spacer(modifier = Modifier.height(32.dp)) // Espacio
+            Spacer(modifier = Modifier.height(32.dp)) // espacio vertical
 
             // Campo de texto para el correo
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = { Text("Correo o nombre de usuario") },
-                modifier = Modifier.fillMaxWidth(0.85f),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                onValueChange = { email = it }, // actualiza el estado
+                label = { Text("Correo o nombre de usuario") }, // etiqueta del campo
+                modifier = Modifier.fillMaxWidth(0.85f), // ancho de 85%
+                singleLine = true, // una sola línea
+                shape = RoundedCornerShape(16.dp), // bordes redondeados
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), // teclado tipo email
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal,
-                    unfocusedBorderColor = GrisMedio
+                    focusedBorderColor = VerdePrincipal, // borde activo verde
+                    unfocusedBorderColor = GrisMedio // borde inactivo gris
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp)) // espacio vertical
 
             // Campo de texto para la contraseña
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it }, // actualiza el estado
                 label = { Text("Contraseña") },
                 singleLine = true,
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(0.85f) // ancho 85%
+                    .clip(RoundedCornerShape(16.dp)), // bordes redondeados
                 shape = RoundedCornerShape(16.dp),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(), // Ocultar o mostrar contraseña
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(), // muestra u oculta
                 trailingIcon = {
                     val image = if (passwordVisible)
-                        painterResource(id = R.drawable.ic_eye_closed) // Ícono cuando es visible
+                        painterResource(id = R.drawable.ic_eye_closed) // ojo cerrado
                     else
-                        painterResource(id = R.drawable.ic_eye) // Ícono cuando está oculta
+                        painterResource(id = R.drawable.ic_eye) // ojo abierto
 
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(painter = image, contentDescription = null)
+                        Icon(painter = image, contentDescription = null) // alterna icono
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
@@ -132,20 +132,20 @@ fun PantallaLogin() {
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp)) // espacio vertical
 
             // Botón principal de inicio de sesión
             Button(
                 onClick = {
-                    Toast.makeText(context, "Bienvenido $email", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Bienvenido $email", Toast.LENGTH_SHORT).show() // muestra Toast
                 },
-                modifier = buttonModifier,
-                colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
+                modifier = buttonModifier, // ancho común
+                colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal) // fondo verde
             ) {
-                Text("Iniciar sesión", color = Blanco)
+                Text("Iniciar sesión", color = Blanco) // texto blanco
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp)) // espacio
 
             // Botón de inicio con Google
             OutlinedButton(
@@ -153,12 +153,12 @@ fun PantallaLogin() {
                     Toast.makeText(context, "Google login", Toast.LENGTH_SHORT).show()
                 },
                 modifier = buttonModifier,
-                border = BorderStroke(1.dp, Color.Gray)
+                border = BorderStroke(1.dp, Color.Gray) // borde gris
             ) {
-                Text("Sign in with Google", color = Negro)
+                Text("Sign in with Google", color = Negro) // texto negro
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp)) // espacio
 
             // Texto interactivo "¿Olvidaste tu contraseña?"
             Text(
