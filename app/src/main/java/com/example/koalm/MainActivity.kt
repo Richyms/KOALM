@@ -52,6 +52,10 @@ class MainActivity : ComponentActivity() {
                         composable("recuperar") {
                             PantallaRecuperarContrasena(navController)
                         }
+                        composable("restablecer") {
+                            PantallaRestablecerContrasena(navController)
+                        }
+
                     }
                 }
             }

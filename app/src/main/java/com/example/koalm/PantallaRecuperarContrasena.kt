@@ -88,6 +88,7 @@ fun PantallaRecuperarContrasena(navController: NavController) {
             Button(
                 onClick = {
                     Toast.makeText(context, "Link enviado a $correo", Toast.LENGTH_SHORT).show()
+                    navController.navigate("restablecer") // ← Esto hace la navegación
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
             ) {
