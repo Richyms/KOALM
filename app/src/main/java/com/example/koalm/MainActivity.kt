@@ -49,6 +49,9 @@ class MainActivity : ComponentActivity() {
                         composable("registro") {
                             PantallaRegistro(navController)
                         }
+                        composable("recuperar") {
+                            PantallaRecuperarContraseña(navController)
+                        }
                     }
                 }
             }
@@ -190,7 +193,10 @@ fun PantallaLogin(navController: NavHostController) {
                         append("Aquí")
                     }
                 },
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                modifier = Modifier.clickable {
+                    navController.navigate("recuperar") // <-- Esta es la conexión
+                }
             )
 
             // Texto interactivo "¿No tienes cuenta?"
