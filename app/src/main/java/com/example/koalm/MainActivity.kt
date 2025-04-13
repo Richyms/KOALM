@@ -55,6 +55,10 @@ class MainActivity : ComponentActivity() {
                         composable("restablecer") {
                             PantallaRestablecerContrasena(navController)
                         }
+                        composable("login") {
+                            PantallaLogin(navController)
+                        }
+
 
                     }
                 }

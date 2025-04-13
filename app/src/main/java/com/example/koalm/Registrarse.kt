@@ -209,7 +209,10 @@ fun PantallaRegistro(navController: NavController) {
                         append("Iniciar sesión")
                     }
                 },
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                modifier = Modifier.clickable {
+                    navController.navigate("login")
+                }
             )
         }
     }
