@@ -9,7 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.* // Layouts como Column, Row, Box
 import androidx.compose.foundation.shape.RoundedCornerShape
-
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.* // Componentes de Material 3 (Botones, TextFields, etc.)
 import androidx.compose.runtime.* // Funciones y estados de Compose
 import androidx.compose.ui.Alignment
@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.example.koalm.ui.theme.* // Acceso a colores y tema personalizado
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -29,6 +30,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import java.util.Calendar
 
 class PersonalizarPerfil : ComponentActivity() {
@@ -36,11 +41,20 @@ class PersonalizarPerfil : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             KoalmTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()/*, color = Color.White*/) { innerPadding ->
-                    PantallaPersonalizar(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+
+                val navController = rememberNavController()
+
+                Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
+                    NavHost(navController = navController, startDestination = "personalize") {
+                        composable("personalize") {
+                            PantallaPersonalizar(navController)
+                        }
+                        composable("login") {
+                            PantallaPersonalizar(navController)
+                        }
+
+
+                    }
                 }
             }
         }
@@ -49,7 +63,7 @@ class PersonalizarPerfil : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navController: NavController
+fun PantallaPersonalizar(navController: NavHostController) {
     //Variables a usar
     val context = LocalContext.current //Muestra el texto
     var nombre by remember { mutableStateOf("Usuario") }
@@ -83,13 +97,13 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
         topBar = {
             TopAppBar(
                 title = { Text("Personalizar Perfil de Usuario")},
-                /*navigationIcon = {
+                navigationIcon = {
                     IconButton(onClick = {
-                        navController.navigateUp()
+                        navController.navigate("registro")
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
-                }*/
+                }
             )
         },
         bottomBar = {
@@ -99,7 +113,8 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                         icon = { Icon(icons[index], contentDescription = item) },
                         label = { Text(item, fontSize = 10.sp) },
                         selected = selectedIndex == index,
-                        onClick = { selectedIndex = index }
+                        onClick = { selectedIndex = index
+                            navController.navigate("personalizar") }
                     )
                 }
             }
@@ -265,13 +280,5 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                 Text("Guardar", color = Blanco) // texto blanco
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    KoalmTheme {
-        PantallaPersonalizar("Android")
     }
 }
