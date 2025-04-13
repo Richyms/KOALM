@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Koalm</string>
+    <string name="title_activity_personalizar_perfil">PersonalizarPerfil</string>
 </resources>
