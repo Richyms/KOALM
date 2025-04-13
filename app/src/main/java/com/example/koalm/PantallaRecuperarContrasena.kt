@@ -25,7 +25,7 @@ import com.example.koalm.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaRecuperarContraseña(navController: NavController) {
+fun PantallaRecuperarContrasena(navController: NavController) {
     val context = LocalContext.current
     var correo by remember { mutableStateOf("") }
 

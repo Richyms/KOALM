@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                             PantallaRegistro(navController)
                         }
                         composable("recuperar") {
-                            PantallaRecuperarContraseña(navController)
+                            PantallaRecuperarContrasena(navController)
                         }
                     }
                 }
