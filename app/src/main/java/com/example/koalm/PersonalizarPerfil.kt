@@ -21,7 +21,14 @@ import com.example.koalm.ui.theme.* // Acceso a colores y tema personalizado
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import java.util.Calendar
 
 class PersonalizarPerfil : ComponentActivity() {
@@ -63,7 +70,13 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
     )
     var peso by remember { mutableStateOf("XX")}
     var altura by remember { mutableStateOf("XXX")}
+    val op_gen = listOf("Masculino", "Femenino", "Prefiero no decirlo")
     val buttonModifier = Modifier.width(200.dp)
+    var opcionSeleccionada by remember { mutableStateOf(op_gen[0]) }
+    //Barra de navegación inferior
+    val items = listOf("Inicio", "Hábitos", "Perfil")
+    val icons = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)
+    var selectedIndex by remember { mutableStateOf(0) }
 
     Scaffold(
 
@@ -78,6 +91,18 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                     }
                 }*/
             )
+        },
+        bottomBar = {
+            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+                items.forEachIndexed { index, item ->
+                    NavigationBarItem(
+                        icon = { Icon(icons[index], contentDescription = item) },
+                        label = { Text(item, fontSize = 10.sp) },
+                        selected = selectedIndex == index,
+                        onClick = { selectedIndex = index }
+                    )
+                }
+            }
         }
 
     ) { innerPadding ->
@@ -91,12 +116,12 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
         ) {
             // Icono del usuario
             Image(
-                painter = painterResource(id = R.drawable.koala),
+                painter = painterResource(id = R.drawable.perfilus),
                 contentDescription = "Usuario", // descripción para accesibilidad
                 modifier = Modifier.size(150.dp) // tamaño de la imagen
             )
 
-            Spacer(modifier = Modifier.height(20.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(15.dp)) // espacio vertical
 
             //Campo de Texto nombre de usuario
             OutlinedTextField(
@@ -112,7 +137,7 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
 
             //Campo de Texto apellidos del usuario
             OutlinedTextField(
@@ -128,7 +153,7 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
 
             //Campo de Texto fecha de nacimiento
             OutlinedTextField(
@@ -154,7 +179,7 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
 
             //Campo de Texto de peso del usuario
             OutlinedTextField(
@@ -173,7 +198,7 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
 
             //Campo de Texto de altura del usuario
             OutlinedTextField(
@@ -192,9 +217,41 @@ fun PantallaPersonalizar(name: String, modifier: Modifier = Modifier) { //navCon
                 )
             )
 
-            Spacer(modifier = Modifier.height(14.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
 
             //Radio botones de genero
+            Column(modifier = Modifier.fillMaxWidth(0.95f)) {
+                Text("Género", style = MaterialTheme.typography.titleMedium) //Titulo de la sección
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    op_gen.forEach { opcion ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f) // que cada opción tome espacio equitativo
+                        ) {
+                            RadioButton(
+                                selected = (opcion == opcionSeleccionada),
+                                onClick = { opcionSeleccionada = opcion }
+                            )
+                            Text(
+                                text = opcion,
+                                fontSize = 12.sp, //Reducción de texto
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
 
             //Botón principal para guardar los cambios
             Button(
