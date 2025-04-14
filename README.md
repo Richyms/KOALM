@@ -87,9 +87,3 @@ app/
 └── ...
 ```
 
-
-## 📞 Soporte
-
-Si encuentras algún problema o tienes preguntas:
-- Abre un issue en el repositorio
-- Contacta al equipo de desarrollo
