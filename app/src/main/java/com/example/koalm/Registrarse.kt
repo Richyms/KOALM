@@ -46,6 +46,26 @@ fun PantallaRegistro(navController: NavController) {
 
     val buttonModifier = Modifier.width(200.dp)
 
+    // Validación de email
+    val isValidEmail = remember(email) {
+        val validDomains = listOf(
+            "gmail.com", "hotmail.com", "yahoo.com", "icloud.com", 
+            "live.com", "outlook.com", "proton.me", "protonmail.com",
+            "aol.com", "mail.com", "zoho.com", "yandex.com"
+        )
+        email.contains("@") && validDomains.any { email.endsWith("@$it") }
+    }
+
+    // Validación de contraseña
+    val isValidPassword = remember(password) {
+        password.length >= 8
+    }
+
+    // Validación de nombre de usuario
+    val isValidUsername = remember(username) {
+        username.isNotEmpty() && !username.contains(" ")
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -85,9 +105,16 @@ fun PantallaRegistro(navController: NavController) {
                 shape = RoundedCornerShape(16.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal,
-                    unfocusedBorderColor = GrisMedio
-                )
+                    focusedBorderColor = if (isValidEmail || email.isEmpty()) VerdePrincipal else Color.Red,
+                    unfocusedBorderColor = if (isValidEmail || email.isEmpty()) GrisMedio else Color.Red
+                ),
+                supportingText = {
+                    Text(
+                        text = "Solo servicios de correo conocidos.",
+                        color = GrisMedio,
+                        fontSize = 12.sp
+                    )
+                }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -100,9 +127,16 @@ fun PantallaRegistro(navController: NavController) {
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal,
-                    unfocusedBorderColor = GrisMedio
-                )
+                    focusedBorderColor = if (isValidUsername || username.isEmpty()) VerdePrincipal else Color.Red,
+                    unfocusedBorderColor = if (isValidUsername || username.isEmpty()) GrisMedio else Color.Red
+                ),
+                supportingText = {
+                    Text(
+                        text = "No se permiten espacios en el nombre de usuario",
+                        color = GrisMedio,
+                        fontSize = 12.sp
+                    )
+                }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -125,9 +159,16 @@ fun PantallaRegistro(navController: NavController) {
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal,
-                    unfocusedBorderColor = GrisMedio
-                )
+                    focusedBorderColor = if (isValidPassword || password.isEmpty()) VerdePrincipal else Color.Red,
+                    unfocusedBorderColor = if (isValidPassword || password.isEmpty()) GrisMedio else Color.Red
+                ),
+                supportingText = {
+                    Text(
+                        text = "La contraseña debe tener al menos 8 caracteres",
+                        color = GrisMedio,
+                        fontSize = 12.sp
+                    )
+                }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -192,15 +233,19 @@ fun PantallaRegistro(navController: NavController) {
 
             Button(
                 onClick = {
-                    if (password == confirmPassword && password.isNotEmpty()) {
-                        if (termsAccepted) {
-                            Toast.makeText(context, "Registrado como $username", Toast.LENGTH_SHORT).show()
-                            navController.navigate("personalizar")
-                        } else {
-                            Toast.makeText(context, "Debes aceptar los términos y condiciones", Toast.LENGTH_SHORT).show()
-                        }
+                    if (!isValidEmail) {
+                        Toast.makeText(context, "Por favor ingresa un correo válido", Toast.LENGTH_SHORT).show()
+                    } else if (!isValidUsername) {
+                        Toast.makeText(context, "El nombre de usuario no debe contener espacios", Toast.LENGTH_SHORT).show()
+                    } else if (!isValidPassword) {
+                        Toast.makeText(context, "La contraseña debe tener al menos 8 caracteres", Toast.LENGTH_SHORT).show()
+                    } else if (password != confirmPassword) {
+                        Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                    } else if (!termsAccepted) {
+                        Toast.makeText(context, "Debes aceptar los términos y condiciones", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, "Las contraseñas no coinciden o están vacías", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Registrado como $username", Toast.LENGTH_SHORT).show()
+                        navController.navigate("personalizar")
                     }
                 },
                 modifier = buttonModifier,

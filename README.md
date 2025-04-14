@@ -43,6 +43,7 @@ Antes de comenzar, necesitarás:
 
 ```bash
 # Clonar el repositorio
+
 git clone https://github.com/Richyms/KOALM.git
 
 # Abrir el proyecto en Android Studio
@@ -87,3 +88,23 @@ app/
 └── ...
 ```
 
+<<<<<<< HEAD
+=======
+## 🤝 Contribución
+
+1. Crea un fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📝 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## 📞 Soporte
+
+Si encuentras algún problema o tienes preguntas:
+- Abre un issue en el repositorio
+- Contacta al equipo de desarrollo 
+>>>>>>> 1f14321 (Validacioens de campos y Dashboard de prueba)
