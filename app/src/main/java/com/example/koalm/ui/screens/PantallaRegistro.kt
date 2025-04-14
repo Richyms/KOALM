@@ -1,6 +1,8 @@
 package com.example.koalm.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +40,8 @@ fun PantallaRegistro(navController: NavController) {
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     val isValidEmail = email.contains("@") && listOf(
         "gmail.com", "hotmail.com", "yahoo.com", "icloud.com", 
         "live.com", "outlook.com", "proton.me", "protonmail.com",
@@ -63,9 +67,10 @@ fun PantallaRegistro(navController: NavController) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             LogoRegistro()
             Spacer(modifier = Modifier.height(16.dp))
