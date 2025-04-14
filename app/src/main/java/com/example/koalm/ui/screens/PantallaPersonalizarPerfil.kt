@@ -27,6 +27,8 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
 import java.util.Calendar
+import java.util.Locale;
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +62,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 datePickerState.selectedDateMillis?.let { millis ->
                     val calendar = Calendar.getInstance().apply { timeInMillis = millis }
                     fechasec = String.format(
+                        Locale("es", "MX"),
                         "%02d/%02d/%04d",
                         calendar.get(Calendar.MONTH) + 1,
                         calendar.get(Calendar.DAY_OF_MONTH),
