@@ -85,7 +85,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 indiceSeleccionado = nuevo
                 when (nuevo) {
                     0 -> navController.navigate("menu")
-                    1 -> navController.navigate("gustos")
+                    1 -> navController.navigate("habitos")
                     2 -> navController.navigate("personalize")
                 }
             }
@@ -110,7 +110,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             Spacer(modifier = Modifier.weight(1f))
             BotonGuardarPerfil {
                 Toast.makeText(context, "Modificaciones Guardadas", Toast.LENGTH_SHORT).show()
-                navController.navigate("gustos") {
+                navController.navigate("habitos") {
                     popUpTo("personalize") { inclusive = true }
                     launchSingleTop = true
                 }
