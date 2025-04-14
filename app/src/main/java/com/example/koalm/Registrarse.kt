@@ -39,6 +39,7 @@ fun PantallaRegistro(navController: NavController) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var termsAccepted by remember { mutableStateOf(false) }
 
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
@@ -70,7 +71,7 @@ fun PantallaRegistro(navController: NavController) {
             Image(
                 painter = painterResource(id = R.drawable.koalaregistrar),
                 contentDescription = "Koalaregistrar",
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier.size(200.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -156,34 +157,56 @@ fun PantallaRegistro(navController: NavController) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(
-                        SpanStyle(
-                            color = VerdeSecundario,
-                            textDecoration = TextDecoration.Underline
-                        )
-                    ) {
-                        append("Términos y condiciones")
+            Row(
+                modifier = Modifier.fillMaxWidth(0.85f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Checkbox(
+                    checked = termsAccepted,
+                    onCheckedChange = { termsAccepted = it },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = VerdePrincipal,
+                        uncheckedColor = GrisMedio
+                    )
+                )
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(
+                            SpanStyle(
+                                color = VerdeSecundario,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        ) {
+                            append("Acepto los términos y condiciones")
+                        }
+                    },
+                    fontSize = 14.sp,
+                    modifier = Modifier.clickable {
+                        Toast.makeText(context, "Mostrando términos y condiciones", Toast.LENGTH_SHORT).show()
                     }
-                },
-                fontSize = 14.sp,
-                modifier = Modifier.clickable {
-                    // Aquí puedes agregar una acción, como abrir una nueva pantalla o URL
-                    Toast.makeText(context, "Mostrando términos y condiciones", Toast.LENGTH_SHORT).show()
-                }
-            )
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(
                 onClick = {
-                    Toast.makeText(context, "Registrado como $username", Toast.LENGTH_SHORT).show()
+                    if (password == confirmPassword && password.isNotEmpty()) {
+                        if (termsAccepted) {
+                            Toast.makeText(context, "Registrado como $username", Toast.LENGTH_SHORT).show()
+                            navController.navigate("personalizar")
+                        } else {
+                            Toast.makeText(context, "Debes aceptar los términos y condiciones", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Las contraseñas no coinciden o están vacías", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = buttonModifier,
-                colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Registrar", color = Blanco)
+                Text("Registrar", color = MaterialTheme.colorScheme.onPrimary)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -193,19 +216,19 @@ fun PantallaRegistro(navController: NavController) {
                     Toast.makeText(context, "Google login", Toast.LENGTH_SHORT).show()
                 },
                 modifier = buttonModifier,
-                border = BorderStroke(1.dp, Color.Gray)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Text("Inciar con Google", color = Negro)
+                Text("Inciar con Google", color = MaterialTheme.colorScheme.onSurface)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(color = Negro)) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
                         append("¿Ya tienes una cuenta? ")
                     }
-                    withStyle(SpanStyle(color = VerdeSecundario)) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
                         append("Iniciar sesión")
                     }
                 },

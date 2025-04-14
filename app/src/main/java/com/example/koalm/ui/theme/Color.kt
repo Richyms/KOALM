@@ -3,9 +3,11 @@ package com.example.koalm.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Colores principales
-val VerdePrincipal = Color(0xFF4CAF50)      // Botón "Iniciar sesión"
-val VerdeSecundario = Color(0xFF188038)     // Enlaces tipo Google
+val VerdePrincipal = Color(0xFF478D4F)      // Botón "Iniciar sesión"
+val VerdeSecundario = Color(0xFF478D4F)     // Enlaces tipo Google
 val VerdeClaro = Color(0xFF81C784)          // Efecto hover o acentos suaves
+val VerdeContenedor = Color(0xFFF6FBF2)     // Color de fondo para contenedores
+val VerdeBorde = Color(0xFFC1C8BD)          // Color para bordes de contenedores
 
 // Grises y neutros
 val GrisClaro = Color(0xFFE0E0E0)           // Fondos secundarios

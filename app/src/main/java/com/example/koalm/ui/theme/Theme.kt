@@ -11,21 +11,49 @@ import androidx.compose.ui.graphics.Color
 private val LightColorScheme = lightColorScheme(
     primary = VerdePrincipal,
     onPrimary = Color.White,
+    secondary = VerdeSecundario,
+    onSecondary = Color.White,
+    tertiary = VerdeClaro,
+    onTertiary = Color.Black,
     background = Blanco,
     onBackground = Color.Black,
     surface = Blanco,
-    onSurface = Color.Black
+    onSurface = Color.Black,
+    surfaceVariant = GrisClaro,
+    onSurfaceVariant = Color.Black,
+    surfaceTint = VerdePrincipal
 )
 
-// Paleta oscura (opcional, podrías personalizarla)
+// Paleta oscura
 private val DarkColorScheme = darkColorScheme(
     primary = VerdePrincipal,
     onPrimary = Color.White,
+    secondary = VerdeSecundario,
+    onSecondary = Color.White,
+    tertiary = VerdeClaro,
+    onTertiary = Color.Black,
     background = Color.Black,
     onBackground = Color.White,
     surface = Color.Black,
-    onSurface = Color.White
+    onSurface = Color.White,
+    surfaceVariant = GrisClaro,
+    onSurfaceVariant = Color.Black,
+    surfaceTint = VerdePrincipal
 )
+
+@Composable
+fun KoalmTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = Typography,
+        shapes = Shapes,
+        content = content
+    )
+}
 
 
 

@@ -37,24 +37,30 @@ import androidx.navigation.compose.rememberNavController
 import java.util.Calendar
 
 class PersonalizarPerfil : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            KoalmTheme {
+            PerfilApp()
+        }
+    }
+}
 
-                val navController = rememberNavController()
-
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-                    NavHost(navController = navController, startDestination = "personalize") {
-                        composable("personalize") {
-                            PantallaPersonalizar(navController)
-                        }
-                        composable("login") {
-                            PantallaPersonalizar(navController)
-                        }
-
-
-                    }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PerfilApp() {
+    KoalmTheme {
+        val navController = rememberNavController()
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            NavHost(navController = navController, startDestination = "personalize") {
+                composable("personalize") {
+                    PantallaPersonalizar(navController)
+                }
+                composable("login") {
+                    PantallaPersonalizar(navController)
                 }
             }
         }
@@ -65,220 +71,268 @@ class PersonalizarPerfil : ComponentActivity() {
 @Composable
 fun PantallaPersonalizar(navController: NavHostController) {
     //Variables a usar
-    val context = LocalContext.current //Muestra el texto
-    var nombre by remember { mutableStateOf("Usuario") }
-    var apellidos by remember { mutableStateOf("ApellidoP ApellidoM") }
-    val calendar = Calendar.getInstance()
-    // Estado para la fecha seleccionada
-    val fechasec = remember { mutableStateOf("") }
-    // Dialogo de fechas
-    val datePickerDialog = android.app.DatePickerDialog(
-        context,
-        { _, year, month, dayOfMonth ->
-            val fecha = String.format("%02d/%02d/%04d", month + 1, dayOfMonth, year)
-            fechasec.value = fecha
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
-    )
-    var peso by remember { mutableStateOf("XX")}
-    var altura by remember { mutableStateOf("XXX")}
+    val context = LocalContext.current
+    var nombre by remember { mutableStateOf("") }
+    var apellidos by remember { mutableStateOf("") }
+    var fechasec by remember { mutableStateOf("") }
+    var peso by remember { mutableStateOf("") }
+    var altura by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
     val op_gen = listOf("Masculino", "Femenino", "Prefiero no decirlo")
-    val buttonModifier = Modifier.width(200.dp)
-    var opcionSeleccionada by remember { mutableStateOf(op_gen[0]) }
+    var opcionSeleccionada by remember { mutableStateOf("") }
+    
+    // DatePicker con Material3
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            val datePickerState = rememberDatePickerState()
+            DatePicker(
+                state = datePickerState,
+                showModeToggle = false
+            )
+            
+            LaunchedEffect(datePickerState.selectedDateMillis) {
+                datePickerState.selectedDateMillis?.let { millis ->
+                    val calendar = Calendar.getInstance().apply { 
+                        timeInMillis = millis 
+                    }
+                    fechasec = String.format(
+                        "%02d/%02d/%04d",
+                        calendar.get(Calendar.MONTH) + 1,
+                        calendar.get(Calendar.DAY_OF_MONTH),
+                        calendar.get(Calendar.YEAR)
+                    )
+                }
+            }
+        }
+    }
+
     //Barra de navegación inferior
     val items = listOf("Inicio", "Hábitos", "Perfil")
     val icons = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)
-    var selectedIndex by remember { mutableStateOf(0) }
+    var selectedIndex by remember { mutableStateOf(2) }  // Set to 2 for "Perfil" selected
 
     Scaffold(
-
         topBar = {
             TopAppBar(
-                title = { Text("Personalizar Perfil de Usuario")},
+                title = { Text("Personalizar perfil de usuario") },
                 navigationIcon = {
                     IconButton(onClick = {
                         navController.navigate("registro")
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
+            ) {
                 items.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = { Icon(icons[index], contentDescription = item) },
                         label = { Text(item, fontSize = 10.sp) },
                         selected = selectedIndex == index,
-                        onClick = { selectedIndex = index
-                            navController.navigate("personalizar") }
+                        onClick = { 
+                            selectedIndex = index
+                            navController.navigate("personalizar") 
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
                     )
                 }
             }
         }
-
     ) { innerPadding ->
         Column(
-            modifier = Modifier.
-                padding(innerPadding).
-                fillMaxSize().
-                padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
+            Spacer(modifier = Modifier.height(20.dp))
+            
             // Icono del usuario
             Image(
-                painter = painterResource(id = R.drawable.perfilus),
-                contentDescription = "Usuario", // descripción para accesibilidad
-                modifier = Modifier.size(150.dp) // tamaño de la imagen
+                painter = painterResource(id = R.drawable.koala_perfil),
+                contentDescription = "Usuario",
+                modifier = Modifier.size(200.dp)
             )
 
-            Spacer(modifier = Modifier.height(15.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(20.dp))
 
             //Campo de Texto nombre de usuario
             OutlinedTextField(
                 value = nombre,
-                onValueChange = { nombre = it }, //actualización del estado
-                label = { Text("Nombre de Usuario")}, //Etiqueta del campo
-                modifier = Modifier.fillMaxWidth(0.85f),
+                onValueChange = { nombre = it },
+                label = { Text("Nombre") },
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal, // borde activo verde
-                    unfocusedBorderColor = GrisMedio // borde inactivo gris
+                    focusedBorderColor = VerdePrincipal,
+                    unfocusedBorderColor = GrisMedio
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(8.dp))
 
             //Campo de Texto apellidos del usuario
             OutlinedTextField(
                 value = apellidos,
-                onValueChange = { apellidos = it }, //actualización del estado
-                label = { Text("Apellidos")}, //Etiqueta del campo
-                modifier = Modifier.fillMaxWidth(0.85f),
+                onValueChange = { apellidos = it },
+                label = { Text("Apellidos") },
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal, // borde activo verde
-                    unfocusedBorderColor = GrisMedio // borde inactivo gris
+                    focusedBorderColor = VerdePrincipal,
+                    unfocusedBorderColor = GrisMedio
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(8.dp))
 
             //Campo de Texto fecha de nacimiento
             OutlinedTextField(
-                value = fechasec.value,
-                onValueChange = {}, // No editable directamente
+                value = fechasec,
+                onValueChange = {},
                 label = { Text("Fecha de nacimiento") },
-                placeholder = {Text("MM/DD/YYYY")},
+                placeholder = { Text("MM/DD/YYYY") },
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .clickable { datePickerDialog.show() }, //Muestra el calendario
+                    .fillMaxWidth()
+                    .clickable { showDatePicker = true },
                 readOnly = true,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = "Seleccionar fecha",
-                        modifier = Modifier.clickable { datePickerDialog.show() }
+                        modifier = Modifier.clickable { showDatePicker = true }
                     )
                 },
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal, // borde activo verde
-                    unfocusedBorderColor = GrisMedio // borde inactivo gris
+                    focusedBorderColor = VerdePrincipal,
+                    unfocusedBorderColor = GrisMedio
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(8.dp))
 
             //Campo de Texto de peso del usuario
             OutlinedTextField(
                 value = peso,
-                onValueChange = { peso = it }, //actualización del estado
-                label = { Text("Peso")}, //Etiqueta del campo
-                modifier = Modifier.fillMaxWidth(0.85f),
+                onValueChange = { peso = it },
+                label = { Text("Peso") },
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(8.dp),
                 trailingIcon = {
-                    Text("Kg", color = GrisMedio) // Unidad de medida
+                    Text("kg", color = GrisMedio)
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal, // borde activo verde
-                    unfocusedBorderColor = GrisMedio // borde inactivo gris
+                    focusedBorderColor = VerdePrincipal,
+                    unfocusedBorderColor = GrisMedio
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(8.dp))
 
             //Campo de Texto de altura del usuario
             OutlinedTextField(
                 value = altura,
-                onValueChange = { altura = it }, //actualización del estado
-                label = { Text("Altura")}, //Etiqueta del campo
-                modifier = Modifier.fillMaxWidth(0.85f),
+                onValueChange = { altura = it },
+                label = { Text("Altura") },
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(8.dp),
                 trailingIcon = {
-                    Text("cm", color = GrisMedio) // Unidad de medida
+                    Text("cm", color = GrisMedio)
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdePrincipal, // borde activo verde
-                    unfocusedBorderColor = GrisMedio // borde inactivo gris
+                    focusedBorderColor = VerdePrincipal,
+                    unfocusedBorderColor = GrisMedio
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
+            Spacer(modifier = Modifier.height(16.dp))
 
             //Radio botones de genero
-            Column(modifier = Modifier.fillMaxWidth(0.95f)) {
-                Text("Género", style = MaterialTheme.typography.titleMedium) //Titulo de la sección
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Género", style = MaterialTheme.typography.bodyMedium)
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     op_gen.forEach { opcion ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f) // que cada opción tome espacio equitativo
+                            modifier = Modifier.weight(1f)
                         ) {
                             RadioButton(
                                 selected = (opcion == opcionSeleccionada),
-                                onClick = { opcionSeleccionada = opcion }
+                                onClick = { opcionSeleccionada = opcion },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = VerdePrincipal
+                                )
                             )
                             Text(
                                 text = opcion,
-                                fontSize = 12.sp, //Reducción de texto
-                                maxLines = 2,
+                                fontSize = 12.sp,
+                                maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(end = 4.dp)
+                                modifier = Modifier.padding(start = 4.dp)
                             )
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp)) // espacio vertical
+            Spacer(modifier = Modifier.weight(1f))
 
             //Botón principal para guardar los cambios
             Button(
                 onClick = {
-                    Toast.makeText(context, "Modificaciones Guardadas", Toast.LENGTH_SHORT)
-                        .show() // muestra Toast
+                    Toast.makeText(context, "Modificaciones Guardadas", Toast.LENGTH_SHORT).show()
+                    navController.navigate("habitos")
                 },
-                modifier = buttonModifier, // ancho común
-                colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal) // fondo verde
+                modifier = Modifier
+                    .width(200.dp)
+                    .padding(vertical = 16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
             ) {
-                Text("Guardar", color = Blanco) // texto blanco
+                Text("Guardar", color = Blanco)
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

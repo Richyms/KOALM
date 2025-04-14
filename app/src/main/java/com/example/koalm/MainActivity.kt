@@ -3,6 +3,8 @@ package com.example.koalm
 
 // Importación de clases necesarias para Android y Jetpack Compose
 import android.os.Bundle
+import android.view.Window
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext // Contexto para Toast, etc.
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource // Carga de imágenes
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString // Texto con diferentes estilos
@@ -28,45 +31,73 @@ import androidx.compose.ui.unit.sp
 import com.example.koalm.ui.theme.* // Acceso a colores y tema personalizado
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.navigation.NavHostController
 import androidx.compose.foundation.clickable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.core.view.WindowCompat
+import androidx.compose.foundation.isSystemInDarkTheme
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            KoalmTheme {
-                val navController = rememberNavController()
+            MainApp()
+        }
+    }
+}
 
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-                    NavHost(navController = navController, startDestination = "login") {
-                        composable("login") {
-                            PantallaLogin(navController)
-                        }
-                        composable("registro") {
-                            PantallaRegistro(navController)
-                        }
-                        composable("recuperar") {
-                            PantallaRecuperarContrasena(navController)
-                        }
-                        composable("restablecer") {
-                            PantallaRestablecerContrasena(navController)
-                        }
-                        composable("login") {
-                            PantallaLogin(navController)
-                        }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainApp() {
+    KoalmTheme {
+        val navController = rememberNavController()
+        val view = LocalView.current
+        val isDarkTheme = isSystemInDarkTheme()
+        
+        DisposableEffect(isDarkTheme) {
+            val window = (view.context as ComponentActivity).window
+            window.statusBarColor = Color.Transparent.toArgb()
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !isDarkTheme
+                isAppearanceLightNavigationBars = !isDarkTheme
+            }
+            onDispose {}
+        }
 
-
-                    }
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            NavHost(
+                navController = navController,
+                startDestination = "login"
+            ) {
+                composable("login") {
+                    PantallaLogin(navController)
+                }
+                composable("registro") {
+                    PantallaRegistro(navController)
+                }
+                composable("recuperar") {
+                    PantallaRecuperarContrasena(navController)
+                }
+                composable("restablecer") {
+                    PantallaRestablecerContrasena(navController)
+                }
+                composable("personalizar") {
+                    PantallaPersonalizar(navController)
+                }
+                composable("habitos") {
+                    PantallaHabitos(navController)
                 }
             }
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +144,7 @@ fun PantallaLogin(navController: NavHostController) {
             Image(
                 painter = painterResource(id = R.drawable.koala),
                 contentDescription = "Koala", // descripción para accesibilidad
-                modifier = Modifier.size(150.dp) // tamaño de la imagen
+                modifier = Modifier.size(200.dp) // tamaño de la imagen
             )
 
             Spacer(modifier = Modifier.height(32.dp)) // espacio vertical
@@ -171,9 +202,9 @@ fun PantallaLogin(navController: NavHostController) {
                         .show() // muestra Toast
                 },
                 modifier = buttonModifier, // ancho común
-                colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal) // fondo verde
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // fondo verde
             ) {
-                Text("Iniciar sesión", color = Blanco) // texto blanco
+                Text("Iniciar sesión", color = MaterialTheme.colorScheme.onPrimary) // texto blanco
             }
 
             Spacer(modifier = Modifier.height(12.dp)) // espacio
@@ -184,9 +215,9 @@ fun PantallaLogin(navController: NavHostController) {
                     Toast.makeText(context, "Google login", Toast.LENGTH_SHORT).show()
                 },
                 modifier = buttonModifier,
-                border = BorderStroke(1.dp, Color.Gray) // borde gris
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline) // borde gris
             ) {
-                Text("Iniciar con Google", color = Negro) // texto negro
+                Text("Iniciar con Google", color = MaterialTheme.colorScheme.onSurface) // texto negro
             }
 
             Spacer(modifier = Modifier.height(24.dp)) // espacio
@@ -194,10 +225,10 @@ fun PantallaLogin(navController: NavHostController) {
             // Texto interactivo "¿Olvidaste tu contraseña?"
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(color = Negro)) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
                         append("¿Olvidaste tu contraseña? ")
                     }
-                    withStyle(SpanStyle(color = VerdeSecundario)) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
                         append("Aquí")
                     }
                 },
@@ -210,8 +241,10 @@ fun PantallaLogin(navController: NavHostController) {
             // Texto interactivo "¿No tienes cuenta?"
             Text(
                 buildAnnotatedString {
-                    append("¿No tienes una cuenta? ")
-                    withStyle(SpanStyle(color = VerdeSecundario)) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
+                        append("¿No tienes una cuenta? ")
+                    }
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
                         append("Regístrate")
                     }
                 },
