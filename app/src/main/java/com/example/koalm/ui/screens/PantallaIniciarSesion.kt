@@ -1,6 +1,7 @@
-package com.example.koalm.ui.screens
+package com.example.koalmV1.ui.screens
 
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -23,14 +24,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.koalm.R
-import com.example.koalm.ui.theme.* // Incluye: VerdePrincipal, GrisMedio, Blanco, etc.
+import com.example.koalmV1.R
+import com.example.koalmV1.ui.theme.* // Incluye: VerdePrincipal, GrisMedio, Blanco, etc.
 
-
+enum class ProviderType{
+    GOOGLE
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaIniciarSesion(navController: NavHostController) {
+fun PantallaIniciarSesion(
+    navController: NavHostController,
+    onGoogleSignInClick: () -> Unit
+) {
     val context = LocalContext.current
     var emailOrUsername by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -77,7 +83,8 @@ fun PantallaIniciarSesion(navController: NavHostController) {
                 isValidPassword = isValidPassword,
                 emailOrUsername = emailOrUsername,
                 context = context,
-                navController = navController
+                navController = navController,
+                onGoogleSignInClick = onGoogleSignInClick
             )
             Spacer(modifier = Modifier.height(24.dp))
             LoginFooterText(navController)
@@ -180,8 +187,9 @@ fun LoginButtons(
     isValidInput: Boolean,
     isValidPassword: Boolean,
     emailOrUsername: String,
-    context: android.content.Context,
-    navController: NavHostController
+    context: Context,
+    navController: NavHostController,
+    onGoogleSignInClick: () -> Unit
 ) {
     val buttonModifier = Modifier.width(200.dp)
 
@@ -199,6 +207,14 @@ fun LoginButtons(
                     Toast.makeText(context, "La contraseña debe tener al menos 8 caracteres", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
+                    val prefs = context.getSharedPreferences(
+                        context.getString(R.string.prefs_file),
+                        Context.MODE_PRIVATE
+                    )
+                    with(prefs.edit()) {
+                        putString("emailOrUsername", emailOrUsername)
+                        apply()
+                    }
                     Toast.makeText(context, "Bienvenido $emailOrUsername", Toast.LENGTH_SHORT).show()
                     navController.navigate("menu")
                 }
@@ -213,9 +229,7 @@ fun LoginButtons(
     Spacer(modifier = Modifier.height(12.dp))
 
     OutlinedButton(
-        onClick = {
-            Toast.makeText(context, "Google login", Toast.LENGTH_SHORT).show()
-        },
+        onClick = { onGoogleSignInClick() },
         modifier = buttonModifier,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
@@ -259,4 +273,3 @@ fun LoginFooterText(navController: NavHostController) {
         }
     )
 }
-

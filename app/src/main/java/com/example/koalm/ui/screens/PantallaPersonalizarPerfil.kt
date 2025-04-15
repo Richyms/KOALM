@@ -1,4 +1,4 @@
-package com.example.koalm.ui.screens
+package com.example.koalmV1.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -24,8 +24,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.koalm.R
-import com.example.koalm.ui.theme.*
+import com.example.koalmV1.R
+import com.example.koalmV1.ui.theme.*
 import java.util.Calendar
 import java.util.Locale;
 
@@ -107,7 +107,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier  = Modifier.height(20.dp))
             ImagenUsuario()
             Spacer(modifier = Modifier.height(20.dp))
             CampoNombre(nombre) { nombre = it }

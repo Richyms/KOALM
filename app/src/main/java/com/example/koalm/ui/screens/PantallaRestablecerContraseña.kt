@@ -1,4 +1,4 @@
-package com.example.koalm.ui.screens
+package com.example.koalmV1.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -13,8 +13,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.koalm.R
-import com.example.koalm.ui.theme.*
+import com.example.koalmV1.R
+import com.example.koalmV1.ui.theme.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 

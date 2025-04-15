@@ -1,5 +1,4 @@
-package com.example.koalm.ui.screens
-
+package com.example.koalmV1.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -29,13 +28,46 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
 import androidx.navigation.NavHostController
-import com.example.koalm.ui.theme.VerdeContenedor
-import com.example.koalm.ui.theme.*
-import com.example.koalm.R
+import com.example.koalmV1.ui.theme.VerdeContenedor
+import com.example.koalmV1.ui.theme.*
+import com.example.koalmV1.R
+//Imports temporales
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.foundation.clickable
+
+
 
 import kotlinx.coroutines.launch
 
+fun cerrarSesion(context: Context, navController: NavHostController) {
+    // Cerrar sesión Firebase
+    FirebaseAuth.getInstance().signOut()
 
+    // Cerrar sesión de Google
+    GoogleSignIn.getClient(
+        context,
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+    ).signOut()
+
+    // Borrar SharedPreferences
+    val prefs = context.getSharedPreferences(
+        context.getString(R.string.prefs_file),
+        Context.MODE_PRIVATE
+    )
+    prefs.edit().clear().apply()
+
+    // Redirigir a pantalla de inicio
+    navController.navigate("iniciar") {
+        popUpTo("menu") { inclusive = true }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,6 +149,18 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
                 SeccionTitulo("Estadísticas")
                 EstadisticasCard()
+                val context = LocalContext.current
+                Text(
+                    text = "Cerrar sesión (debug)",
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            cerrarSesion(context, navController)
+                        }
+                        .padding(bottom = 24.dp)
+                )
             }
         }
     }

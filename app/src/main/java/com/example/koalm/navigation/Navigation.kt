@@ -1,26 +1,32 @@
-package com.example.koalm.navigation
+package com.example.koalmV1.navigation
 
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.koalm.ui.screens.PantallaCodigoRecuperarContrasena
-import com.example.koalm.ui.screens.*
+import com.example.koalmV1.ui.screens.*
 
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(
+    navController: NavHostController,
+    onGoogleSignInClick: () -> Unit,
+    startDestination: String
+) {
     NavHost(
         navController = navController,
-        startDestination = "iniciar"
+        startDestination = startDestination
     ) {
-        composable("iniciar") { PantallaIniciarSesion(navController) }
+        composable("iniciar") {
+            PantallaIniciarSesion(
+                navController = navController,
+                onGoogleSignInClick = onGoogleSignInClick
+            )
+        }
         composable("registro") { PantallaRegistro(navController) }
         composable("recuperar") { PantallaRecuperarContrasena(navController) }
-        composable("recuperarCodigo") { PantallaCodigoRecuperarContrasena(navController) }
         composable("restablecer") { PantallaRestablecerContrasena(navController) }
         composable("personalizar") { PantallaPersonalizarPerfil(navController) }
         composable("habitos") { PantallaGustosUsuario(navController) }
@@ -28,6 +34,7 @@ fun AppNavigation(navController: NavHostController) {
     }
 }
 
+// Animación personalizada (opcional)
 private fun androidx.navigation.NavGraphBuilder.screenWithSlide(
     route: String,
     content: @Composable () -> Unit
@@ -37,25 +44,25 @@ private fun androidx.navigation.NavGraphBuilder.screenWithSlide(
         enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { it },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(300)
             )
         },
         exitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { -it },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(300)
             )
         },
         popEnterTransition = {
             slideInHorizontally(
                 initialOffsetX = { -it },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(300)
             )
         },
         popExitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { it },
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(300)
             )
         }
     ) {
