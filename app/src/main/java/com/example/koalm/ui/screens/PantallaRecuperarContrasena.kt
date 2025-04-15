@@ -96,7 +96,7 @@ fun CampoCorreoRecuperar(value: String, onValueChange: (String) -> Unit) {
 @Composable
 fun MensajeExplicacion() {
     Text(
-        text = "Enviaremos un link al correo asociado a tu cuenta para que restablezcas la contraseña.",
+        text = "Enviaremos un codigo de 4 digitos al correo asociado a tu cuenta para que restablezcas la contraseña.",
         fontSize = 12.sp,
         color = GrisMedio,
         modifier = Modifier.padding(top = 4.dp, start = 20.dp, end = 20.dp)
