@@ -1,4 +1,4 @@
-package com.example.koalm.ui.theme
+package com.example.koalmV1.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

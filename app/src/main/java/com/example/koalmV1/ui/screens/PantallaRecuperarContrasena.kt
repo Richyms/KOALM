@@ -1,4 +1,4 @@
-package com.example.koalm.ui.screens
+package com.example.koalmV1.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -25,8 +25,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.koalm.R
-import com.example.koalm.ui.theme.*
+import com.example.koalmV1.R
+import com.example.koalmV1.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,10 +85,10 @@ fun CampoCorreoRecuperar(value: String, onValueChange: (String) -> Unit) {
         value = value,
         onValueChange = onValueChange,
         label = { Text("Ingresa tu correo") },
-        modifier = Modifier
-            .fillMaxWidth(0.85f)
-            .clip(RoundedCornerShape(16.dp)),
+
+        modifier = Modifier.fillMaxWidth(0.85f),
         shape = RoundedCornerShape(16.dp),
+
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(

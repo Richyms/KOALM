@@ -1,4 +1,4 @@
-package com.example.koalm.ui.screens
+package com.example.koalmV1.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -19,9 +19,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.koalm.R
-import com.example.koalm.ui.theme.*
+
 import androidx.compose.foundation.isSystemInDarkTheme
+
+import com.example.koalmV1.R
+import com.example.koalmV1.ui.theme.*
 
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -2,14 +2,16 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
+
 android {
-    namespace = "com.example.koalm"
+    namespace = "com.example.koalmV1"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.koalm"
+        applicationId = "com.example.koalmV1"
         minSdk = 31
         targetSdk = 35
         versionCode = 1
@@ -51,8 +53,17 @@ android {
 }
 
 dependencies {
-    val composeBomVersion = "2024.01.00"
-    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
+    // Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    implementation("com.google.firebase:firebase-auth")
+
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // Credential Manager
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // Core AndroidX
     implementation("androidx.core:core-ktx:1.12.0")
@@ -60,6 +71,8 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.8.2")
 
     // Compose
+    val composeBomVersion = "2024.01.00"
+    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -77,7 +90,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    
+
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
