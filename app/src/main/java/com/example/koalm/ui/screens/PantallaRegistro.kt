@@ -117,9 +117,9 @@ fun CampoCorreo(value: String, valido: Boolean, onValueChange: (String) -> Unit)
         value = value,
         onValueChange = onValueChange,
         label = { Text("Correo") },
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         singleLine = true,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(6.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
@@ -139,9 +139,9 @@ fun CampoNombreUsuario(value: String, valido: Boolean, onValueChange: (String) -
         value = value,
         onValueChange = onValueChange,
         label = { Text("Nombre de usuario") },
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         singleLine = true,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(6.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
             unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red
@@ -165,9 +165,9 @@ fun CampoContraseña(
         value = value,
         onValueChange = onValueChange,
         label = { Text("Contraseña") },
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         singleLine = true,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(6.dp),
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             val icon = if (visible) R.drawable.ic_eye_closed else R.drawable.ic_eye
@@ -198,9 +198,9 @@ fun CampoConfirmarContraseña(
         value = value,
         onValueChange = onValueChange,
         label = { Text("Confirmar contraseña") },
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         singleLine = true,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(6.dp),
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             val icon = if (visible) R.drawable.ic_eye_closed else R.drawable.ic_eye
@@ -221,7 +221,7 @@ fun CampoConfirmarContraseña(
 fun CheckboxTerminos(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val context = LocalContext.current
     Row(
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {

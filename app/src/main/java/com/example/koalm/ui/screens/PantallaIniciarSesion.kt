@@ -114,9 +114,9 @@ fun EmailOrUsernameField(
         value = value,
         onValueChange = onValueChange,
         label = { Text("Correo o nombre de usuario") },
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         singleLine = true,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(6.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (isValid || value.isEmpty()) VerdePrincipal else Color.Red,
@@ -151,9 +151,9 @@ fun PasswordField(
         label = { Text("Contraseña") },
         singleLine = true,
         modifier = Modifier
-            .fillMaxWidth(0.85f)
-            .clip(RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .fillMaxWidth(0.97f)
+            .clip(RoundedCornerShape(6.dp)),
+        shape = RoundedCornerShape(6.dp),
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             val icon = if (passwordVisible)
