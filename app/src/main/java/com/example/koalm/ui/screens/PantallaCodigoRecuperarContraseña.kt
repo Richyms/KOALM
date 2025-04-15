@@ -1,32 +1,32 @@
 package com.example.koalm.ui.screens
 
-
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.koalm.ui.theme.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import com.example.koalm.R
-
+import com.example.koalm.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,14 +54,8 @@ fun PantallaCodigoRecuperarContrasena(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            //@Composable
-            //fun ImagenKoalaRecuperarCodigo() {
-                Image(
-                    painter = painterResource(id = R.drawable.koala_lupa),
-                    contentDescription = "Koala pregunta",
-                    modifier = Modifier.size(150.dp)
-                )
-            //}
+            ImagenKoalaRecuperarCodigo()
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Text("Código", style = MaterialTheme.typography.labelLarge)
@@ -80,16 +74,17 @@ fun PantallaCodigoRecuperarContrasena(navController: NavController) {
                                 codigo[i] = it
                             }
                         },
-                        modifier = Modifier
-                            .size(60.dp)
-                            .border(1.dp, VerdeBorde, RoundedCornerShape(8.dp)),
+                        modifier = Modifier.size(60.dp),
+                        shape = RoundedCornerShape(8.dp),
                         singleLine = true,
                         textStyle = TextStyle(fontSize = 24.sp),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = VerdePrincipal,
+                            unfocusedBorderColor = GrisMedio,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     )
-
                 }
             }
 
@@ -123,11 +118,11 @@ fun PantallaCodigoRecuperarContrasena(navController: NavController) {
 
             Text(
                 buildAnnotatedString {
-                    withStyle(SpanStyle(color = Negro)) {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {
                         append("¿No tienes una cuenta? ")
                     }
                     withStyle(SpanStyle(color = VerdeSecundario)) {
-                        append("Registrate")
+                        append("Regístrate")
                     }
                 },
                 fontSize = 14.sp,
@@ -137,4 +132,17 @@ fun PantallaCodigoRecuperarContrasena(navController: NavController) {
             )
         }
     }
+}
+
+@Composable
+fun ImagenKoalaRecuperarCodigo() {
+    val isDark = isSystemInDarkTheme()
+    val tintColor = if (isDark) Color.White else Color.Black
+
+    Image(
+        painter = painterResource(id = R.drawable.query),
+        contentDescription = "Koala pregunta",
+        modifier = Modifier.size(300.dp),
+        colorFilter = ColorFilter.tint(tintColor)
+    )
 }

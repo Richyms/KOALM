@@ -1,21 +1,28 @@
 package com.example.koalm.ui.screens
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
+import androidx.compose.foundation.isSystemInDarkTheme
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +31,6 @@ fun PantallaGustosUsuario(navController: NavController) {
     var leer by remember { mutableStateOf(true) }
     var meditar by remember { mutableStateOf(true) }
     var nadar by remember { mutableStateOf(false) }
-    var selectedIndex by remember { mutableStateOf(1) }
 
     Scaffold(
         topBar = {
@@ -39,16 +45,6 @@ fun PantallaGustosUsuario(navController: NavController) {
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        },
-        bottomBar = {
-            BarraInferiorGustos(selectedIndex) { nuevo ->
-                selectedIndex = nuevo
-                when (nuevo) {
-                    0 -> navController.navigate("menu")
-                    1 -> navController.navigate("gustos")
-                    2 -> navController.navigate("personalize")
-                }
-            }
         }
     ) { innerPadding ->
         Column(
@@ -72,67 +68,40 @@ fun PantallaGustosUsuario(navController: NavController) {
     }
 }
 
-
 @Composable
 fun ImagenKoalaGustos() {
+    val isDark = isSystemInDarkTheme()
+    val tintColor = if (isDark) Color.White else Color.Black
     Image(
-        painter = painterResource(id = R.drawable.koala_ejercicio),
+        painter = painterResource(id = R.drawable.training),
         contentDescription = "Koala haciendo ejercicio",
         modifier = Modifier
-            .size(200.dp)
-            .padding(vertical = 24.dp)
+            .size(300.dp)
+            .padding(vertical = 24.dp),
+        colorFilter = ColorFilter.tint(tintColor)
     )
 }
-
-
-
 
 @Composable
 fun TextoTituloGustos() {
     Text(
         text = "Marca tus hábitos a mejorar",
         fontSize = 16.sp,
-        modifier = Modifier.padding(bottom = 16.dp)
+        modifier = Modifier.padding(bottom = 16.dp),
+        style = MaterialTheme.typography.titleMedium
     )
 }
 
-
-
-
-@Composable
-fun BarraInferiorGustos(seleccionado: Int, onSelect: (Int) -> Unit) {
-    val items = listOf("Inicio", "Hábitos", "Perfil")
-    val icons = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)
-
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 8.dp
-    ) {
-        items.forEachIndexed { index, item ->
-            NavigationBarItem(
-                selected = seleccionado == index,
-                onClick = { onSelect(index) },
-                icon = { Icon(icons[index], contentDescription = item) },
-                label = { Text(item) }
-            )
-        }
-    }
-}
-
-
-
-
-
 @Composable
 fun BotonGuardarGustos(onClick: () -> Unit) {
+    val buttonModifier = Modifier.width(200.dp)
     Button(
         onClick = onClick,
-        modifier = Modifier
-            .width(200.dp)
-            .padding(vertical = 16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
+        modifier = buttonModifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Text("Guardar", color = Color.White)
+        Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
     }
 }
 
@@ -146,15 +115,10 @@ fun HabitoCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .border(
-                width = 1.dp,
-                color = VerdeBorde,
-                shape = RoundedCornerShape(8.dp)
-            ),
-        shape = RoundedCornerShape(8.dp),
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = VerdeContenedor
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -196,6 +160,3 @@ fun HabitoCard(
         }
     }
 }
-
-
-

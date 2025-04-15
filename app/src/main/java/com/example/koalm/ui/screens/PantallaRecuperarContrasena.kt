@@ -3,6 +3,7 @@ package com.example.koalm.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,7 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -61,17 +66,18 @@ fun PantallaRecuperarContrasena(navController: NavController) {
     }
 }
 
-
-
 @Composable
 fun ImagenKoalaRecuperar() {
+    val isDark = isSystemInDarkTheme()
+    val tintColor = if (isDark) Color.White else Color.Black
+
     Image(
-        painter = painterResource(id = R.drawable.koala_pregunta),
+        painter = painterResource(id = R.drawable.query),
         contentDescription = "Koala pregunta",
-        modifier = Modifier.size(150.dp)
+        modifier = Modifier.size(300.dp),
+        colorFilter = ColorFilter.tint(tintColor)
     )
 }
-
 
 @Composable
 fun CampoCorreoRecuperar(value: String, onValueChange: (String) -> Unit) {
@@ -79,38 +85,39 @@ fun CampoCorreoRecuperar(value: String, onValueChange: (String) -> Unit) {
         value = value,
         onValueChange = onValueChange,
         label = { Text("Ingresa tu correo") },
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .clip(RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
 }
 
 
-
-
 @Composable
 fun MensajeExplicacion() {
     Text(
-        text = "Enviaremos un codigo de 4 digitos al correo asociado a tu cuenta para que restablezcas la contraseña.",
+        text = "Enviaremos un código de 4 dígitos al correo asociado a tu cuenta para que restablezcas la contraseña.",
         fontSize = 12.sp,
         color = GrisMedio,
-        modifier = Modifier.padding(top = 4.dp, start = 20.dp, end = 20.dp)
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .padding(top = 4.dp)
     )
 }
-
-
 
 
 @Composable
 fun BotonEnviarCorreo(correo: String, navController: NavController, context: android.content.Context) {
     Button(
         onClick = {
-            Toast.makeText(context, "Codigo enviado a $correo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Código enviado a $correo", Toast.LENGTH_SHORT).show()
             navController.navigate("recuperarCodigo")
         },
         colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
@@ -118,8 +125,6 @@ fun BotonEnviarCorreo(correo: String, navController: NavController, context: and
         Text("Enviar", color = Blanco)
     }
 }
-
-
 
 @Composable
 fun TextoIrARegistro(navController: NavController) {
@@ -136,6 +141,3 @@ fun TextoIrARegistro(navController: NavController) {
         }
     )
 }
-
-
-

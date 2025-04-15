@@ -70,7 +70,7 @@ fun PantallaRestablecerContrasena(navController: NavController) {
 @Composable
 fun ImagenKoalaRestablecer() {
     Image(
-        painter = painterResource(id = R.drawable.koala_restablecer),
+        painter = painterResource(id = R.drawable.detective),
         contentDescription = "Koala Restablecer",
         modifier = Modifier.size(180.dp)
     )

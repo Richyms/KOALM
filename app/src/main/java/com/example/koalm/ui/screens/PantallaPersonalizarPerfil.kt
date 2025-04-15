@@ -2,22 +2,21 @@ package com.example.koalm.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +26,9 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
 import java.util.Calendar
-import java.util.Locale;
+import java.util.Locale
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +45,6 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     var showDatePicker by remember { mutableStateOf(false) }
     val opcionesGenero = listOf("Masculino", "Femenino", "Prefiero no decirlo")
     var generoSeleccionado by remember { mutableStateOf("") }
-    var indiceSeleccionado by remember { mutableStateOf(2) }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -57,13 +57,19 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             }
         ) {
             val datePickerState = rememberDatePickerState()
-            DatePicker(state = datePickerState, showModeToggle = false)
+            DatePicker(
+                state = datePickerState,
+                showModeToggle = false,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = VerdePrincipal,
+                    todayDateBorderColor = VerdePrincipal
+                )
+            )
             LaunchedEffect(datePickerState.selectedDateMillis) {
                 datePickerState.selectedDateMillis?.let { millis ->
                     val calendar = Calendar.getInstance().apply { timeInMillis = millis }
                     fechasec = String.format(
-                        Locale("es", "MX"),
-                        "%02d/%02d/%04d",
+                        Locale("es", "MX"), "%02d/%02d/%04d",
                         calendar.get(Calendar.MONTH) + 1,
                         calendar.get(Calendar.DAY_OF_MONTH),
                         calendar.get(Calendar.YEAR)
@@ -86,16 +92,6 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        },
-        bottomBar = {
-            BarraInferiorPersonalizar(indiceSeleccionado) { nuevo ->
-                indiceSeleccionado = nuevo
-                when (nuevo) {
-                    0 -> navController.navigate("menu")
-                    1 -> navController.navigate("habitos")
-                    2 -> navController.navigate("personalize")
-                }
-            }
         }
     ) { innerPadding ->
         Column(
@@ -104,15 +100,14 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             ImagenUsuario()
             Spacer(modifier = Modifier.height(20.dp))
             CampoNombre(nombre) { nombre = it }
             CampoApellidos(apellidos) { apellidos = it }
-            CampoFechaNacimiento(fechasec, onClick = { showDatePicker = true })
+            CampoFechaNacimiento(fechasec) { showDatePicker = true }
             CampoPeso(peso) { peso = it }
             CampoAltura(altura) { altura = it }
             SelectorGenero(opcionesGenero, generoSeleccionado) { generoSeleccionado = it }
@@ -129,202 +124,169 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     }
 }
 
-
 @Composable
 fun ImagenUsuario() {
+    val isDark = isSystemInDarkTheme()
+    val tintColor = if (isDark) Color.White else Color.Black
     Image(
-        painter = painterResource(id = R.drawable.koala_perfil),
+        painter = painterResource(id = R.drawable.profile),
         contentDescription = "Usuario",
-        modifier = Modifier.size(200.dp)
+        modifier = Modifier.size(200.dp),
+        colorFilter = ColorFilter.tint(tintColor)
     )
 }
-
 
 @Composable
 fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
+    val filtered = value.filter { it.isLetter() || it.isWhitespace() }
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = filtered,
+        onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
         label = { Text("Nombre") },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(0.85f).clip(RoundedCornerShape(16.dp)),
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 }
-
 
 @Composable
 fun CampoApellidos(value: String, onValueChange: (String) -> Unit) {
+    val filtered = value.filter { it.isLetter() || it.isWhitespace() }
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = filtered,
+        onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
         label = { Text("Apellidos") },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(0.85f).clip(RoundedCornerShape(16.dp)),
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 }
-
 
 @Composable
 fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
+    val iconTint = if (isSystemInDarkTheme()) Color.White else Color.Black
     OutlinedTextField(
         value = value,
         onValueChange = {},
         label = { Text("Fecha de nacimiento") },
         placeholder = { Text("MM/DD/YYYY") },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth(0.85f).clip(RoundedCornerShape(16.dp)).clickable { onClick() },
         readOnly = true,
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.DateRange,
                 contentDescription = "Seleccionar fecha",
+                tint = iconTint,
                 modifier = Modifier.clickable { onClick() }
             )
         },
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 }
-
-
 
 @Composable
 fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
+    val filtered = value.filter { it.isDigit() }
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = filtered,
+        onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
         label = { Text("Peso") },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(0.85f).clip(RoundedCornerShape(16.dp)),
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         trailingIcon = { Text("kg", color = GrisMedio) },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 }
-
-
 
 @Composable
 fun CampoAltura(value: String, onValueChange: (String) -> Unit) {
+    val filtered = value.filter { it.isDigit() }
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = filtered,
+        onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
         label = { Text("Altura") },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(0.85f).clip(RoundedCornerShape(16.dp)),
         singleLine = true,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(16.dp),
         trailingIcon = { Text("cm", color = GrisMedio) },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 }
-
-
-
 
 @Composable
 fun SelectorGenero(opciones: List<String>, seleccion: String, onSelect: (String) -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Género", style = MaterialTheme.typography.bodyMedium)
+    Column(modifier = Modifier.fillMaxWidth(0.85f)) {
+        Text("Género", style = MaterialTheme.typography.labelMedium)
+        Spacer(modifier = Modifier.height(8.dp))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             opciones.forEach { opcion ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.wrapContentWidth().padding(horizontal = 4.dp)
                 ) {
                     RadioButton(
                         selected = (opcion == seleccion),
                         onClick = { onSelect(opcion) },
-                        colors = RadioButtonDefaults.colors(selectedColor = VerdePrincipal)
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = VerdePrincipal,
+                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                     Text(
                         text = opcion,
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 4.dp)
+                        modifier = Modifier.padding(start = 2.dp)
                     )
                 }
             }
         }
     }
+    Spacer(modifier = Modifier.height(12.dp))
 }
-
-
 
 @Composable
 fun BotonGuardarPerfil(onClick: () -> Unit) {
+    val buttonModifier = Modifier.width(200.dp)
     Button(
         onClick = onClick,
-        modifier = Modifier
-            .width(200.dp)
-            .padding(vertical = 16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
+        modifier = buttonModifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Text("Guardar", color = Blanco)
+        Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
     }
 }
-
-
-@Composable
-fun BarraInferiorPersonalizar(seleccionado: Int, onSelect: (Int) -> Unit) {
-    val items = listOf("Inicio", "Hábitos", "Perfil")
-    val icons = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)
-
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 8.dp
-    ) {
-        items.forEachIndexed { index, item ->
-            NavigationBarItem(
-                icon = { Icon(icons[index], contentDescription = item) },
-                label = { Text(item, fontSize = 10.sp) },
-                selected = seleccionado == index,
-                onClick = { onSelect(index) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    indicatorColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            )
-        }
-    }
-}
-
-
-
-
-
-
-

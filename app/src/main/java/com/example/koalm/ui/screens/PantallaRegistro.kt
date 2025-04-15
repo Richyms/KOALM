@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.ColorFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,17 +101,18 @@ fun PantallaRegistro(navController: NavController) {
     }
 }
 
-
 @Composable
 fun LogoRegistro() {
+    val isDark = isSystemInDarkTheme()
+    val tintColor = if (isDark) Color.White else Color.Black
+
     Image(
-        painter = painterResource(id = R.drawable.koala_registrar),
+        painter = painterResource(id = R.drawable.greeting),
         contentDescription = "Koala registrarse",
-        modifier = Modifier.size(200.dp)
+        modifier = Modifier.size(200.dp),
+        colorFilter = ColorFilter.tint(tintColor)
     )
 }
-
-
 
 @Composable
 fun CampoCorreo(value: String, valido: Boolean, onValueChange: (String) -> Unit) {
@@ -123,15 +126,14 @@ fun CampoCorreo(value: String, valido: Boolean, onValueChange: (String) -> Unit)
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red
+            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text("Solo servicios de correo conocidos.", color = GrisMedio, fontSize = 12.sp)
         }
     )
 }
-
-
 
 @Composable
 fun CampoNombreUsuario(value: String, valido: Boolean, onValueChange: (String) -> Unit) {
@@ -144,14 +146,14 @@ fun CampoNombreUsuario(value: String, valido: Boolean, onValueChange: (String) -
         shape = RoundedCornerShape(16.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red
+            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text("No se permiten espacios en el nombre de usuario", color = GrisMedio, fontSize = 12.sp)
         }
     )
 }
-
 
 @Composable
 fun CampoContraseña(
@@ -177,15 +179,14 @@ fun CampoContraseña(
         },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red
+            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text("La contraseña debe tener al menos 8 caracteres", color = GrisMedio, fontSize = 12.sp)
         }
     )
 }
-
-
 
 @Composable
 fun CampoConfirmarContraseña(
@@ -210,12 +211,11 @@ fun CampoConfirmarContraseña(
         },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio
+            unfocusedBorderColor = GrisMedio,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     )
 }
-
-
 
 @Composable
 fun CheckboxTerminos(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -251,9 +251,6 @@ fun CheckboxTerminos(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         )
     }
 }
-
-
-
 
 @Composable
 fun BotonesRegistro(
@@ -296,8 +293,6 @@ fun BotonesRegistro(
         Text("Iniciar con Google", color = MaterialTheme.colorScheme.onSurface)
     }
 }
-
-
 
 @Composable
 fun TextoIrIniciarSesion(navController: NavController) {

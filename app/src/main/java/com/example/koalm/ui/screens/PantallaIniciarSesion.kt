@@ -25,6 +25,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.* // Incluye: VerdePrincipal, GrisMedio, Blanco, etc.
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.ColorFilter
+
+
 
 
 
@@ -88,12 +92,17 @@ fun PantallaIniciarSesion(navController: NavHostController) {
 
 @Composable
 fun LoginLogo() {
+    val isDark = isSystemInDarkTheme()
+    val tintColor = if (isDark) Color.White else Color.Black
+
     Image(
-        painter = painterResource(id = R.drawable.koala),
+        painter = painterResource(id = R.drawable.login),
         contentDescription = "Koala",
-        modifier = Modifier.size(200.dp)
+        modifier = Modifier.size(300.dp),
+        colorFilter = ColorFilter.tint(tintColor)
     )
 }
+
 
 
 @Composable
@@ -113,7 +122,8 @@ fun EmailOrUsernameField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (isValid || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedBorderColor = if (isValid || value.isEmpty()) GrisMedio else Color.Red
+            unfocusedBorderColor = if (isValid || value.isEmpty()) GrisMedio else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text(
@@ -159,7 +169,8 @@ fun PasswordField(
         },
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (isValidPassword || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedBorderColor = if (isValidPassword || value.isEmpty()) GrisMedio else Color.Red
+            unfocusedBorderColor = if (isValidPassword || value.isEmpty()) GrisMedio else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text(
