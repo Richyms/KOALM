@@ -27,8 +27,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 import com.example.koalmV1.ui.theme.*
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import com.example.koalmV1.R
 
 
