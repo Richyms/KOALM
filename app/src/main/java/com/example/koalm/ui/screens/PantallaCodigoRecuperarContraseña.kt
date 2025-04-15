@@ -1,4 +1,4 @@
-package com.example.koalm.ui.screens
+package com.example.koalmV1.ui.screens
 
 
 import android.widget.Toast
@@ -22,10 +22,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.koalm.ui.theme.*
+import com.example.koalmV1.ui.theme.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import com.example.koalm.R
+import com.example.koalmV1.R
 
 
 @OptIn(ExperimentalMaterial3Api::class)
