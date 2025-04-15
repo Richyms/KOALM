@@ -1,4 +1,5 @@
-package com.example.koalm
+package com.example.koalm.ui.screens
+
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -24,10 +25,7 @@ import androidx.navigation.NavController
 import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-
-
-
-
+import com.example.koalm.R
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,12 +54,14 @@ fun PantallaCodigoRecuperarContrasena(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.koala_lupa),
-                contentDescription = "Koala lupa",
-                modifier = Modifier.size(150.dp)
-            )
-
+            //@Composable
+            //fun ImagenKoalaRecuperarCodigo() {
+                Image(
+                    painter = painterResource(id = R.drawable.koala_lupa),
+                    contentDescription = "Koala pregunta",
+                    modifier = Modifier.size(150.dp)
+                )
+            //}
             Spacer(modifier = Modifier.height(32.dp))
 
             Text("Código", style = MaterialTheme.typography.labelLarge)
@@ -111,6 +111,7 @@ fun PantallaCodigoRecuperarContrasena(navController: NavController) {
                         navController.navigate("PantallaRestablecerContrasena")
                     } else {
                         Toast.makeText(context, "Código incompleto", Toast.LENGTH_SHORT).show()
+                        navController.navigate("restablecer")
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)

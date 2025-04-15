@@ -110,8 +110,8 @@ fun MensajeExplicacion() {
 fun BotonEnviarCorreo(correo: String, navController: NavController, context: android.content.Context) {
     Button(
         onClick = {
-            Toast.makeText(context, "Link enviado a $correo", Toast.LENGTH_SHORT).show()
-            navController.navigate("restablecer")
+            Toast.makeText(context, "Codigo enviado a $correo", Toast.LENGTH_SHORT).show()
+            navController.navigate("recuperarCodigo")
         },
         colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
     ) {

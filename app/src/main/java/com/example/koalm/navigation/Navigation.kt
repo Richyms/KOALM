@@ -1,9 +1,6 @@
 package com.example.koalm.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -11,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.koalm.ui.screens.PantallaCodigoRecuperarContrasena
 import com.example.koalm.ui.screens.*
 
 @Composable
@@ -22,6 +20,7 @@ fun AppNavigation(navController: NavHostController) {
         composable("iniciar") { PantallaIniciarSesion(navController) }
         composable("registro") { PantallaRegistro(navController) }
         composable("recuperar") { PantallaRecuperarContrasena(navController) }
+        composable("recuperarCodigo") { PantallaCodigoRecuperarContrasena(navController) }
         composable("restablecer") { PantallaRestablecerContrasena(navController) }
         composable("personalizar") { PantallaPersonalizarPerfil(navController) }
         composable("habitos") { PantallaGustosUsuario(navController) }
