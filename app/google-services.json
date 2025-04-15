@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "871019524284",
+    "project_id": "onefor-e3956",
+    "storage_bucket": "onefor-e3956.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871019524284:android:8c708a4e3a7c68ba5820b9",
+        "android_client_info": {
+          "package_name": "com.example.koalm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLE47r_oXRX0_Qk12Zn6K00j80stq7lQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
