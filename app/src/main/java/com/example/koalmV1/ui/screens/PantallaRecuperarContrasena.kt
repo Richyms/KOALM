@@ -115,10 +115,23 @@ fun MensajeExplicacion() {
 
 @Composable
 fun BotonEnviarCorreo(correo: String, navController: NavController, context: android.content.Context) {
+    val EmailConf = correo.contains("@")
+    val isValidEmail = EmailConf && listOf(
+        "gmail.com", "hotmail.com", "yahoo.com", "icloud.com",
+        "live.com", "outlook.com", "proton.me", "protonmail.com",
+        "aol.com", "mail.com", "zoho.com", "yandex.com"
+    ).any { correo.endsWith("@$it") }
+
+    val isValidConf = EmailConf && correo.isNotBlank() && !correo.contains(" ")
+    val isValidInput = if (EmailConf) isValidEmail else isValidConf
     Button(
         onClick = {
-            Toast.makeText(context, "Código enviado a $correo", Toast.LENGTH_SHORT).show()
-            navController.navigate("recuperarCodigo")
+            if (isValidInput) {
+                Toast.makeText(context, "Código enviado a $correo", Toast.LENGTH_SHORT).show()
+                navController.navigate("recuperarCodigo")
+            } else {
+                Toast.makeText(context, "Por favor, ingresa un correo válido.", Toast.LENGTH_SHORT).show()
+            }
         },
         colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
     ) {
