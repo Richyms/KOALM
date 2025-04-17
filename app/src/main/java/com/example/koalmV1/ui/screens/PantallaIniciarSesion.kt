@@ -41,19 +41,17 @@ fun PantallaIniciarSesion(
     onGoogleSignInClick: () -> Unit
 ) {
     val context = LocalContext.current
-    var emailOrUsername by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val isEmail = emailOrUsername.contains("@")
-    val isValidEmail = isEmail && listOf(
+    // Validación de correo conocido
+    val isValidEmail = email.contains("@") && listOf(
         "gmail.com", "hotmail.com", "yahoo.com", "icloud.com",
         "live.com", "outlook.com", "proton.me", "protonmail.com",
         "aol.com", "mail.com", "zoho.com", "yandex.com"
-    ).any { emailOrUsername.endsWith("@$it") }
+    ).any { email.endsWith("@$it") }
 
-    val isValidUsername = !isEmail && emailOrUsername.isNotBlank() && !emailOrUsername.contains(" ")
-    val isValidInput = if (isEmail) isValidEmail else isValidUsername
     val isValidPassword = password.length >= 8
 
     Scaffold(
@@ -77,20 +75,25 @@ fun PantallaIniciarSesion(
         ) {
             LoginLogo()
             Spacer(modifier = Modifier.height(32.dp))
-            EmailOrUsernameField(emailOrUsername, isValidInput, isEmail) {
-                emailOrUsername = it
-            }
+            EmailOrUsernameField(
+                value = email,
+                isValid = isValidEmail,
+                isEmail = true,
+                onValueChange = { email = it }
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            PasswordField(password, passwordVisible, isValidPassword, onPasswordChange = {
-                password = it
-            }, onVisibilityToggle = {
-                passwordVisible = !passwordVisible
-            })
+            PasswordField(
+                value = password,
+                passwordVisible = passwordVisible,
+                isValidPassword = isValidPassword,
+                onPasswordChange = { password = it },
+                onVisibilityToggle = { passwordVisible = !passwordVisible }
+            )
             Spacer(modifier = Modifier.height(24.dp))
             LoginButtons(
-                isValidInput = isValidInput,
+                isValidInput = isValidEmail,
                 isValidPassword = isValidPassword,
-                emailOrUsername = emailOrUsername,
+                emailOrUsername = email,
                 password = password,
                 context = context,
                 navController = navController,
@@ -101,6 +104,7 @@ fun PantallaIniciarSesion(
         }
     }
 }
+
 
 @Composable
 fun LoginLogo() {

@@ -23,6 +23,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import android.content.Context
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.ColorFilter
@@ -37,7 +38,10 @@ import com.google.firebase.auth.ActionCodeSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaRegistro(navController: NavController) {
+fun PantallaRegistro(
+    navController: NavController,
+    onGoogleSignInClick: () -> Unit
+) {
     val context = LocalContext.current
 
     var email by remember { mutableStateOf("") }
@@ -92,16 +96,22 @@ fun PantallaRegistro(navController: NavController) {
                 passwordVisible = !passwordVisible
             }
             Spacer(modifier = Modifier.height(8.dp))
-            CampoConfirmarContraseña(confirmPassword, confirmPasswordVisible, onValueChange = { confirmPassword = it }) {
-                confirmPasswordVisible = !confirmPasswordVisible
-            }
+            CampoConfirmarContrasena(
+                value = confirmPassword,
+                visible = confirmPasswordVisible,
+                coincideCon = confirmPassword == password,
+                onValueChange = { confirmPassword = it },
+                onToggle = { confirmPasswordVisible = !confirmPasswordVisible }
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
             CheckboxTerminos(termsAccepted) { termsAccepted = it }
             Spacer(modifier = Modifier.height(12.dp))
             BotonesRegistro(
                 email, username, password, confirmPassword,
                 isValidEmail, isValidUsername, isValidPassword, termsAccepted,
-                navController, context
+                navController, context,
+                onGoogleSignInClick = onGoogleSignInClick
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextoIrIniciarSesion(navController)
@@ -197,9 +207,10 @@ fun CampoContraseña(
 }
 
 @Composable
-fun CampoConfirmarContraseña(
+fun CampoConfirmarContrasena(
     value: String,
     visible: Boolean,
+    coincideCon: Boolean,
     onValueChange: (String) -> Unit,
     onToggle: () -> Unit
 ) {
@@ -218,12 +229,22 @@ fun CampoConfirmarContraseña(
             }
         },
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = VerdePrincipal,
-            unfocusedBorderColor = GrisMedio,
+            focusedBorderColor = if (coincideCon || value.isEmpty()) VerdePrincipal else Color.Red,
+            unfocusedBorderColor = if (coincideCon || value.isEmpty()) GrisMedio else Color.Red,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-        )
+        ),
+        supportingText = {
+            if (!coincideCon && value.isNotEmpty()) {
+                Text(
+                    text = "Las contraseñas no coinciden",
+                    color = Color.Red,
+                    fontSize = 12.sp
+                )
+            }
+        }
     )
 }
+
 
 @Composable
 fun CheckboxTerminos(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -265,7 +286,9 @@ fun BotonesRegistro(
     email: String, username: String, password: String, confirmPassword: String,
     isValidEmail: Boolean, isValidUsername: Boolean, isValidPassword: Boolean,
     termsAccepted: Boolean,
-    navController: NavController, context: android.content.Context
+    navController: NavController,
+    context: Context,
+    onGoogleSignInClick: () -> Unit
 ) {
     val buttonModifier = Modifier.width(200.dp)
 
@@ -331,9 +354,8 @@ fun BotonesRegistro(
     Spacer(modifier = Modifier.height(12.dp))
 
     OutlinedButton(
-        onClick = {
-            Toast.makeText(context, "Google login", Toast.LENGTH_SHORT).show()
-        },
+        onClick = { onGoogleSignInClick() },
+
         modifier = buttonModifier,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {

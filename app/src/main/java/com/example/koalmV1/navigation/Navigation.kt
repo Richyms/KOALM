@@ -25,7 +25,14 @@ fun AppNavigation(
                 onGoogleSignInClick = onGoogleSignInClick
             )
         }
-        composable("registro") { PantallaRegistro(navController) }
+        composable("registro")
+            { PantallaRegistro(
+                navController = navController,
+                onGoogleSignInClick = onGoogleSignInClick
+            )
+        }
+
+
         composable("recuperar") { PantallaRecuperarContrasena(navController) }
         composable("restablecer") { PantallaRestablecerContrasena(navController) }
         composable("recuperarCodigo") { PantallaCodigoRecuperarContrasena(navController) }
