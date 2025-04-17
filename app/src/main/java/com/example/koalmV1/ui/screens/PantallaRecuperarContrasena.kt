@@ -60,9 +60,9 @@ fun PantallaRecuperarContrasena(navController: NavController) {
             ImagenKoalaRecuperar()
             Spacer(modifier = Modifier.height(24.dp))
             CampoCorreoRecuperar(correo) { correo = it }
-            MensajeExplicacion()                               // <- texto actualizado
+            MensajeExplicacion()
             Spacer(modifier = Modifier.height(16.dp))
-            BotonEnviarCorreo(correo, navController, context)  // <- lógica nueva
+            BotonEnviarCorreo(correo, navController, context)
             Spacer(modifier = Modifier.height(32.dp))
             TextoIrARegistro(navController)
         }
@@ -146,7 +146,8 @@ fun BotonEnviarCorreo(
                         "Revisa tu bandeja de entrada; te enviamos el enlace.",
                         Toast.LENGTH_LONG
                     ).show()
-                    navController.popBackStack()
+                    // navController.popBackStack()
+                    navController.navigate("restablecer")
                 }
                 .addOnFailureListener {
                     Toast.makeText(context, it.localizedMessage, Toast.LENGTH_LONG).show()
