@@ -31,6 +31,8 @@ import com.example.koalmV1.R
 import com.example.koalmV1.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.ActionCodeSettings
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +71,7 @@ fun PantallaRegistro(navController: NavController) {
                 }
             )
         }
+
     ) { padding ->
         Column(
             modifier = Modifier
@@ -286,8 +289,30 @@ fun BotonesRegistro(
                             )
                             Toast.makeText(context, "Registrado como $username", Toast.LENGTH_SHORT).show()
                             //Enviar correo de verificacion
-                            FirebaseAuth.getInstance().currentUser?.sendEmailVerification()
-                            Toast.makeText(context, "Se ha enviado un enlace de verificación a tu correo electrónico. Verifícalo para activar tu cuenta", Toast.LENGTH_SHORT).show()
+                            val actionCodeSettings = ActionCodeSettings.newBuilder()
+                                .setUrl("https://koalm-94491.web.app") // Tu página personalizada
+                                .setHandleCodeInApp(false)
+                                .setAndroidPackageName("com.example.koalmV1", true, "35") // Ajusta tu minSdk si es diferente
+                                .build()
+
+                            FirebaseAuth.getInstance().currentUser?.sendEmailVerification(actionCodeSettings)
+                                ?.addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        Toast.makeText(
+                                            context,
+                                            "Se ha enviado un enlace de verificación a tu correo electrónico. Verifícalo para activar tu cuenta",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigate("iniciar")
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Error al enviar el correo de verificación: ${task.exception?.localizedMessage}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }
+
                             navController.navigate("iniciar")
 
                         }else {

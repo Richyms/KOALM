@@ -28,6 +28,7 @@ fun AppNavigation(
         composable("registro") { PantallaRegistro(navController) }
         composable("recuperar") { PantallaRecuperarContrasena(navController) }
         composable("restablecer") { PantallaRestablecerContrasena(navController) }
+        composable("recuperarCodigo") { PantallaCodigoRecuperarContrasena(navController) }
         composable("personalizar") { PantallaPersonalizarPerfil(navController) }
         composable("habitos") { PantallaGustosUsuario(navController) }
         composable("menu") { PantallaMenuPrincipal(navController) }

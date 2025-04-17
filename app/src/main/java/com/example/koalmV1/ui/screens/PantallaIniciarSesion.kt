@@ -58,9 +58,15 @@ fun PantallaIniciarSesion(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Iniciar sesión") })
+            TopAppBar(
+                title = { Text("Iniciar sesión") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
         }
-    ) { innerPadding ->
+    ) { innerPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)

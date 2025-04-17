@@ -1,5 +1,4 @@
 package com.example.koalmV1.ui.theme
-
 import androidx.compose.ui.graphics.Color
 
 // Colores principales
@@ -19,3 +18,8 @@ val Negro = Color(0xFF000000)              // Texto principal
 
 // Color temático del koala
 val MarronKoala = Color(0xFF5D4037)         // Íconos y detalles visuales
+
+
+// MODO OSCURO
+
+val FondoOscuro = Color(0xFF0E1312)

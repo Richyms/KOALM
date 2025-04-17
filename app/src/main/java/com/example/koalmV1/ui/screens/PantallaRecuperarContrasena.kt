@@ -11,8 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.koalmV1.R
 import com.example.koalmV1.ui.theme.*
+
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ActionCodeSettings
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,9 +60,9 @@ fun PantallaRecuperarContrasena(navController: NavController) {
             ImagenKoalaRecuperar()
             Spacer(modifier = Modifier.height(24.dp))
             CampoCorreoRecuperar(correo) { correo = it }
-            MensajeExplicacion()
+            MensajeExplicacion()                               // <- texto actualizado
             Spacer(modifier = Modifier.height(16.dp))
-            BotonEnviarCorreo(correo, navController, context)
+            BotonEnviarCorreo(correo, navController, context)  // <- lógica nueva
             Spacer(modifier = Modifier.height(32.dp))
             TextoIrARegistro(navController)
         }
@@ -102,7 +106,7 @@ fun CampoCorreoRecuperar(value: String, onValueChange: (String) -> Unit) {
 @Composable
 fun MensajeExplicacion() {
     Text(
-        text = "Enviaremos un código de 4 dígitos al correo asociado a tu cuenta para que restablezcas la contraseña.",
+        text = "Te enviaremos un enlace de restablecimiento al correo asociado a tu cuenta.",
         fontSize = 12.sp,
         color = GrisMedio,
         modifier = Modifier
@@ -113,24 +117,42 @@ fun MensajeExplicacion() {
 
 
 @Composable
-fun BotonEnviarCorreo(correo: String, navController: NavController, context: android.content.Context) {
-    val EmailConf = correo.contains("@")
-    val isValidEmail = EmailConf && listOf(
-        "gmail.com", "hotmail.com", "yahoo.com", "icloud.com",
-        "live.com", "outlook.com", "proton.me", "protonmail.com",
-        "aol.com", "mail.com", "zoho.com", "yandex.com"
-    ).any { correo.endsWith("@$it") }
+fun BotonEnviarCorreo(
+    correo: String,
+    navController: NavController,
+    context: android.content.Context
+) {
+    val auth = FirebaseAuth.getInstance()
 
-    val isValidConf = EmailConf && correo.isNotBlank() && !correo.contains(" ")
-    val isValidInput = if (EmailConf) isValidEmail else isValidConf
+    val emailValido =
+        correo.isNotBlank() &&
+                android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()
+
     Button(
+        enabled = emailValido,
         onClick = {
-            if (isValidInput) {
-                Toast.makeText(context, "Código enviado a $correo", Toast.LENGTH_SHORT).show()
-                navController.navigate("recuperarCodigo")
-            } else {
-                Toast.makeText(context, "Por favor, ingresa un correo válido.", Toast.LENGTH_SHORT).show()
-            }
+            val auth = FirebaseAuth.getInstance()
+
+            val actionCodeSettings = ActionCodeSettings.newBuilder()
+                .setUrl("https://koalm-94491.web.app")
+                .setHandleCodeInApp(false)
+                .setAndroidPackageName("com.example.koalmV1", true, "35")
+                .build()
+
+            auth.sendPasswordResetEmail(correo, actionCodeSettings)
+                .addOnSuccessListener {
+                    Toast.makeText(
+                        context,
+                        "Revisa tu bandeja de entrada; te enviamos el enlace.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    navController.popBackStack()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(context, it.localizedMessage, Toast.LENGTH_LONG).show()
+                }
+
+
         },
         colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
     ) {
