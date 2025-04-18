@@ -112,7 +112,7 @@ fun LogoRegistro() {
     Image(
         painter = painterResource(id = R.drawable.greeting),
         contentDescription = "Koala registrarse",
-        modifier = Modifier.size(200.dp),
+        modifier = Modifier.size(240.dp),
         colorFilter = ColorFilter.tint(tintColor)
     )
 }
@@ -309,8 +309,11 @@ fun TextoIrIniciarSesion(navController: NavController) {
             }
         },
         fontSize = 14.sp,
-        modifier = Modifier.clickable {
-            navController.navigate("iniciar")
-        }
+        modifier = Modifier
+            .padding(30.dp)
+            .clickable {
+                navController.navigate("iniciar")
+            }
+
     )
 }

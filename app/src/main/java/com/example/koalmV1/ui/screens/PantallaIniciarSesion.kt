@@ -34,9 +34,7 @@ import com.example.koalmV1.R
 import com.example.koalmV1.ui.theme.* // Incluye: VerdePrincipal, GrisMedio, Blanco, etc.
 
 
-enum class ProviderType{
-    GOOGLE
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
