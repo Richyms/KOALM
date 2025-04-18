@@ -1,13 +1,18 @@
 package com.example.koalmV1.ui.screens
 
+
+import android.content.Context
+import androidx.core.content.edit                       // KTX para SharedPreferences
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
@@ -19,57 +24,44 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.layout.ContentScale
 import androidx.navigation.NavHostController
-import com.example.koalmV1.ui.theme.VerdeContenedor
-import com.example.koalmV1.ui.theme.*
 import com.example.koalmV1.R
-//Imports temporales
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.example.koalmV1.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.foundation.clickable
-
-
-
 import kotlinx.coroutines.launch
-
+import com.google.android.gms.auth.api.identity.Identity
+@Suppress("DEPRECATION")
 fun cerrarSesion(context: Context, navController: NavHostController) {
-    // Cerrar sesión Firebase
     FirebaseAuth.getInstance().signOut()
 
-    // Cerrar sesión de Google
-    GoogleSignIn.getClient(
-        context,
-        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(context.getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-    ).signOut()
-
-    // Borrar SharedPreferences
-    val prefs = context.getSharedPreferences(
+    @Suppress("DEPRECATION")
+    Identity.getSignInClient(context)
+        .signOut()
+        .addOnCompleteListener {
+            // …
+        }
+    // 3. Borra SharedPreferences con extensión KTX
+    context.getSharedPreferences(
         context.getString(R.string.prefs_file),
         Context.MODE_PRIVATE
-    )
-    prefs.edit().clear().apply()
+    ).edit {
+        clear()
+    }
 
-    // Redirigir a pantalla de inicio
+    // 4. Redirige a la pantalla de inicio y limpia el back stack
     navController.navigate("iniciar") {
         popUpTo("menu") { inclusive = true }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMenuPrincipal(navController: NavHostController) {
