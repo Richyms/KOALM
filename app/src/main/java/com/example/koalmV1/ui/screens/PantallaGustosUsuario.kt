@@ -1,6 +1,7 @@
 package com.example.koalmV1.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.foundation.isSystemInDarkTheme
 
@@ -49,8 +52,10 @@ fun PantallaGustosUsuario(navController: NavController) {
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ImagenKoalaGustos()
@@ -93,15 +98,18 @@ fun TextoTituloGustos() {
 
 @Composable
 fun BotonGuardarGustos(onClick: () -> Unit) {
-    val buttonModifier = Modifier.width(200.dp)
+    val buttonModifier = Modifier
+        .width(200.dp)
+        .padding(20.dp)
     Button(
         onClick = onClick,
         modifier = buttonModifier,
         shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-    ) {
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        contentPadding = PaddingValues(15.dp)) {
         Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
     }
+
 }
 
 @Composable
@@ -159,3 +167,18 @@ fun HabitoCard(
         }
     }
 }
+@Composable
+fun PantallaConScroll() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // Aquí puedes poner muchos elementos
+        repeat(50) {
+            Text("Elemento $it", modifier = Modifier.padding(8.dp))
+        }
+    }
+}
+

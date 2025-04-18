@@ -1,8 +1,6 @@
 package com.example.koalmV1.ui.screens
-
-
 import android.content.Context
-import androidx.core.content.edit                       // KTX para SharedPreferences
+import androidx.core.content.edit
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,29 +37,7 @@ import com.example.koalmV1.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
-@Suppress("DEPRECATION")
-fun cerrarSesion(context: Context, navController: NavHostController) {
-    FirebaseAuth.getInstance().signOut()
 
-    @Suppress("DEPRECATION")
-    Identity.getSignInClient(context)
-        .signOut()
-        .addOnCompleteListener {
-            // …
-        }
-    // 3. Borra SharedPreferences con extensión KTX
-    context.getSharedPreferences(
-        context.getString(R.string.prefs_file),
-        Context.MODE_PRIVATE
-    ).edit {
-        clear()
-    }
-
-    // 4. Redirige a la pantalla de inicio y limpia el back stack
-    navController.navigate("iniciar") {
-        popUpTo("menu") { inclusive = true }
-    }
-}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMenuPrincipal(navController: NavHostController) {
@@ -160,7 +136,29 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 }
 
 
+@Suppress("DEPRECATION")
+fun cerrarSesion(context: Context, navController: NavHostController) {
+    FirebaseAuth.getInstance().signOut()
 
+    @Suppress("DEPRECATION")
+    Identity.getSignInClient(context)
+        .signOut()
+        .addOnCompleteListener {
+            // …
+        }
+    // 3. Borra SharedPreferences con extensión KTX
+    context.getSharedPreferences(
+        context.getString(R.string.prefs_file),
+        Context.MODE_PRIVATE
+    ).edit {
+        clear()
+    }
+
+    // 4. Redirige a la pantalla de inicio y limpia el back stack
+    navController.navigate("iniciar") {
+        popUpTo("menu") { inclusive = true }
+    }
+}
 @Composable
 fun SeccionTitulo(texto: String) {
     Text(

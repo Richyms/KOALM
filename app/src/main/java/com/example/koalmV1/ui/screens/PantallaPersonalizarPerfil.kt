@@ -35,7 +35,6 @@ import androidx.compose.foundation.clickable
 fun PantallaPersonalizarPerfil(navController: NavHostController) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
     var fechasec by remember { mutableStateOf("") }
@@ -279,7 +278,9 @@ fun SelectorGenero(opciones: List<String>, seleccion: String, onSelect: (String)
 
 @Composable
 fun BotonGuardarPerfil(onClick: () -> Unit) {
-    val buttonModifier = Modifier.width(200.dp)
+    val buttonModifier = Modifier
+        .width(200.dp)
+        .padding(50.dp)
     Button(
         onClick = onClick,
         modifier = buttonModifier,
