@@ -23,6 +23,6 @@ data class Usuario(
         "nacimiento" to (nacimiento ?: ""),
         "peso"       to (peso      ?: 0),
         "altura"     to (altura    ?: 0),
-        "genero"     to (genero    ?: "")   
+        "genero"     to (genero    ?: "")
     )
 }
