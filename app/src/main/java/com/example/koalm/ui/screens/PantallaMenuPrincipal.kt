@@ -52,12 +52,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
         Triple("Meditación koalística", "Meditar como un koala: profundo y reparador.", R.drawable.koala_meditando)
     )
 
-    //Autentifiacion si esta logeado
-    if (FirebaseAuth.getInstance().currentUser?.email.isNullOrEmpty()){
-        navController.navigate("recuperar")
-    }else{
-        navController.navigate("menu")
-    }
+
 
     ModalNavigationDrawer(
         drawerState = drawerState,

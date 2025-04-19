@@ -39,14 +39,18 @@ class MainActivity : ComponentActivity() {
         firebaseAuth = FirebaseAuth.getInstance()
         credentialManager = CredentialManager.create(this)
 
-        // Puede venir “habitos” o “iniciar” desde un Intent previo
-        val navigateTo = intent.getStringExtra("navigateTo")
+        //Pantalla a la que ira depende si esta logeado o no devuelve una valor bool
 
+        val startDestination = if (firebaseAuth.currentUser?.isEmailVerified == true) {
+            "menu"  // o "habitos", según cómo lo llamas
+        } else {
+            "iniciar"
+        }
         // Lanza la UI Compose
         setContent {
             MainApp(
                 onGoogleSignInClick = { handleGoogleSignIn() },
-                startDestination = navigateTo ?: "iniciar"
+                startDestination = startDestination
             )
         }
     }
