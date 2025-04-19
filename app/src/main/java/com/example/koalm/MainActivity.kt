@@ -1,4 +1,4 @@
-package com.example.koalmV1
+package com.example.koalm
 import androidx.credentials.CustomCredential
 import android.content.Intent
 import android.os.Bundle
@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
-import com.example.koalmV1.navigation.AppNavigation
-import com.example.koalmV1.ui.theme.KoalmTheme
+import com.example.koalm.navigation.AppNavigation
+import com.example.koalm.ui.theme.KoalmTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential

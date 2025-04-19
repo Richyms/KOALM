@@ -1,4 +1,4 @@
-package com.example.koalmV1.ui.theme
+package com.example.koalm.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes

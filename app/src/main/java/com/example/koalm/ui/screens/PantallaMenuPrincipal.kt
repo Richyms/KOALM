@@ -1,4 +1,4 @@
-package com.example.koalmV1.ui.screens
+package com.example.koalm.ui.screens
 import android.content.Context
 import androidx.core.content.edit
 import androidx.compose.foundation.Image
@@ -32,8 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.koalmV1.R
-import com.example.koalmV1.ui.theme.*
+import com.example.koalm.R
+import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
@@ -51,6 +51,13 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
         Triple("Alimentación consciente", "Disfruta cada hoja de eucalipto como si fuera la primera.", R.drawable.koala_comiendo),
         Triple("Meditación koalística", "Meditar como un koala: profundo y reparador.", R.drawable.koala_meditando)
     )
+
+    //Autentifiacion si esta logeado
+    if (FirebaseAuth.getInstance().currentUser?.email.isNullOrEmpty()){
+        navController.navigate("recuperar")
+    }else{
+        navController.navigate("menu")
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,

@@ -1,4 +1,4 @@
-package com.example.koalmV1.ui.screens
+package com.example.koalm.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -22,8 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.koalmV1.R
-import com.example.koalmV1.ui.theme.*
+import com.example.koalm.R
+import com.example.koalm.ui.theme.*
 import java.util.Calendar
 import java.util.Locale
 import androidx.compose.foundation.shape.RoundedCornerShape

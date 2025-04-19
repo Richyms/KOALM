@@ -1,4 +1,4 @@
-package com.example.koalmV1.ui.screens
+package com.example.koalm.ui.screens
 
 import android.content.Context
 import android.widget.Toast
@@ -27,8 +27,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.core.content.edit
 
-import com.example.koalmV1.R
-import com.example.koalmV1.ui.theme.*
+import com.example.koalm.R
+import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.firestore.FirebaseFirestore

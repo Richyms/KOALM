@@ -1,4 +1,4 @@
-package com.example.koalmV1.navigation
+package com.example.koalm.navigation
 
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.koalmV1.ui.screens.*
+import com.example.koalm.ui.screens.*
 
 @Composable
 fun AppNavigation(
@@ -39,6 +39,7 @@ fun AppNavigation(
         composable("personalizar") { PantallaPersonalizarPerfil(navController) }
         composable("habitos") { PantallaGustosUsuario(navController) }
         composable("menu") { PantallaMenuPrincipal(navController) }
+
     }
 }
 

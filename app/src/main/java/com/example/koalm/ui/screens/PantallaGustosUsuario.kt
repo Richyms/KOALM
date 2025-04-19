@@ -1,4 +1,4 @@
-package com.example.koalmV1.ui.screens
+package com.example.koalm.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.material3.Button
@@ -19,11 +19,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-
 import androidx.compose.foundation.isSystemInDarkTheme
-
-import com.example.koalmV1.R
-import com.example.koalmV1.ui.theme.*
+import com.example.koalm.R
+import com.example.koalm.ui.theme.*
 
 
 @OptIn(ExperimentalMaterial3Api::class)

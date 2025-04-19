@@ -1,6 +1,5 @@
-package com.example.koalmV1.ui.screens
+package com.example.koalm.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -17,9 +16,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.koalmV1.R
-import com.example.koalmV1.ui.theme.VerdePrincipal
-import com.example.koalmV1.ui.theme.GrisMedio
+import com.example.koalm.R
+import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.ui.theme.GrisMedio
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

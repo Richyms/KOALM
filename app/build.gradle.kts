@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace       = "com.example.koalmV1"
+    namespace       = "com.example.koalm"
     compileSdk      = 35
 
 
@@ -14,7 +14,7 @@ android {
 
 
     defaultConfig {
-        applicationId    = "com.example.koalmV1"
+        applicationId    = "com.example.koalm"
         minSdk           = 31
         targetSdk        = 35
         versionCode      = 1
