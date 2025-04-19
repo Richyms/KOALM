@@ -32,7 +32,9 @@ import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.firestore.FirebaseFirestore
-
+import com.google.firebase.firestore.SetOptions
+import com.example.koalm.model.Usuario
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +106,6 @@ fun PantallaIniciarSesion(
         }
     }
 }
-
 
 @Composable
 fun LoginLogo() {
@@ -217,39 +218,52 @@ fun LoginButtons(
                     Toast.makeText(context, "La contraseña debe tener al menos 8 caracteres", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
+                    // Guardamos en SharedPreferences
                     val prefs = context.getSharedPreferences(
                         context.getString(R.string.prefs_file),
                         Context.MODE_PRIVATE
                     )
-
-                    // ✅ Usamos la extensión edit de KTX
                     prefs.edit {
                         putString("emailOrUsername", emailOrUsername)
                     }
 
-                    FirebaseAuth.getInstance().signInWithEmailAndPassword(emailOrUsername, password)
-                        .addOnCompleteListener {
-                            if (it.isSuccessful) {
+                    // 1) Login con Firebase Auth
+                    FirebaseAuth.getInstance()
+                        .signInWithEmailAndPassword(emailOrUsername, password)
+                        .addOnCompleteListener { authTask ->
+                            if (authTask.isSuccessful) {
                                 val user = FirebaseAuth.getInstance().currentUser
-                                val db = FirebaseFirestore.getInstance()
-                                val documento = db.collection("UserK").document(emailOrUsername)
+                                val uid = user?.uid ?: UUID.randomUUID().toString()
 
-                                documento.get()
-                                    .addOnSuccessListener { resultado ->
-                                        if (resultado != null && resultado.exists() && user != null && user.isEmailVerified) {
-                                            val nickname = resultado.getString("nickName") ?: ""
-                                            Toast.makeText(context, "Bienvenid@ $nickname", Toast.LENGTH_SHORT).show()
-                                            navController.navigate("habitos")
-                                        } else {
-                                            FirebaseAuth.getInstance().signOut()
-                                            Toast.makeText(context, "Debes verificar tu correo antes de acceder.", Toast.LENGTH_LONG).show()
-                                        }
+                                // 2) Preparamos el objeto con email + username
+                                val usuarioLogin = Usuario(
+                                    id = uid,
+                                    userId = uid,
+                                    email = emailOrUsername,
+                                    username = emailOrUsername.substringBefore("@")
+                                )
+
+                                val db = FirebaseFirestore.getInstance()
+                                // 3) Hacemos merge() para actualizar/incluir sólo esos campos
+                                db.collection("usuarios")
+                                    .document(uid)
+                                    .set(usuarioLogin.toMap(), SetOptions.merge())
+
+                                // 4) Leemos de vuelta el campo "username" para el saludo
+                                db.collection("usuarios")
+                                    .document(uid)
+                                    .get()
+                                    .addOnSuccessListener { snap ->
+                                        val nickname = snap.getString("username") ?: ""
+                                        Toast.makeText(context, "Bienvenid@ $nickname", Toast.LENGTH_SHORT).show()
+                                        // Navega a tu siguiente pantalla
+                                        navController.navigate("habitos")
                                     }
-                                    .addOnFailureListener {
-                                        Toast.makeText(context, "Error al obtener el nickname", Toast.LENGTH_SHORT).show()
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(context, "Error al obtener usuario: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                                     }
                             } else {
-                                val error = it.exception
+                                val error = authTask.exception
                                 when {
                                     error is FirebaseAuthInvalidCredentialsException -> {
                                         Toast.makeText(context, "Correo y/o contraseña incorrectos. Intenta de nuevo.", Toast.LENGTH_SHORT).show()
@@ -279,6 +293,7 @@ fun LoginButtons(
         Text("Iniciar con Google", color = MaterialTheme.colorScheme.onSurface)
     }
 }
+
 
 @Composable
 fun LoginFooterText(navController: NavHostController) {

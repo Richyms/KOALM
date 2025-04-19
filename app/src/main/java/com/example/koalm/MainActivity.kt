@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         //Pantalla a la que ira depende si esta logeado o no devuelve una valor bool
 
         val startDestination = if (firebaseAuth.currentUser?.isEmailVerified == true) {
-            "menu"  // o "habitos", según cómo lo llamas
+            "menu"
         } else {
             "iniciar"
         }

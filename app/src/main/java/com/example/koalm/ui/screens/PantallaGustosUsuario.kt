@@ -65,7 +65,7 @@ fun PantallaGustosUsuario(navController: NavController) {
             HabitoCard("Nadar", "Me gusta nadar.", nadar) { nadar = it }
 
             Spacer(modifier = Modifier.weight(1f))
-            BotonGuardarGustos { navController.navigate("menu") }
+            BotonGuardarGustos { navController.navigate("personalizar") }
         }
     }
 }

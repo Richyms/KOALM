@@ -89,7 +89,7 @@ fun CampoCorreoRecuperar(value: String, onValueChange: (String) -> Unit) {
         onValueChange = onValueChange,
         label = { Text("Ingresa tu correo") },
 
-        modifier = Modifier.fillMaxWidth(0.85f),
+        modifier = Modifier.fillMaxWidth(0.97f),
         shape = RoundedCornerShape(16.dp),
 
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
