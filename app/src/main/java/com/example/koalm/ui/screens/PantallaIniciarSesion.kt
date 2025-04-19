@@ -254,7 +254,7 @@ fun LoginButtons(
                                     .document(uid)
                                     .get()
                                     .addOnSuccessListener { snap ->
-                                        val nickname = snap.getString("username") ?: ""
+                                        val nickname = snap.getString("nickName") ?: ""
                                         Toast.makeText(context, "Bienvenid@ $nickname", Toast.LENGTH_SHORT).show()
                                         // Navega a tu siguiente pantalla
                                         navController.navigate("habitos")

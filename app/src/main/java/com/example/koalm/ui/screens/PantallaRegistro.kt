@@ -296,52 +296,48 @@ fun BotonesRegistro(
         onClick = {
             when {
                 !isValidEmail -> Toast.makeText(context, "Por favor ingresa un correo válido", Toast.LENGTH_SHORT).show()
-                !isValidUsername -> Toast.makeText(context, "El nombre de usuario no debe contener espacios", Toast.LENGTH_SHORT).show()
+                !isValidUsername -> Toast.makeText(context, "El nombre de usuario no debe conx  tener espacios", Toast.LENGTH_SHORT).show()
                 !isValidPassword -> Toast.makeText(context, "La contraseña debe tener al menos 8 caracteres", Toast.LENGTH_SHORT).show()
                 password != confirmPassword -> Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
                 !termsAccepted -> Toast.makeText(context, "Debes aceptar los términos y condiciones", Toast.LENGTH_SHORT).show()
                 else -> {
                     //Usando el servicio de FireBase
-                    FirebaseAuth.getInstance().createUserWithEmailAndPassword(email,password).addOnCompleteListener {
-                        if (it.isSuccessful) {
-                            //Usando Cloud FireStore
-                            val db = FirebaseFirestore.getInstance()
-                            db.collection("UserK").document(email).set(
-                                hashMapOf("nickName" to username,
-                                    "email" to email)
-                            )
-                            Toast.makeText(context, "Registrado como $username", Toast.LENGTH_SHORT).show()
-                            //Enviar correo de verificacion
-                            val actionCodeSettings = ActionCodeSettings.newBuilder()
-                                .setUrl("https://koalm-94491.web.app") // Tu página personalizada
-                                .setHandleCodeInApp(false)
-                                .setAndroidPackageName("com.example.koalmV1", true, "35") // Ajusta tu minSdk si es diferente
-                                .build()
+                    FirebaseAuth.getInstance()
+                        .createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                // 1) obtener UID
+                                val auth = FirebaseAuth.getInstance()
+                                val userId = auth.currentUser!!.uid
 
-                            FirebaseAuth.getInstance().currentUser?.sendEmailVerification(actionCodeSettings)
-                                ?.addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        Toast.makeText(
-                                            context,
-                                            "Se ha enviado un enlace de verificación a tu correo electrónico. Verifícalo para activar tu cuenta",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.navigate("iniciar")
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "Error al enviar el correo de verificación: ${task.exception?.localizedMessage}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                // 2) referenciar colección unificada
+                                val db = FirebaseFirestore.getInstance()
+                                db.collection("usuarios")
+                                    .document(userId)
+                                    .set(
+                                        mapOf(
+                                            "nickName"   to username,
+                                            "email"      to email,
+                                            "userId"     to userId
+                                        )
+                                    )
+
+                                // 3) resto: verificación de email, navegación…
+                                auth.currentUser
+                                    ?.sendEmailVerification(/* tus ActionCodeSettings */)
+                                    ?.addOnCompleteListener { verifyTask ->
+                                        // …
                                     }
-                                }
 
-                            navController.navigate("iniciar")
-
-                        }else {
-                            Toast.makeText(context, "Ya existe una cuenta con este correo. Usa otro email o inicia sesión.", Toast.LENGTH_SHORT).show()
+                                navController.navigate("iniciar")
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Ya existe una cuenta con este correo.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
-                    }
                 }
             }
         },

@@ -9,7 +9,9 @@ data class Usuario(
     val apellido: String?     = null,
     val nacimiento: String?   = null,
     val peso: Int?            = null,
-    val altura: Int?          = null
+    val altura: Int?          = null,
+    val genero: String?       = null
+
 ) {
     fun toMap(): Map<String, Any> = mapOf(
         "id"         to (id        ?: ""),
@@ -20,6 +22,7 @@ data class Usuario(
         "apellido"   to (apellido  ?: ""),
         "nacimiento" to (nacimiento ?: ""),
         "peso"       to (peso      ?: 0),
-        "altura"     to (altura    ?: 0)
+        "altura"     to (altura    ?: 0),
+        "genero"     to (genero    ?: "")   
     )
 }
