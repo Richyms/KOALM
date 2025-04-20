@@ -8,7 +8,7 @@ Antes de comenzar, necesitarás:
 
 1. **Android Studio** (versión recomendada: 2023.1.1 o superior)
    - Descarga desde: [Android Studio](https://developer.android.com/studio)
-   - Instalación mínima: 8GB RAM, 8GB espacio en disco
+   - Instalación mínima: 8GB RAM, 8GB espacio en disc
 
 2. **Java Development Kit (JDK)** 11 o superior
    - Descarga desde: [JDK](https://www.oracle.com/java/technologies/downloads/)

@@ -81,7 +81,13 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         val icon = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)[index]
                         NavigationBarItem(
                             selected = index == 0,
-                            onClick = { /* Navegación */ },
+                            onClick = { 
+                                when (index) {
+                                    0 -> { /* Mantener en inicio */ }
+                                    1 -> navController.navigate("tipos_habitos")
+                                    2 -> { /* Navegación al perfil */ }
+                                }
+                            },
                             icon = { Icon(icon, contentDescription = label) },
                             label = { Text(label) }
                         )

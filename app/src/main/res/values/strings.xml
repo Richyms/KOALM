@@ -3,4 +3,38 @@
     <string name="title_activity_personalizar_perfil">PersonalizarPerfil</string>
     <string name="prefs_file">KOALM_PREFS</string>
     <string name="default_web_client_id">564465083756-rf2pr2310d2f7m6t7bfb31gbgqplgl9t.apps.googleusercontent.com</string>
+
+    <string name="titulo_config_escritura">Configurar hábito de escritura</string>
+    <string name="label_descripcion">Añadir descripción</string>
+    <string name="placeholder_descripcion">No sabes lo que piensas hasta que lo escribes.</string>
+    
+    <string name="label_frecuencia">Frecuencia: *</string>
+    <string name="label_hora">Hora del recordatorio: *</string>
+    <string name="texto_ayuda_hora">
+        Cuando te recordemos tu escritura, seleccionarás el tiempo que quieres escribir.
+    </string>
+    
+    <string name="label_notas">Habilitar notas en la app</string>
+    <string name="boton_guardar">Guardar</string>
+
+    <string name="label_duracion_escritura">Duración de escritura</string>
+
+    <!-- Notificaciones -->
+    <string name="notification_channel_name">Recordatorio de escritura</string>
+    <string name="notification_channel_description">Canal para recordatorios de escritura diaria</string>
+    <string name="notification_title">¡Es hora de escribir!</string>
+    <string name="notification_default_text">Es hora de escribir</string>
+    <string name="error_no_days_selected">Selecciona al menos un día</string>
+    <string name="error_notification_permission">Se requieren permisos de notificación</string>
+    <string name="success_notifications_scheduled">Notificaciones programadas</string>
+
+    <!-- Temporizador -->
+    <string name="timer_channel_name">Temporizador de escritura</string>
+    <string name="timer_channel_description">Canal para el temporizador de escritura</string>
+    <string name="timer_notification_title">Tiempo de escritura</string>
+    <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
+    <string name="timer_remaining_text">Tiempo restante: %s</string>
+    <string name="timer_completion_title">¡Tiempo completado!</string>
+    <string name="timer_completion_text">Has completado tu sesión de escritura</string>
+    <string name="start_writing_action">Comenzar %d min</string>
 </resources>

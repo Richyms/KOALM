@@ -39,11 +39,13 @@ fun AppNavigation(
         composable("personalizar") { PantallaPersonalizarPerfil(navController) }
         composable("habitos") { PantallaGustosUsuario(navController) }
         composable("menu") { PantallaMenuPrincipal(navController) }
-
+        composable("tipos_habitos") { PantallaHabitos(navController) }
+        composable("salud_mental") { PantallaSaludMental(navController) }
+        composable("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
     }
 }
 
-// Animación personalizada (opcional)
+// Animación personalizada (opcional)s
 private fun androidx.navigation.NavGraphBuilder.screenWithSlide(
     route: String,
     content: @Composable () -> Unit
