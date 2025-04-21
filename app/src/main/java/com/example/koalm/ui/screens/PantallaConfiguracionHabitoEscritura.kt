@@ -4,7 +4,7 @@ package com.example.koalm.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
+// import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,12 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
+// import androidx.compose.ui.geometry.CornerRadius
+// import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedback
+// import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
+// import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -30,7 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+// import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.services.NotificationService
@@ -51,12 +51,13 @@ import android.util.Log
 import android.content.Intent
 
 /* foundation */
-import androidx.compose.foundation.Canvas          // ←  dibujar el track
+// import androidx.compose.foundation.Canvas          // ←  dibujar el track
 import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 /* ui */
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.IntOffset
+// import androidx.compose.ui.geometry.Size
+// import androidx.compose.ui.unit.IntOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,7 +118,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 title = { Text(stringResource(R.string.titulo_config_escritura)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
-                        Icon(Icons.Default.ArrowBack, null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 }
             )
