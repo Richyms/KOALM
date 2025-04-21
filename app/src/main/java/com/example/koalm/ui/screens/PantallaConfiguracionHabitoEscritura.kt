@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+// import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -42,6 +42,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -49,6 +50,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import android.util.Log
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 
 /* foundation */
 // import androidx.compose.foundation.Canvas          // ←  dibujar el track
@@ -59,6 +62,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 // import androidx.compose.ui.geometry.Size
 // import androidx.compose.ui.unit.IntOffset
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
@@ -349,6 +353,7 @@ private fun HoraField(hora: LocalTime, onClick: () -> Unit) {
 }
 
 /*─────────────────────────────  SLIDER “PIXEL STYLE”  ───────────────────────*/
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun DurationSlider(
     value: Float,
