@@ -187,12 +187,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     )
                     HoraField(hora) { mostrarTimePicker = true }
 
-                    Text(
-                        text = stringResource(R.string.texto_ayuda_hora),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
                     /*  Duración (Slider personalizado)  */
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
@@ -211,6 +205,11 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                             valueRange    = rangoDuracion,
                             tickEvery     = 15,           // marca cada 15 min
                             modifier      = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Selecciona el tiempo que quieres que dure tu hábito de escritura",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
