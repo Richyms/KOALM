@@ -22,6 +22,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,41 +67,41 @@ fun PantallaParametrosSalud(navController: NavController) {
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(26.dp),
+                .padding(vertical = 5.dp, horizontal = 26.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
                 painter = painterResource(id = R.drawable.training),
                 contentDescription = "Koala salud",
                 modifier = Modifier
-                    .size(180.dp)
-                    .offset(y = (-24).dp)
+                    .size(150.dp)
+                    .offset(y = (-10).dp)
             )
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-50).dp)
+                    .padding(8.dp, 0.dp)
             ) {
                 InfoMiniCard("Pasos", "7400/10000", Icons.AutoMirrored.Filled.DirectionsWalk)
                 InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime)
                 InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment)
             }
 
+            // Cambiar fecha
             Text(
                 text = "Este dato es de la última información registrada, dd/mm/yy",
                 fontSize = 9.sp,
                 color = Color.Gray,
-                modifier = Modifier.offset(y = (-40).dp)
+                modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
             )
 
-            InfoCardConProgreso("Sueño", "7 h 7 min", 0.88f, Icons.Default.Bedtime)
+            InfoCard("Sueño", "7 h 7 min", Icons.Default.Bedtime, progreso = 0.88f)
             InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite)
-            InfoCardConProgreso("Ansiedad", "Moderado", 0.6f, Icons.Default.SentimentNeutral)
-            InfoCardConProgreso("Peso", "-2.5 kg perdidos", 0.5f, Icons.Default.MonitorWeight)
+            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f)
+            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f)
             InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun)
-
         }
     }
 }
@@ -116,36 +119,20 @@ fun InfoMiniCard(titulo: String, dato: String, icono: ImageVector) {
 }
 
 @Composable
-fun InfoCard(titulo: String, dato: String, icono: ImageVector) {
-    Card(
+fun InfoCard(
+    titulo: String,
+    dato: String,
+    icono: ImageVector,
+    progreso: Float? = null
+) {
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Icon(icono, contentDescription = titulo, modifier = Modifier.size(32.dp))
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(titulo, fontWeight = FontWeight.Bold)
-                if (dato.isNotBlank()) {
-                    Text(dato)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun InfoCardConProgreso(titulo: String, dato: String, progreso: Float, icono: ImageVector) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 2.dp,
+        color = VerdeContenedor,
+        border = BorderStroke(1.dp, Color.LightGray)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -155,14 +142,37 @@ fun InfoCardConProgreso(titulo: String, dato: String, progreso: Float, icono: Im
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(titulo, fontWeight = FontWeight.Bold)
-                Text(dato)
+                if (dato.isNotBlank()) {
+                    Text(dato)
+                }
             }
-            CircularProgressIndicator(
-                progress = { progreso },
-                modifier = Modifier.size(36.dp),
-                strokeWidth = 4.dp,
-                color = Color(0xFF5EAF4D)
-            )
+            if (progreso != null) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
+                    CircularProgressIndicator(
+                        progress = { progreso },
+                        modifier = Modifier.fillMaxSize(),
+                        strokeWidth = 4.dp,
+                        color = VerdePrincipal
+                    )
+
+                    if (titulo == "Ansiedad") {
+                        Icon(
+                            imageVector = Icons.Default.SentimentNeutral,
+                            contentDescription = "Nivel de ansiedad",
+                            tint = Negro,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else if (titulo == "Sueño") { // cambiar la hora
+                        Text(
+                            text = "/8 h",
+                            fontSize = 10.sp,
+                            color = Negro,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
         }
     }
 }
