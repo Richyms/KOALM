@@ -46,7 +46,8 @@ fun PantallaHabitos(navController: NavHostController) {
             HabitoCategoriaCard(
                 titulo = "Salud física",
                 descripcion = "Control de sueño, alimentación, hidratación y peso.",
-                icono = Icons.Default.FitnessCenter
+                icono = Icons.Default.FitnessCenter,
+                onClick = { navController.navigate("salud_fisica") }
             )
             
             HabitoCategoriaCard(

@@ -41,7 +41,9 @@ fun AppNavigation(
         composable("menu") { PantallaMenuPrincipal(navController) }
         composable("tipos_habitos") { PantallaHabitos(navController) }
         composable("salud_mental") { PantallaSaludMental(navController) }
+        composable("salud_fisica") { PantallaSaludFisica(navController) }
         composable("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
+        composable("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
     }
 }
 
