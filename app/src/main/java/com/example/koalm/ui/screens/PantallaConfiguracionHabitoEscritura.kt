@@ -304,7 +304,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
 
 /*────────────────────────────────  COMPONENTES  ─────────────────────────────*/
 @Composable
-private fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
+fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
     val bg          = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     val textColor   = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -323,7 +323,7 @@ private fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun HoraField(hora: LocalTime, onClick: () -> Unit) {
+fun HoraField(hora: LocalTime, onClick: () -> Unit) {
     Surface(
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(12.dp),
@@ -446,7 +446,7 @@ fun DurationSlider(
 /*─────────────────────────────  TIME PICKER  ───────────────────────────────*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TimePickerDialog(
+fun TimePickerDialog(
     initialTime : LocalTime,
     onTimePicked: (LocalTime) -> Unit,
     onDismiss   : () -> Unit,
