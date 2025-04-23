@@ -17,6 +17,13 @@ val GrisCard = Color(0xFFF3F3F3)            // Fondo de cards
 val Blanco = Color(0xFFFFFFFF)              // Fondo principal
 val Negro = Color(0xFF000000)              // Texto principal
 
+// Colores grafica ritmo cardiaco
+val AzulLigero = Color(0xFF00CFF9)
+val VerdeAerobico = Color(0xFF8D9D3D)
+val AmarilloIntensivo = Color(0xFFFFA20D)
+val NaranjaAnaerobico = Color(0xFFFF5E3A)
+val RojoVOMAx = Color(0xFFFF1A1A)
+
 // Color temático del koala
 val MarronKoala = Color(0xFF5D4037)         // Íconos y detalles visuales
 
