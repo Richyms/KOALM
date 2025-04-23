@@ -96,10 +96,10 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 now.toLocalDate(),
                 hora
             )
-            
+
             Log.d(TAG, "Iniciando servicio de notificaciones")
             context.startService(Intent(context, NotificationService::class.java))
-            
+
             notificationService.scheduleNotification(
                 context = context,
                 diasSeleccionados = diasSeleccionados,
@@ -107,7 +107,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
                 durationMinutes = duracionMin.toLong()
             )
-            
+
             Toast.makeText(context, context.getString(R.string.success_notifications_scheduled), Toast.LENGTH_SHORT).show()
             navController.navigateUp()
         } else {
@@ -237,7 +237,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
 
             /*  Guardar  */
             Button(
-                onClick = { 
+                onClick = {
                     // Verificar si hay días seleccionados
                     if (!diasSeleccionados.any { it }) {
                         Toast.makeText(context, context.getString(R.string.error_no_days_selected), Toast.LENGTH_SHORT).show()
@@ -263,10 +263,10 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 now.toLocalDate(),
                                 hora
                             )
-                            
+
                             Log.d(TAG, "Iniciando servicio de notificaciones")
                             context.startService(Intent(context, NotificationService::class.java))
-                            
+
                             notificationService.scheduleNotification(
                                 context = context,
                                 diasSeleccionados = diasSeleccionados,
@@ -274,7 +274,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
                                 durationMinutes = duracionMin.toLong()
                             )
-                            
+
                             Toast.makeText(context, context.getString(R.string.success_notifications_scheduled), Toast.LENGTH_SHORT).show()
                             navController.navigateUp()
                         }
@@ -369,7 +369,7 @@ fun DurationSlider(
 
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = with(density) { maxWidth.toPx() }
-        
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -428,7 +428,7 @@ fun DurationSlider(
             // Thumb visual, atado a la posición actual
             val progress = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
             val thumbOffset = with(density) { (progress * maxWidthPx).toDp() }
-            
+
             Box(
                 modifier = Modifier
                     .width(thumbWidth)
