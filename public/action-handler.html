@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>KOALM – Validación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        body {
+          font-family: 'Inter', sans-serif;
+          background-color: #ffffff;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          margin: 0;
+          padding: 24px;
+          color: #111;
+        }
+
+        img {
+          width: 160px;
+          margin-bottom: 32px;
+        }
+
+        h1 {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          text-align: center;
+        }
+
+        .form {
+          width: 100%;
+          max-width: 360px;
+        }
+
+        input {
+          width: 100%;
+          padding: 14px;
+          margin-bottom: 12px;
+          border: 1px solid #ccc;
+          border-radius: 12px;
+          font-size: 16px;
+        }
+
+        button {
+          width: 100%;
+          padding: 14px;
+          background-color: #478D4F;
+          color: white;
+          font-weight: 600;
+          border: none;
+          border-radius: 999px;
+          font-size: 16px;
+          cursor: pointer;
+        }
+
+        .message {
+          margin-top: 16px;
+          font-size: 14px;
+          text-align: center;
+        }
+
+        .success {
+          color: green;
+        }
+
+        .error {
+          color: red;
+        }
+
+        .hidden {
+          display: none;
+        }
+    </style>
+</head>
+<body>
+
+<img src="koala.png" alt="Koala KOALM" />
+
+<!-- Dentro del <body> -->
+<div id="resetSection" style="display: none;">
+    <h1>Restablecer contraseña</h1>
+    <input type="password" id="newPassword" placeholder="Nueva contraseña" />
+    <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" />
+    <button id="btnReset">Guardar nueva contraseña</button>
+    <div class="message" id="resetMessage"></div>
+</div>
+
+<div id="verifySection" style="display: none;">
+    <h1>Verificación de correo</h1>
+    <div class="message success" id="verifyMessage">⏳ Verificando correo...</div>
+</div>
+
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC2wssygyez7OIb4pRCDwi-hokvjjDcSAU",
+      authDomain: "koalm-94491.firebaseapp.com",
+      projectId: "koalm-94491"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+window.addEventListener("load", () => {
+  const url = new URL(window.location.href);
+  const mode = url.searchParams.get("mode");
+  const oobCode = url.searchParams.get("oobCode");
+
+  // Inicializa Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2wssygyez7OIb4pRCDwi-hokvjjDcSAU",
+    authDomain: "koalm-94491.firebaseapp.com",
+    projectId: "koalm-94491"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  // Mostrar solo la sección relevante
+  if (mode === "resetPassword") {
+    document.getElementById("resetSection").style.display = "block";
+    document.getElementById("btnReset").addEventListener("click", () => {
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const msg = document.getElementById("resetMessage");
+
+      if (!newPassword || newPassword.length < 8) {
+        msg.textContent = "La contraseña debe tener al menos 8 caracteres.";
+        msg.className = "message error";
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        msg.textContent = "Las contraseñas no coinciden.";
+        msg.className = "message error";
+        return;
+      }
+
+      firebase.auth().confirmPasswordReset(oobCode, newPassword)
+        .then(() => {
+          msg.textContent = "✅ Contraseña actualizada.";
+          msg.className = "message success";
+        })
+        .catch((error) => {
+          msg.textContent = "❌ Error: " + error.message;
+          msg.className = "message error";
+        });
+    });
+  }
+
+  if (mode === "verifyEmail") {
+    document.getElementById("verifySection").style.display = "block";
+    const msg = document.getElementById("verifyMessage");
+
+    firebase.auth().applyActionCode(oobCode)
+      .then(() => {
+        msg.textContent = "✅ Tu correo ha sido verificado con éxito.";
+      })
+      .catch((error) => {
+        msg.textContent = "❌ Error al verificar el correo: " + error.message;
+        msg.className = "message error";
+      });
+  }
+});
+
+</script>
+</body>
+</html>
