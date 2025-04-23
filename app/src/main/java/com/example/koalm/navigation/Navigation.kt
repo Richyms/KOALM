@@ -44,6 +44,7 @@ fun AppNavigation(
         composable("salud_fisica") { PantallaSaludFisica(navController) }
         composable("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
         composable("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
+        composable("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
     }
 }
 

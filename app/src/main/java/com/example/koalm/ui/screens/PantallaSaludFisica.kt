@@ -29,7 +29,7 @@ fun PantallaSaludFisica(navController: NavHostController) {
     val habitos = listOf(
         HabitoFisico("Sueño", "Registra tus horas de sueño y mejora tu descanso."),
         HabitoFisico("Alimentación", "Comer a tus horas, nutre más que los alimentos."),
-        HabitoFisico("Hidratación", "Re-vive fuera de tu pantalla."),
+        HabitoFisico("Hidratación", "Recuerda hidratarte cada día"),
     )
     Scaffold(
         topBar = {
@@ -80,6 +80,10 @@ fun HabitoFisicoCard(habito: HabitoFisico, navController: NavHostController) {
         onClick = {
             if (habito.titulo == "Sueño") {
                 navController.navigate("configurar_habito_sueno")
+            }else{
+                if(habito.titulo == "Hidratación"){
+                    navController.navigate("configurar_habito_hidratacion")
+                }
             }
         },
         modifier = Modifier
