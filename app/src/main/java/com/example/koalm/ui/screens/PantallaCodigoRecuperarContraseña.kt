@@ -28,6 +28,15 @@ import androidx.navigation.NavController
 
 import com.example.koalm.ui.theme.*
 import com.example.koalm.R
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun VistaPreviaPantallaCodigoRecuperarContrasena() {
+    val navController = rememberNavController()
+    PantallaCodigoRecuperarContrasena(navController)
+}
 
 
 @OptIn(ExperimentalMaterial3Api::class)

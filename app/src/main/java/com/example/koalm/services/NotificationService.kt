@@ -76,7 +76,7 @@ class NotificationService : Service() {
         diasSeleccionados.forEachIndexed { index, seleccionado ->
             if (seleccionado) {
                 val dayOfWeek = DayOfWeek.of(index + 1)
-                
+
                 // Calcular el próximo día de la semana
                 var nextNotificationTime = now.with(hora.toLocalTime())
                     .with(TemporalAdjusters.nextOrSame(dayOfWeek))
