@@ -145,5 +145,6 @@ fun PantallaControlPeso(
 @Composable
 fun VistaPreviaControlPeso() {
     val navController = rememberNavController()
+    navController.navigate("objetivos/74.5/01%20de%20febrero%20del%202025/72/69")
     PantallaControlPeso(navController = navController, pesoActual = 72f, pesoObjetivo = 69f)
 }
