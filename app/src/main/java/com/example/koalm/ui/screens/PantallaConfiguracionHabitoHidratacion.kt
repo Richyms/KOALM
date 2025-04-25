@@ -175,17 +175,11 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
                         ) {
                             // Hora de inicio
                             Box(modifier = Modifier.weight(1f)){
-                                HoraField(
-                                    hora = horaIni,
-                                    onClick = { mostrarTimePickerIni = true }
-                                )
+                                HoraField(hora = horaIni) { mostrarTimePickerIni = true }
                             }
                             // Hora de fin
                             Box(modifier = Modifier.weight(1f)) {
-                                HoraField(
-                                    hora = horaFin,
-                                    onClick = { mostrarTimePickerFin = true }
-                                )
+                                HoraField(hora = horaFin) { mostrarTimePickerFin = true }
                             }
                         }
                     }
@@ -281,7 +275,7 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.weight(1f))
 
             Button(
                 onClick = {
