@@ -5,6 +5,7 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -140,26 +141,57 @@ fun PantallaConfiguracionHabitoAlimentacion(navController: NavHostController) {
 
 @Composable
 fun HorarioComidaItem(hora: String, onEditar: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(8.dp))
-            .padding(8.dp)
-            .border(1.dp, Color(0xFF4CAF50), RoundedCornerShape(8.dp))
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onEditar) {
-            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color(0xFF4CAF50))
+        Surface(
+            tonalElevation = 0.dp,
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, Color(0xFF4CAF50)),
+            color = Color.White,
+            modifier = Modifier
+                .widthIn(max = 180.dp) // Compacto como en sueño
+                .height(48.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Editar",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clickable(onClick = onEditar)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = hora,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Icon(
+                    imageVector = Icons.Default.AccessTime,
+                    contentDescription = "Hora",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
-        Text(text = hora, fontSize = 16.sp)
-        Icon(
-            imageVector = Icons.Default.AccessTime,
-            contentDescription = "Hora",
-            tint = Color(0xFF4CAF50)
-        )
     }
 }
+
+
+
+
+
 
 fun mostrarTimePicker(context: Context, onTimeSelected: (String) -> Unit) {
     val calendar = Calendar.getInstance()
