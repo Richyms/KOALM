@@ -1,5 +1,5 @@
 package com.example.koalm.ui.screens
-v
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
