@@ -84,6 +84,9 @@ fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
             if (habito.titulo == "Escritura") {
                 navController.navigate("configurar_habito_escritura")
             }
+            if(habito.titulo == "Meditación"){
+                navController.navigate("configurar_habito_meditacion")
+            }
         },
         modifier = Modifier
             .fillMaxWidth()

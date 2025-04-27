@@ -52,13 +52,18 @@ import android.util.Log
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.ui.text.input.KeyboardType
 
 /* foundation */
 // import androidx.compose.foundation.Canvas          // ←  dibujar el track
 import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
@@ -103,6 +108,7 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
             Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {//--------------------- Tarjeta principal ----------------------

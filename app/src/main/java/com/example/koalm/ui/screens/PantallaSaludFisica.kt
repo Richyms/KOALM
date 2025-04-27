@@ -30,6 +30,7 @@ fun PantallaSaludFisica(navController: NavHostController) {
         HabitoFisico("Sueño", "Registra tus horas de sueño y mejora tu descanso."),
         HabitoFisico("Alimentación", "Comer a tus horas, nutre más que los alimentos."),
         HabitoFisico("Hidratación", "Recuerda hidratarte cada día"),
+        HabitoFisico("Por ajustar", "Se agregara cuando se tenga")
     )
     Scaffold(
         topBar = {
