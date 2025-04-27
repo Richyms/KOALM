@@ -46,6 +46,21 @@ fun AppNavigation(
         composable("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
         composable("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
         composable("configurar-habito-alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController)}
+        composable("estadisticas"){PantallaParametrosSalud(navController)}
+        /*Ajustar enlace de pantalla parametros salud*/
+        //composable("ritmo-cardiaco"){PantallaRitmoCardiaco(navController)}
+        //composable("sueño-de-anoche"){PantallaSueno(navController)}
+        //composable("nivel-de-estres"){PantallaEstres(navController)}
+        //composable("control-de-peso"){PantallaControlPeso(navContoller)}
+        //composable("actividad-diaria"{No esta}
+        /*Contol de peso*/
+        //composable("objetivos-peso"){PantallaObjetivosPeso(navController)}
+        //composable("actualizar-peso"){PantallaActualizarPeso(navController)}
+        /*Control de actividad fisica*/
+        //composable("meta-diaria-pasos"){PantallaMetaPasos(navController}
+        //composable("meta-diaria-movimiento"){no esta}
+        //composable("meta-diaria-calorias"){no esta}
+
     }
 }
 

@@ -56,7 +56,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { DrawerContenido() }
+        drawerContent = { DrawerContenido(navController) }
     ) {
         Scaffold(
             topBar = {
@@ -202,12 +202,19 @@ fun EstadisticasCard() {
 
 
 @Composable
-fun DrawerContenido() {
+fun DrawerContenido(navController: NavHostController) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
         Divider()
         listOf("Inicio", "Racha", "Estadísticas", "Test de emociones").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
+                when (it) {
+                    //"Inicio" -> navController.navigate("inicio")
+                    //"Racha" -> navController.navigate("racha")
+                    "Estadísticas" -> navController.navigate("estadisticas")
+                    //"Test de emociones" -> navController.navigate("test_emociones")
+                }
+            })
         }
         Divider()
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
