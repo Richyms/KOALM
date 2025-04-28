@@ -4,12 +4,12 @@ package com.example.koalm.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
+// import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+// import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -17,12 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
+// import androidx.compose.ui.geometry.CornerRadius
+// import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedback
+// import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
+// import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -30,7 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+// import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.services.NotificationService
@@ -42,6 +42,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -49,15 +50,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import android.util.Log
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 
 /* foundation */
-import androidx.compose.foundation.Canvas          // ←  dibujar el track
+// import androidx.compose.foundation.Canvas          // ←  dibujar el track
 import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 /* ui */
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.IntOffset
+// import androidx.compose.ui.geometry.Size
+// import androidx.compose.ui.unit.IntOffset
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
@@ -91,10 +96,10 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 now.toLocalDate(),
                 hora
             )
-            
+
             Log.d(TAG, "Iniciando servicio de notificaciones")
             context.startService(Intent(context, NotificationService::class.java))
-            
+
             notificationService.scheduleNotification(
                 context = context,
                 diasSeleccionados = diasSeleccionados,
@@ -102,7 +107,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
                 durationMinutes = duracionMin.toLong()
             )
-            
+
             Toast.makeText(context, context.getString(R.string.success_notifications_scheduled), Toast.LENGTH_SHORT).show()
             navController.navigateUp()
         } else {
@@ -117,7 +122,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 title = { Text(stringResource(R.string.titulo_config_escritura)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
-                        Icon(Icons.Default.ArrowBack, null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 }
             )
@@ -187,12 +192,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     )
                     HoraField(hora) { mostrarTimePicker = true }
 
-                    Text(
-                        text = stringResource(R.string.texto_ayuda_hora),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
                     /*  Duración (Slider personalizado)  */
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
@@ -211,6 +210,11 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                             valueRange    = rangoDuracion,
                             tickEvery     = 15,           // marca cada 15 min
                             modifier      = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Selecciona el tiempo que quieres que dure tu hábito de escritura",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -233,7 +237,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
 
             /*  Guardar  */
             Button(
-                onClick = { 
+                onClick = {
                     // Verificar si hay días seleccionados
                     if (!diasSeleccionados.any { it }) {
                         Toast.makeText(context, context.getString(R.string.error_no_days_selected), Toast.LENGTH_SHORT).show()
@@ -259,10 +263,10 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 now.toLocalDate(),
                                 hora
                             )
-                            
+
                             Log.d(TAG, "Iniciando servicio de notificaciones")
                             context.startService(Intent(context, NotificationService::class.java))
-                            
+
                             notificationService.scheduleNotification(
                                 context = context,
                                 diasSeleccionados = diasSeleccionados,
@@ -270,7 +274,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
                                 durationMinutes = duracionMin.toLong()
                             )
-                            
+
                             Toast.makeText(context, context.getString(R.string.success_notifications_scheduled), Toast.LENGTH_SHORT).show()
                             navController.navigateUp()
                         }
@@ -300,7 +304,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
 
 /*────────────────────────────────  COMPONENTES  ─────────────────────────────*/
 @Composable
-private fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
+fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
     val bg          = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
     val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     val textColor   = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -319,7 +323,7 @@ private fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun HoraField(hora: LocalTime, onClick: () -> Unit) {
+fun HoraField(hora: LocalTime, onClick: () -> Unit) {
     Surface(
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(12.dp),
@@ -349,6 +353,7 @@ private fun HoraField(hora: LocalTime, onClick: () -> Unit) {
 }
 
 /*─────────────────────────────  SLIDER “PIXEL STYLE”  ───────────────────────*/
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun DurationSlider(
     value: Float,
@@ -364,7 +369,7 @@ fun DurationSlider(
 
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = with(density) { maxWidth.toPx() }
-        
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -423,7 +428,7 @@ fun DurationSlider(
             // Thumb visual, atado a la posición actual
             val progress = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
             val thumbOffset = with(density) { (progress * maxWidthPx).toDp() }
-            
+
             Box(
                 modifier = Modifier
                     .width(thumbWidth)
@@ -441,7 +446,7 @@ fun DurationSlider(
 /*─────────────────────────────  TIME PICKER  ───────────────────────────────*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TimePickerDialog(
+fun TimePickerDialog(
     initialTime : LocalTime,
     onTimePicked: (LocalTime) -> Unit,
     onDismiss   : () -> Unit,

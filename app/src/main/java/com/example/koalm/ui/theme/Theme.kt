@@ -21,8 +21,7 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color.Black,
     surfaceVariant = GrisClaro,
     onSurfaceVariant = Color.Black,
-    surfaceTint = VerdePrincipal,
-
+    surfaceTint = VerdePrincipal
 )
 
 // Paleta oscura
@@ -38,7 +37,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = Color.Black,
     onSurface = Color.White,
     surfaceVariant = GrisClaro,
-    onSurfaceVariant = Color.White,
+    onSurfaceVariant = Color.Black,
     surfaceTint = VerdePrincipal
 )
 

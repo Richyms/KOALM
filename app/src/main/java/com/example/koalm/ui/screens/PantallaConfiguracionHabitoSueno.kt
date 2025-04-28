@@ -1,0 +1,281 @@
+// PantallaConfiguracionHabitoSueno.kt
+package com.example.koalm.ui.screens
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+
+import com.example.koalm.services.NotificationService
+import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.theme.VerdeBorde
+import com.example.koalm.ui.theme.VerdeContenedor
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.AddCircle
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
+    val context = LocalContext.current
+
+    var descripcion by remember { mutableStateOf("") }
+    val diasSemana = listOf("L", "M", "M", "J", "V", "S", "D")
+    var diasSeleccionados by remember { mutableStateOf(List(7) { false }) }
+
+    var horaDormir by remember { mutableStateOf(LocalTime.of(22, 0)) }
+    var mostrarTimePickerInicio by remember { mutableStateOf(false) }
+
+    var duracionHoras by remember { mutableStateOf(8f) }
+    val rangoHoras = 1f..12f
+    val horaDespertarCalculada = horaDormir.plusHours(duracionHoras.toLong())
+
+    // Lista dinámica de recordatorios
+    val recordatorios = remember {
+        mutableStateListOf(
+            "Desconectarse de las pantallas",
+            "Tomar un té sin cafeína",
+            "Escuchar música suave",
+            "Evitar comidas pesadas"
+        )
+    }
+    val recordatoriosChecked = remember {
+        mutableStateListOf(true, true, true, true)
+    }
+
+    // Dialogo de agregar
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var nuevoRecordatorio by remember { mutableStateOf("") }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Configurar hábito de sueño") },
+                navigationIcon = {
+                    IconButton(onClick = navController::navigateUp) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                    }
+                }
+            )
+        },
+        bottomBar = { BarraNavegacionInferior(navController, "configurar_habito") }
+    ) { innerPadding ->
+
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, VerdeBorde),
+                colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+
+                    OutlinedTextField(
+                        value = descripcion,
+                        onValueChange = { descripcion = it },
+                        placeholder = { Text("Dormir bien transforma tu energía, tu salud y tu bienestar mental.") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text("Elige a qué hora planeas dormir:")
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        diasSemana.forEachIndexed { i, d ->
+                            DiaCircle(
+                                label = d,
+                                selected = diasSeleccionados[i],
+                                onClick = {
+                                    diasSeleccionados = diasSeleccionados.toMutableList().also { it[i] = !it[i] }
+                                }
+                            )
+                        }
+                    }
+
+                    // Horas de dormir y despertar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            HoraField(
+                                hora = horaDormir,
+                                onClick = { mostrarTimePickerInicio = true }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            HoraFieldCentrada(horaDespertarCalculada)
+                        }
+                    }
+
+                    // Slider editable
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DurationSlider(
+                            value = duracionHoras,
+                            onValueChange = { duracionHoras = it },
+                            valueRange = rangoHoras,
+                            tickEvery = 1,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Sueño excelente\n${duracionHoras.roundToInt()} horas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+
+                    Text("Selecciona los recordatorios que deseas antes de dormir (opcional):")
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        recordatorios.forEachIndexed { index, texto ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = recordatoriosChecked[index],
+                                    onCheckedChange = { recordatoriosChecked[index] = it }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(texto)
+                            }
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clickable { mostrarDialogo = true }
+                                .padding(top = 8.dp)
+                        ) {
+                            Icon(Icons.Default.AddCircle, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Agregar.")
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    Toast.makeText(context, "Configuración de sueño guardada", Toast.LENGTH_SHORT).show()
+                    navController.navigateUp()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Guardar")
+            }
+        }
+    }
+
+    if (mostrarTimePickerInicio) {
+        TimePickerDialog(
+            initialTime = horaDormir,
+            onTimePicked = { horaDormir = it },
+            onDismiss = { mostrarTimePickerInicio = false }
+        )
+    }
+
+    if (mostrarDialogo) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogo = false },
+            title = { Text("Nuevo recordatorio") },
+            text = {
+                OutlinedTextField(
+                    value = nuevoRecordatorio,
+                    onValueChange = { nuevoRecordatorio = it },
+                    placeholder = { Text("Ej. Lavarse los dientes") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (nuevoRecordatorio.isNotBlank()) {
+                        recordatorios.add(nuevoRecordatorio)
+                        recordatoriosChecked.add(true)
+                        nuevoRecordatorio = ""
+                        mostrarDialogo = false
+                    }
+                }) {
+                    Text("Agregar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogo = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+@Composable
+fun HoraFieldCentrada(hora: LocalTime) {
+    Surface(
+        tonalElevation = 0.dp,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+

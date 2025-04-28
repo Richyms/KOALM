@@ -17,7 +17,7 @@ import androidx.navigation.NavHostController
 import com.example.koalm.ui.theme.*
 import com.example.koalm.ui.components.BarraNavegacionInferior
 
-data class HabitoMental(
+data class HabitoFisico(
     val titulo: String,
     val descripcion: String,
     val completado: Boolean = false
@@ -25,18 +25,17 @@ data class HabitoMental(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaSaludMental(navController: NavHostController) {
+fun PantallaSaludFisica(navController: NavHostController) {
     val habitos = listOf(
-        HabitoMental("Lectura", "Registra y administra tus lecturas."),
-        HabitoMental("Meditación", "Tomate un tiempo para ti y tu mente."),
-        HabitoMental("Desconexión digital", "Re-vive fuera de tu pantalla."),
-        HabitoMental("Escritura", "Tomate un tiempo para ti y tu cuaderno")
+        HabitoFisico("Sueño", "Registra tus horas de sueño y mejora tu descanso."),
+        HabitoFisico("Alimentación", "Comer a tus horas, nutre más que los alimentos."),
+        HabitoFisico("Hidratación", "Recuerda hidratarte cada día"),
+        HabitoFisico("Por ajustar", "Se agregara cuando se tenga")
     )
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestión de hábitos de salud mental") },
+                title = { Text("Gestión de hábitos de salud fisica") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Regresar")
@@ -50,7 +49,7 @@ fun PantallaSaludMental(navController: NavHostController) {
         bottomBar = {
             BarraNavegacionInferior(
                 navController = navController,
-                rutaActual = "salud_mental"
+                rutaActual = "salud_fisica"
             )
         }
     ) { innerPadding ->
@@ -63,34 +62,33 @@ fun PantallaSaludMental(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Plantilla de hábitos",
+                text = "Selecciona tus hábitos",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             habitos.forEach { habito ->
-                HabitoMentalCard(habito, navController)
+                HabitoFisicoCard(habito, navController)
             }
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
+fun HabitoFisicoCard(habito: HabitoFisico, navController: NavHostController) {
     Card(
-        onClick = { 
-            if (habito.titulo == "Escritura") {
-                navController.navigate("configurar_habito_escritura")
+        onClick = {
+            if (habito.titulo == "Sueño") {
+                navController.navigate("configurar_habito_sueno")
+            }else{
+                if(habito.titulo == "Hidratación"){
+                    navController.navigate("configurar_habito_hidratacion")
+                }
+                if(habito.titulo == "Alimentación"){
+                    navController.navigate("configurar-habito-alimentacion")
+                }
             }
-            if(habito.titulo == "Meditación"){
-                navController.navigate("configurar_habito_meditacion")
-            }
-            if(habito.titulo == "Lectura"){
-                navController.navigate("configurar-habito-lectura")
-            }
-
         },
         modifier = Modifier
             .fillMaxWidth()
@@ -111,9 +109,9 @@ fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
                 tint = VerdePrincipal,
                 modifier = Modifier.size(24.dp)
             )
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column {
                 Text(
                     text = habito.titulo,
@@ -128,4 +126,4 @@ fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
             }
         }
     }
-} 
+}

@@ -37,4 +37,23 @@
     <string name="timer_completion_title">¡Tiempo completado!</string>
     <string name="timer_completion_text">Has completado tu sesión de escritura</string>
     <string name="start_writing_action">Comenzar %d min</string>
+
+    <!-- Hidratación -->
+    <string name="titulo_config_hidratacion">Configurar hábito de hidratación</string>
+    <string name="placeholder_descripcion_hidratacion">
+        Los koalas toman agua de las hojas, ¡pero tú no eres un koala! ¡Hidrátate!
+    </string>
+    <string name="label_cantidad_litros">Objetivo de hidratación diario: *</string>
+    <string name="label_hora_hidratacion">Horario de recordatorios:</string>
+    <string name="label_recordatorio_hidratación">Número de recordatorios (opcional)</string>
+    <string name="label_recordatorios_agua">recordatorios de 1 L</string>
+    <string name="label_recordatorio_hidratación_f">Frecuencia de recordatorios (opcional)</string>
+    <string name="label_recordatorio_hidratación_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
+    <!-- Meditación -->
+    <string name="titulo_config_meditacion">Configurar hábito de meditación</string>
+    <string name="placeholder_descripcion_meditacion">
+        Es sano darte un tiempo para ti y para tu mente.
+    </string>
+    <string name="label_duracion_meditacion">Duración de la Meditación</string>
+
 </resources>

@@ -1,5 +1,6 @@
 package com.example.koalm.ui.screens
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -31,6 +32,8 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.example.koalm.model.Usuario
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +57,41 @@ fun PantallaIniciarSesion(
     val isValidPassword = password.length >= 8
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Al montar: si ya logueado y verificado, checar perfil y navegar
+    LaunchedEffect(auth.currentUser) {
+        auth.currentUser?.let { user ->
+            if (!user.isEmailVerified) {
+                Toast.makeText(context, "Verifica tu correo antes de continuar", Toast.LENGTH_LONG).show()
+                return@let
+            }
+            db.collection("usuarios").document(user.uid).get()
+                .addOnSuccessListener { doc ->
+                    if (!doc.exists()) return@addOnSuccessListener
+                    val nombre     = doc.getString("nombre").orEmpty()
+                    val apellido   = doc.getString("apellido").orEmpty()
+                    val nacimiento = doc.getString("nacimiento").orEmpty()
+                    val genero     = doc.getString("genero").orEmpty()
+                    val peso       = doc.getLong("peso") ?: 0L
+                    val altura     = doc.getLong("altura") ?: 0L
+
+                    val completo = listOf(
+                        nombre.isNotBlank(),
+                        apellido.isNotBlank(),
+                        nacimiento.isNotBlank(),
+                        genero.isNotBlank(),
+                        peso > 0L,
+                        altura > 0L
+                    ).all { it }
+
+                    val destino = if (completo) "menu" else "personalizar"
+                    navController.navigate(destino) {
+                        popUpTo("iniciar") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,6 +107,7 @@ fun PantallaIniciarSesion(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -76,9 +115,10 @@ fun PantallaIniciarSesion(
             LoginLogo()
             Spacer(modifier = Modifier.height(32.dp))
 
-            EmailField(
+            EmailOrUsernameField(
                 value = email,
                 isValid = isValidEmail,
+                isEmail = true,
                 onValueChange = { email = it }
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -92,7 +132,7 @@ fun PantallaIniciarSesion(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón de login
+            // Botón de login solo si correo verificado
             Button(
                 onClick = {
                     when {
@@ -104,85 +144,53 @@ fun PantallaIniciarSesion(
                                     if (task.isSuccessful) {
                                         val user = auth.currentUser!!
                                         if (!user.isEmailVerified) {
-                                            Toast.makeText(
-                                                context,
+                                            Toast.makeText(context,
                                                 "Por favor verifica tu correo antes de iniciar sesión",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                             return@addOnCompleteListener
                                         }
-
-                                        val correoReal = user.email!!
-
-                                        // Recuperar el documento de usuario existente
-                                        db.collection("usuarios").document(correoReal).get()
-                                            .addOnSuccessListener { doc ->
-                                                if (doc.exists()) {
-                                                    // Obtener los valores actuales de los campos que no deben cambiar
-                                                    val userId = doc.getString("userId") ?: ""
-                                                    val emailU = doc.getString("email") ?: ""
-                                                    val username = doc.getString("username") ?: ""
-
-                                                    // Obtener los valores que se pueden actualiar
-                                                    val imagenBase64 = doc.getString("imagenBase64") ?: ""
-                                                    val nombre = doc.getString("nombre") ?: ""
-                                                    val apellido = doc.getString("apellido") ?: ""
-                                                    val nacimiento = doc.getString("nacimiento") ?: ""
-                                                    val genero = doc.getString("genero") ?: ""
-                                                    val peso = doc.getDouble("peso")?.toFloat() ?: 0f
-                                                    val altura = doc.getLong("altura")?.toInt() ?: 0
-
-                                                    // Creamos el objeto con los datos nuevos (y conservamos los antiguos campos que no cambian uwu)
-                                                    val uLogin = Usuario(
-                                                        userId = userId,  // No cambia
-                                                        email = emailU,     // No cambia
-                                                        username = username, // No cambia
-                                                        imagenBase64 = imagenBase64,
-                                                        nombre = nombre,
-                                                        apellido = apellido,
-                                                        nacimiento = nacimiento,
-                                                        genero = genero,
-                                                        peso = peso,
-                                                        altura = altura
-                                                    )
-
-                                                    // Se actualiza el documento manteniendo los campos que no deben cambiar
-                                                    db.collection("usuarios")
-                                                        .document(correoReal)
-                                                        .set(uLogin.toMap(), SetOptions.merge())
-                                                        .addOnSuccessListener {
-                                                            // Verificamos si el perfil está completo o no
-                                                            val completo = listOf(
-                                                                nombre.isNotBlank(),
-                                                                apellido.isNotBlank(),
-                                                                nacimiento.isNotBlank(),
-                                                                genero.isNotBlank(),
-                                                                peso > 0f,
-                                                                altura > 0
-                                                            ).all { it }
-
-                                                            // Determinamos la pantalla de destino dependiendo de si el perfil está completo
-                                                            val destino = if (completo) "menu" else "personalizar"
-                                                            Toast.makeText(
-                                                                context,
-                                                                if (completo) "Bienvenid@ $username"
-                                                                else "Completa tu perfil antes de continuar",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-
-                                                            // Navegamos a las pantallas según el estado del perfil
-                                                            navController.navigate(destino) {
-                                                                popUpTo("iniciar") { inclusive = true }
-                                                                launchSingleTop = true
-                                                            }
+                                        val uid = user.uid
+                                        // Actualizar usuario mínimo
+                                        val uLogin = Usuario(
+                                            id = uid,
+                                            userId = uid,
+                                            email = email,
+                                            username = email.substringBefore("@")
+                                        )
+                                        db.collection("usuarios").document(uid)
+                                            .set(uLogin.toMap(), SetOptions.merge())
+                                            .addOnSuccessListener {
+                                                // Leer y checar perfil completo
+                                                db.collection("usuarios").document(uid).get()
+                                                    .addOnSuccessListener { doc ->
+                                                        val nombre     = doc.getString("nombre").orEmpty()
+                                                        val apellido   = doc.getString("apellido").orEmpty()
+                                                        val nacimiento = doc.getString("nacimiento").orEmpty()
+                                                        val genero     = doc.getString("genero").orEmpty()
+                                                        val peso       = doc.getLong("peso") ?: 0L
+                                                        val altura     = doc.getLong("altura") ?: 0L
+                                                        val completo = listOf(
+                                                            nombre.isNotBlank(),
+                                                            apellido.isNotBlank(),
+                                                            nacimiento.isNotBlank(),
+                                                            genero.isNotBlank(),
+                                                            peso > 0L,
+                                                            altura > 0L
+                                                        ).all { it }
+                                                        val destino = if (completo) "menu" else "personalizar"
+                                                        Toast.makeText(context,
+                                                            if (completo) "Bienvenid@ ${doc.getString("username")}"
+                                                            else "Completa tu perfil antes de continuar",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                        navController.navigate(destino) {
+                                                            popUpTo("iniciar") { inclusive = true }
+                                                            launchSingleTop = true
                                                         }
-                                                } else {
-                                                    // Si el documento no existe, manejamos el caso comoo:
-                                                    Toast.makeText(context, "Usuario no encontrado en la base de datos", Toast.LENGTH_SHORT).show()
-                                                }
+                                                    }
                                             }
                                     } else {
-                                        // Si el inicio de sesión falla, se muestra un mensaje de error
                                         val err = task.exception
                                         val msg = if (err is FirebaseAuthInvalidCredentialsException)
                                             "Credenciales incorrectas"
@@ -193,7 +201,7 @@ fun PantallaIniciarSesion(
                         }
                     }
                 },
-            modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(200.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Iniciar sesión", color = MaterialTheme.colorScheme.onPrimary)
@@ -229,9 +237,10 @@ fun LoginLogo() {
 }
 
 @Composable
-fun EmailField(
+fun EmailOrUsernameField(
     value: String,
     isValid: Boolean,
+    isEmail: Boolean,
     onValueChange: (String) -> Unit
 ) {
     OutlinedTextField(
@@ -245,13 +254,11 @@ fun EmailField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (isValid || value.isEmpty()) VerdePrincipal else Color.Red,
             unfocusedBorderColor = if (isValid || value.isEmpty()) GrisMedio else Color.Red,
-            focusedLabelColor = if (isValid || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            errorLabelColor = Color.Red
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text(
-                text = "Solo servicios de correo electrónico permitidos..",
+                text = "Solo servicios de correo electrónico conocidos.",
                 color = GrisMedio,
                 fontSize = 12.sp
             )
@@ -279,9 +286,9 @@ fun PasswordField(
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             val icon = if (passwordVisible)
-                painterResource(id = R.drawable.ic_eye)
-            else
                 painterResource(id = R.drawable.ic_eye_closed)
+            else
+                painterResource(id = R.drawable.ic_eye)
             IconButton(onClick = onVisibilityToggle) {
                 Icon(painter = icon, contentDescription = null)
             }
@@ -289,13 +296,11 @@ fun PasswordField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (isValidPassword || value.isEmpty()) VerdePrincipal else Color.Red,
             unfocusedBorderColor = if (isValidPassword || value.isEmpty()) GrisMedio else Color.Red,
-            focusedLabelColor = if (isValidPassword || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            errorLabelColor = Color.Red
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         ),
         supportingText = {
             Text(
-                text = "La contraseña debe tener al menos 8 caracteres, una letra minúscula, una mayúscula, un número y un carácter especial.",
+                text = "La contraseña debe tener al menos 8 caracteres",
                 color = GrisMedio,
                 fontSize = 12.sp
             )
@@ -303,8 +308,7 @@ fun PasswordField(
     )
 }
 
-
-/*@Composable
+@Composable
 fun LoginButtons(
     isValidInput: Boolean,
     isValidPassword: Boolean,
@@ -330,16 +334,17 @@ fun LoginButtons(
                                 val user = auth.currentUser!!
                                 val uid = user.uid
                                 val usuarioLogin = Usuario(
+                                    id = uid,
                                     userId = uid,
                                     email = emailOrUsername,
                                     username = emailOrUsername.substringBefore("@")
                                 )
                                 db.collection("usuarios")
-                                    .document(emailOrUsername)
+                                    .document(uid)
                                     .set(usuarioLogin.toMap(), SetOptions.merge())
 
                                 db.collection("usuarios")
-                                    .document(emailOrUsername)
+                                    .document(uid)
                                     .get()
                                     .addOnSuccessListener { snap ->
                                         val nickname = snap.getString("nickName") ?: ""
@@ -377,7 +382,6 @@ fun LoginButtons(
         Text("Iniciar con Google", color = MaterialTheme.colorScheme.onSurface)
     }
 }
-*/
 
 @Composable
 fun LoginFooterText(navController: NavHostController) {

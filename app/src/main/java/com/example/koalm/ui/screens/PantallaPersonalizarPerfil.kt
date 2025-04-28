@@ -32,17 +32,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import java.util.Calendar
 import java.util.Locale
-import java.util.TimeZone
-import android.net.Uri
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.layout.ContentScale
-import android.util.Base64
-import androidx.activity.compose.rememberLauncherForActivityResult
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.asImageBitmap
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,47 +48,27 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     var generoSeleccionado by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
     val opcionesGenero = listOf("Masculino", "Femenino", "Prefiero no decirlo")
-    var username by remember { mutableStateOf("") }  // Aquí almacenamos el username
 
     // Instancias de Auth y Firestore
     val auth = FirebaseAuth.getInstance()
     val uid  = auth.currentUser?.uid
-    val email  = auth.currentUser?.email
     val db   = FirebaseFirestore.getInstance()
 
-    // Subir imagen a Firebase
-    var imagenUri by remember { mutableStateOf<Uri?>(null) }
-    var imagenBase64 by remember { mutableStateOf<String?>(null) }
-
-    // Launcher para abrir la galería y seleccionar una imagen
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            imagenUri = it
-            val inputStream = context.contentResolver.openInputStream(it)
-            val bytes = inputStream?.readBytes()
-            imagenBase64 = Base64.encodeToString(bytes, Base64.DEFAULT)
-            inputStream?.close()
-        }
-    }
     // Leer los datos guardados una sola vez al componer
-    LaunchedEffect(email) {
-        if (email != null) {
+    LaunchedEffect(uid) {
+        if (uid != null) {
             db.collection("usuarios")
-                .document(email)
+                .document(uid)
                 .get()
                 .addOnSuccessListener { doc ->
-                    username = doc.getString("username").orEmpty()
                     val u = doc.toObject(Usuario::class.java)
                     u?.let {
-                        imagenBase64       = it.imagenBase64.orEmpty()
-                        nombre             = it.nombre.orEmpty()
-                        apellidos          = it.apellido.orEmpty()
-                        fechasec           = it.nacimiento.orEmpty()
-                        peso               = it.peso?.toString().orEmpty()
-                        altura             = it.altura?.toString().orEmpty()
-                        generoSeleccionado = it.genero.orEmpty()
+                        nombre             = it.nombre    ?: ""
+                        apellidos          = it.apellido  ?: ""
+                        fechasec           = it.nacimiento?: ""
+                        peso               = it.peso?.toString()   ?: ""
+                        altura             = it.altura?.toString() ?: ""
+                        generoSeleccionado = it.genero   ?: ""
                     }
                 }
                 .addOnFailureListener { e ->
@@ -131,21 +100,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
-            ImagenUsuario(imagenBase64 = imagenBase64)
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BotonAnadirImagenPerfil(onClick = { launcher.launch("image/*") })
-                    BotonEliminarImagenPerfil(onClick = {
-                        imagenUri = null
-                        imagenBase64 = null  })
-                }
-            }
+            ImagenUsuario()
             Spacer(modifier = Modifier.height(20.dp))
             CampoNombre(nombre)            { nombre = it }
             CampoApellidos(apellidos)      { apellidos = it }
@@ -157,45 +112,22 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
 
             BotonGuardarPerfil {
                 if (uid != null) {
-                    if (email == null) {
-                        Toast.makeText(context, "No se pudo obtener el correo", Toast.LENGTH_SHORT).show()
-                        return@BotonGuardarPerfil
-                    }
-
-                    // Validar campos requeridos
-                    if (
-                        // imagenBase64 Es solo si quieeere
-                        username.isBlank() ||
-                        nombre.isBlank() ||
-                        apellidos.isBlank() ||
-                        fechasec.isEmpty() ||
-                        peso.isEmpty() ||
-                        peso.toFloatOrNull() == null ||
-                        altura.isEmpty() ||
-                        altura.toIntOrNull() == null ||
-                        generoSeleccionado.isEmpty()
-                    ) {
-                        Toast.makeText(context, "Por favor completa todos los campos correctamente.", Toast.LENGTH_SHORT).show()
-                        return@BotonGuardarPerfil
-                    }
-
-                    // Construir objeto usuario
+                    // Construir objeto Usuario
                     val usuario = Usuario(
-                        imagenBase64 = imagenBase64,
+                        id         = uid,
                         userId     = uid,
-                        email      = email,
-                        username   = username,
+                        email      = auth.currentUser?.email,
+                        username   = auth.currentUser?.email?.substringBefore("@"),
                         nombre     = nombre,
                         apellido   = apellidos,
                         nacimiento = fechasec,
-                        peso       = String.format(Locale.US, "%.2f", peso.toFloatOrNull() ?: 0f).toFloat(),
+                        peso       = peso.toIntOrNull(),
                         altura     = altura.toIntOrNull(),
                         genero     = generoSeleccionado
                     )
-                    
                     // Guardar (merge) en Firestore
                     db.collection("usuarios")
-                        .document(email)
+                        .document(uid)
                         .set(usuario.toMap(), SetOptions.merge())
                         .addOnSuccessListener {
                             Toast.makeText(context, "Perfil guardado correctamente", Toast.LENGTH_SHORT).show()
@@ -232,9 +164,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             )
             LaunchedEffect(datePickerState.selectedDateMillis) {
                 datePickerState.selectedDateMillis?.let { millis ->
-                    val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-                        timeInMillis = millis
-                    }
+                    val cal = Calendar.getInstance().apply { timeInMillis = millis }
                     fechasec = String.format(
                         Locale("es", "MX"),
                         "%02d/%02d/%04d",
@@ -248,82 +178,17 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     }
 }
 
-//Función auxiliar para la imagen del usuario
-fun base64ToBitmap(base64Str: String): Bitmap? {
-    return try {
-        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-    } catch (e: Exception) {
-        null
-    }
-}
-
 @Composable
-fun ImagenUsuario(imagenBase64: String?) {
+fun ImagenUsuario() {
     val isDark = isSystemInDarkTheme()
-    val tint = if (isDark) Color.White else Color.Black
-
-    if (!imagenBase64.isNullOrEmpty()) {
-        val bitmap = remember(imagenBase64) { base64ToBitmap(imagenBase64) }
-
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Usuario",
-                modifier = Modifier
-                    .size(200.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.profile),
-                contentDescription = "Usuario",
-                modifier = Modifier
-                    .size(200.dp),
-                colorFilter = ColorFilter.tint(tint)
-            )
-        }
-    } else {
-        Image(
-            painter = painterResource(id = R.drawable.profile),
-            contentDescription = "Usuario",
-            modifier = Modifier
-                .size(200.dp),
-            colorFilter = ColorFilter.tint(tint)
-        )
-    }
+    val tint   = if (isDark) Color.White else Color.Black
+    Image(
+        painter = painterResource(id = R.drawable.profile),
+        contentDescription = "Usuario",
+        modifier = Modifier.size(200.dp),
+        colorFilter = ColorFilter.tint(tint)
+    )
 }
-
-
-@Composable
-fun BotonAnadirImagenPerfil(onClick: () -> Unit) {
-    Button(
-        onClick   = onClick,
-        modifier = Modifier
-            .width(200.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-    ) {
-        Text("Añadir foto", color = MaterialTheme.colorScheme.onPrimary)
-    }
-}
-@Composable
-fun BotonEliminarImagenPerfil(onClick: () -> Unit) {
-    Button(
-        onClick   = onClick,
-        modifier = Modifier
-            .width(200.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = ButtonDefaults.buttonColors(containerColor = RojoClaro)
-    ) {
-        Text("Eliminar foto", color = MaterialTheme.colorScheme.onPrimary)
-    }
-}
-
-
 
 @Composable
 fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
@@ -331,7 +196,7 @@ fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = filtered,
         onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
-        label = { Text("Nombre *") },
+        label = { Text("Nombre") },
         modifier = Modifier
             .fillMaxWidth(0.97f)
             .clip(RoundedCornerShape(16.dp)),
@@ -351,7 +216,7 @@ fun CampoApellidos(value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = filtered,
         onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
-        label = { Text("Apellidos *") },
+        label = { Text("Apellidos") },
         modifier = Modifier
             .fillMaxWidth(0.97f)
             .clip(RoundedCornerShape(16.dp)),
@@ -371,7 +236,7 @@ fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
     OutlinedTextField(
         value = value,
         onValueChange = {},
-        label = { Text("Fecha de nacimiento *") },
+        label = { Text("Fecha de nacimiento") },
         placeholder = { Text("MM/DD/YYYY") },
         modifier = Modifier
             .fillMaxWidth(0.97f)
@@ -397,16 +262,11 @@ fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
 
 @Composable
 fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
+    val filtered = value.filter { it.isDigit() }
     OutlinedTextField(
-        value = value,
-        onValueChange = { newValue ->
-            // Expresión regular: hasta 3 dígitos antes del punto, opcionalmente punto y hasta 2 dígitos después
-            val regex = Regex("^\\d{0,3}(\\.\\d{0,2})?$")
-            if (newValue.isEmpty() || newValue.matches(regex)) {
-                onValueChange(newValue)
-            }
-        },
-        label = { Text("Peso *") },
+        value = filtered,
+        onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
+        label = { Text("Peso") },
         modifier = Modifier
             .fillMaxWidth(0.97f)
             .clip(RoundedCornerShape(16.dp)),
@@ -421,14 +281,13 @@ fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
     Spacer(modifier = Modifier.height(12.dp))
 }
 
-
 @Composable
 fun CampoAltura(value: String, onValueChange: (String) -> Unit) {
     val filtered = value.filter { it.isDigit() }
     OutlinedTextField(
         value = filtered,
         onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
-        label = { Text("Altura *") },
+        label = { Text("Altura") },
         modifier = Modifier
             .fillMaxWidth(0.97f)
             .clip(RoundedCornerShape(16.dp)),
@@ -450,7 +309,7 @@ fun SelectorGenero(
     onSelect: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(0.97f)) {
-        Text("Género *", style = MaterialTheme.typography.labelMedium)
+        Text("Género", style = MaterialTheme.typography.labelMedium)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -489,7 +348,7 @@ fun BotonGuardarPerfil(onClick: () -> Unit) {
         onClick   = onClick,
         modifier = Modifier
             .width(200.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(50.dp),
         shape    = RoundedCornerShape(16.dp),
         colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {

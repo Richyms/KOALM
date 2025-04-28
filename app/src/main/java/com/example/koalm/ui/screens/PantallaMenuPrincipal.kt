@@ -12,9 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -56,7 +56,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { DrawerContenido() }
+        drawerContent = { DrawerContenido(navController) }
     ) {
         Scaffold(
             topBar = {
@@ -78,14 +78,14 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
             bottomBar = {
                 NavigationBar(tonalElevation = 8.dp) {
                     listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
-                        val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
+                        val icon = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)[index]
                         NavigationBarItem(
                             selected = index == 0,
-                            onClick = {
+                            onClick = { 
                                 when (index) {
-                                    0 -> navController.navigate("menu")
+                                    0 -> { /* Mantener en inicio */ }
                                     1 -> navController.navigate("tipos_habitos")
-                                    2 -> navController.navigate("personalizar")
+                                    2 -> { /* Navegación al perfil */ }
                                 }
                             },
                             icon = { Icon(icon, contentDescription = label) },
@@ -202,19 +202,26 @@ fun EstadisticasCard() {
 
 
 @Composable
-fun DrawerContenido() {
+fun DrawerContenido(navController: NavHostController) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
-        HorizontalDivider()
+        Divider()
         listOf("Inicio", "Racha", "Estadísticas", "Test de emociones").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
+                when (it) {
+                    //"Inicio" -> navController.navigate("inicio")
+                    //"Racha" -> navController.navigate("racha")
+                    "Estadísticas" -> navController.navigate("estadisticas")
+                    //"Test de emociones" -> navController.navigate("test_emociones")
+                }
+            })
         }
-        HorizontalDivider()
+        Divider()
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
         }
-        HorizontalDivider()
+        Divider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Recomendaciones de Kool", "Insignias y logros", "Información de la app").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
