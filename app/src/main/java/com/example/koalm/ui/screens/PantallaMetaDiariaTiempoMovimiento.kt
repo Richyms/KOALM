@@ -32,7 +32,7 @@ fun PantallaMetaMovimiento(
     metaMinutos: Int = 100,
     onMinutosSeleccionados: (Int) -> Unit = {}
 ) {
-    val minutosList = (30..180 step 10).toList() // Puedes ajustar el rango aquí
+    val minutosList = (30..180 step 10).toList()
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = minutosList.indexOf(metaMinutos).coerceAtLeast(0)
     )
