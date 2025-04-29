@@ -189,13 +189,13 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    /*  Switch sonidos hambientales*/
+                    /*  Switch sonidos ambientales*/
                     Row(
                         Modifier.fillMaxWidth(),
                         Arrangement.SpaceBetween,
                         Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.label_notas))
+                        Text(stringResource(R.string.label_sonidos))
                         Switch(
                             checked = sonidoshambHabilitados,
                             onCheckedChange = { sonidoshambHabilitados = it }
@@ -208,7 +208,7 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
                         Arrangement.SpaceBetween,
                         Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.label_notas))
+                        Text(stringResource(R.string.label_respiracion))
                         Switch(
                             checked = ejerciciorespiracionHabilitados,
                             onCheckedChange = { ejerciciorespiracionHabilitados = it }

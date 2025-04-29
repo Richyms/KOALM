@@ -37,12 +37,17 @@
     <string name="timer_completion_title">¡Tiempo completado!</string>
     <string name="timer_completion_text">Has completado tu sesión de escritura</string>
     <string name="start_writing_action">Comenzar %d min</string>
+    <!-- Sueño -->
+    <string name="titulo_config_sueño">Configurar hábito de sueño</string>
+    <string name="placeholder_descripcion_sueño">Dormir bien transforma tu energía, tu salud y tu bienestar mental.</string>
+
+    <!-- Alimentación -->
+    <string name="titulo_config_alimentacion">Configurar hábito de sueño</string>
+    <string name="placeholder_descripcion_alimentacion">"Kool estará observando... así que come bien, o podrías descubrir de lo que es capaz.</string>
 
     <!-- Hidratación -->
     <string name="titulo_config_hidratacion">Configurar hábito de hidratación</string>
-    <string name="placeholder_descripcion_hidratacion">
-        Los koalas toman agua de las hojas, ¡pero tú no eres un koala! ¡Hidrátate!
-    </string>
+    <string name="placeholder_descripcion_hidratacion">Los koalas toman agua de las hojas, ¡pero tú no eres un koala! ¡Hidrátate!</string>
     <string name="label_cantidad_litros">Objetivo de hidratación diario: *</string>
     <string name="label_hora_hidratacion">Horario de recordatorios:</string>
     <string name="label_recordatorio_hidratación">Número de recordatorios (opcional)</string>
@@ -51,9 +56,14 @@
     <string name="label_recordatorio_hidratación_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
     <!-- Meditación -->
     <string name="titulo_config_meditacion">Configurar hábito de meditación</string>
-    <string name="placeholder_descripcion_meditacion">
-        Es sano darte un tiempo para ti y para tu mente.
-    </string>
+    <string name="placeholder_descripcion_meditacion"> Es sano darte un tiempo para ti y para tu mente.</string>
     <string name="label_duracion_meditacion">Duración de la Meditación</string>
+    <string name="label_sonidos">Sonidos ambientales durante la meditación.</string>
+    <string name="label_respiracion">Recordatorio de ejercicios de respiración previos.</string>
+
+    <!-- Lectura -->
+    <string name="titulo_config_lectura">Configurar hábito de lectura</string>
+    <string name="placeholder_descripcion_lectura">Leer es como viajar... pero sin hacer fila en el aeropuerto.</string>
+    <string name="label_duracion_lectura">Duración de Lectura</string>
 
 </resources>

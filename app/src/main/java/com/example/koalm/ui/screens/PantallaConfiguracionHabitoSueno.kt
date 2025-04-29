@@ -49,6 +49,7 @@ import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.AddCircle
+import com.example.koalm.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,11 +121,12 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                     OutlinedTextField(
                         value = descripcion,
                         onValueChange = { descripcion = it },
-                        placeholder = { Text("Dormir bien transforma tu energía, tu salud y tu bienestar mental.") },
+                        label = { Text(stringResource(R.string.label_descripcion)) },
+                        placeholder = { Text(stringResource(R.string.placeholder_descripcion_sueño)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Text("Elige a qué hora planeas dormir:")
+                    Text("Frecuencia: *")
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -139,6 +141,7 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                             )
                         }
                     }
+                    Text("Elige a qué hora planeas dormir: *")
 
                     // Horas de dormir y despertar
                     Row(
@@ -146,15 +149,44 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Box(modifier = Modifier.weight(1f)) {
-                            HoraField(
-                                hora = horaDormir,
-                                onClick = { mostrarTimePickerInicio = true }
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                // Campo de hora de dormir
+                                HoraField(
+                                    hora = horaDormir,
+                                    onClick = { mostrarTimePickerInicio = true }
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                // Etiqueta de "Inicio del sueño"
+                                Text(
+                                    text = "Inicio del sueño",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                         Box(modifier = Modifier.weight(1f)) {
-                            HoraFieldCentrada(horaDespertarCalculada)
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                // Campo de hora de despertar
+                                HoraFieldCentrada(horaDespertarCalculada)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                // Etiqueta de "Fin del sueño"
+                                Text(
+                                    text = "Fin del sueño",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
+
 
                     // Slider editable
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

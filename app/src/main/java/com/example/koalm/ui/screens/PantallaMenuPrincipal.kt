@@ -83,9 +83,9 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                             selected = index == 0,
                             onClick = { 
                                 when (index) {
-                                    0 -> { /* Mantener en inicio */ }
+                                    0 -> navController.navigate( "menu" )
                                     1 -> navController.navigate("tipos_habitos")
-                                    2 -> { /* Navegación al perfil */ }
+                                    2 -> navController.navigate( "personalizar" )
                                 }
                             },
                             icon = { Icon(icon, contentDescription = label) },

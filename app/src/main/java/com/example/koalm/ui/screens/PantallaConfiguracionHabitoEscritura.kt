@@ -212,7 +212,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                             modifier      = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = "Selecciona el tiempo que quieres que dure tu hábito de escritura",
+                            text = "Selecciona el tiempo que quieres que dure tu escritura",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -37,7 +37,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = Color.Black,
     onSurface = Color.White,
     surfaceVariant = GrisClaro,
-    onSurfaceVariant = Color.Black,
+    onSurfaceVariant = Color.White,
     surfaceTint = VerdePrincipal
 )
 

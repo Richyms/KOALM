@@ -19,22 +19,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
     val context = LocalContext.current
+    /*  Duración  */
+    var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
+    val rangoDuracion = 1f..180f
 
     var descripcion by remember { mutableStateOf("") }
-    val diasSemana = listOf("S", "L", "M", "M", "J", "V", "S")
+    val diasSemana = listOf("L", "M", "M", "J", "V", "S", "D")
     var diasSeleccionados by remember { mutableStateOf(List(7) { false }) }
 
     var horaRecordatorio by remember { mutableStateOf(LocalTime.of(22, 0)) }
@@ -78,27 +85,30 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                     OutlinedTextField(
                         value = descripcion,
                         onValueChange = { descripcion = it },
-                        placeholder = { Text("Leer es como viajar... pero sin hacer fila en el aeropuerto.") },
+                        label = { Text(stringResource(R.string.label_descripcion)) },
+                        placeholder = { Text(stringResource(R.string.placeholder_descripcion_lectura)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
 
                     // 🟢 Frecuencia
                     Text(
-                        text = "Frecuencia: *",
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyLarge
+                        text = stringResource(R.string.label_frecuencia),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
                     )
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        diasSemana.forEachIndexed { index, dia ->
+                        diasSemana.forEachIndexed { i, d ->
                             DiaCircle(
-                                label = dia,
-                                selected = diasSeleccionados[index],
-                                onClick = {
-                                    diasSeleccionados = diasSeleccionados.toMutableList().also { it[index] = !it[index] }
+                                label = d,
+                                selected = diasSeleccionados[i],
+                                onClick  = {
+                                    diasSeleccionados = diasSeleccionados.toMutableList()
+                                        .also { it[i] = !it[i] }
                                 }
                             )
                         }
@@ -106,22 +116,36 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
 
                     // 🟢 Hora de recordatorio
                     Text(
-                        text = "Hora del recordatorio: *",
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyLarge
+                        text = stringResource(R.string.label_hora),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
                     )
+                    HoraField(horaRecordatorio) { mostrarTimePicker = true }
 
-                    HoraField(
-                        hora = horaRecordatorio,
-                        onClick = { mostrarTimePicker = true }
-                    )
-
-                    Text(
-                        text = "Cuando te recordemos tu lectura,\nseleccionarás la hora en la que quieres leer.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = stringResource(R.string.label_duracion_lectura),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = formatearDuracion(duracionMin.roundToInt()),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        DurationSlider(
+                            value        = duracionMin,
+                            onValueChange = { duracionMin = it },
+                            valueRange    = rangoDuracion,
+                            tickEvery     = 15,           // marca cada 15 min
+                            modifier      = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Selecciona el tiempo que quieres que dure tu lectura",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
@@ -183,3 +207,11 @@ fun TimePickerDialogLectura(
     )
 }
 
+
+/*──────────────────────────  HELPERS  ─────────────────────────────────────*/
+private fun formatearDuracion(min: Int): String = when {
+    min < 60           -> "$min minutos"
+    min == 60          -> "1 hora"
+    min % 60 == 0      -> "${min/60} horas"
+    else               -> "${min/60} horas ${min%60} min"
+}
