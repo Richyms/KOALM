@@ -184,9 +184,6 @@ fun BotonEnviarCorreo(
     }
 }
 
-
-
-
 @Composable
 fun TextoIrARegistro(navController: NavController) {
     Text(
