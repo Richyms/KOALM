@@ -37,7 +37,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 import com.example.koalm.model.Usuario
 import com.google.firebase.firestore.SetOptions
-
+import androidx.compose.ui.draw.clip
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaRegistro(
@@ -80,26 +80,8 @@ fun PantallaRegistro(
             }
     }
 
-    // Para saber si el username está disponible o nadota
-    val db = FirebaseFirestore.getInstance()
+    // Para saber si el username es válido
     var username by remember { mutableStateOf("") }
-    var usuarioValido by remember { mutableStateOf(true) }
-    var yaExisteUsuario by remember { mutableStateOf(false) }
-
-    fun validarNombreUsuario(nombre: String) {
-        if (nombre.isNotBlank()) {
-            db.collection("usuarios")
-                .whereEqualTo("username", nombre)
-                .get()
-                .addOnSuccessListener { documents ->
-                    yaExisteUsuario = !documents.isEmpty
-                }
-                .addOnFailureListener {
-                    yaExisteUsuario = false // En caso de error, entonceees asumimos que no existe
-                }
-        }
-    }
-
 
     Scaffold(
         topBar = {
@@ -146,12 +128,8 @@ fun PantallaRegistro(
             Spacer(modifier = Modifier.height(8.dp))
             CampoNombreUsuario(
                 value = username,
-                valido = usuarioValido,
-                yaExiste = yaExisteUsuario,
-                onValueChange = {
-                    username = it //actualizar nombre de usuario
-                    usuarioValido = !it.contains(" ") //validar que no contenga espacios
-                    validarNombreUsuario(it) //verificar si existe o no el nombre en la db
+                onValueChange = { nuevoValor ->
+                   username = nuevoValor
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -172,7 +150,7 @@ fun PantallaRegistro(
             Spacer(modifier = Modifier.height(12.dp))
             BotonesRegistro(
                 email, username, password, confirmPassword,
-                isValidEmail, yaExisteCorreo, usuarioValido, yaExisteUsuario,
+                isValidEmail, yaExisteCorreo,
                 termsAccepted, navController, context,
                 onGoogleSignInClick = onGoogleSignInClick
             )
@@ -294,61 +272,82 @@ fun AyudaDominios() {
 @Composable
 fun CampoNombreUsuario(
     value: String,
-    valido: Boolean,
-    yaExiste: Boolean,
     onValueChange: (String) -> Unit
 ) {
-    val minimoCaracteres = 3 // Número mínimo de caracteres
+    val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
+    val limpio = value.filter { it.code != 8203 } // Elimina caracteres invisibles (como \u200B)
+
+    val valido = limpio.isNotBlank() &&
+            limpio.trim().length >= 3 &&
+            regex.matches(limpio)
 
     OutlinedTextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = { nuevoTexto ->
+            if (nuevoTexto.matches(regex)) {
+                onValueChange(nuevoTexto)
+            }
+        },
         label = { Text("Nombre de usuario *") },
-        modifier = Modifier.fillMaxWidth(0.97f),
+        modifier = Modifier
+            .fillMaxWidth(0.97f)
+            .clip(RoundedCornerShape(16.dp)),
         singleLine = true,
-        shape = RoundedCornerShape(6.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = if ((valido && !yaExiste && value.length >= minimoCaracteres) || value.isEmpty()) VerdePrincipal else Color.Red,
-            unfocusedBorderColor = if ((valido && !yaExiste && value.length >= minimoCaracteres) || value.isEmpty()) GrisMedio else Color.Red,
-            focusedLabelColor = if ((valido && !yaExiste && value.length >= minimoCaracteres) || value.isEmpty()) VerdePrincipal else Color.Red,
+            focusedBorderColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
+            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
+            focusedLabelColor = if (valido || value.isEmpty()) VerdePrincipal else Color.Red,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             errorLabelColor = Color.Red
         ),
         supportingText = {
-            if (yaExiste && value.isNotEmpty()) {
-                Text(
-                    text = "Este nombre de usuario ya está en uso.",
-                    color = Color.Red,
-                    fontSize = 12.sp
-                )
-            } else if (value.length < minimoCaracteres && value.isNotEmpty()) {
-                Text(
-                    text = "El nombre de usuario debe tener al menos $minimoCaracteres caracteres.",
-                    color = Color.Red,
-                    fontSize = 12.sp
-                )
-            } else if (!yaExiste && !valido && value.isNotEmpty()) {
-                Text(
-                    text = "No se permiten espacios en el nombre de usuario.",
-                    color = Color.Red,
-                    fontSize = 12.sp
-                )
-            } else if (!yaExiste && value.isNotEmpty()) {
-                Text(
-                    text = "Nombre de usuario válido.",
-                    color = GrisMedio,
-                    fontSize = 12.sp
-                )
-            } else {
-                Text(
-                    text = "No se permiten espacios en el nombre de usuario.",
-                    color = GrisMedio,
-                    fontSize = 12.sp
-                )
+            when {
+                value.all { it == ' ' } && value.length >= 3 -> { // Solo espacios
+                    Text(
+                        text = "El nombre no puede solo contener espacios.",
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+
+                value.isBlank() -> {
+                    Text(
+                        text = "El nombre no puede estar vacío o solo contener espacios.",
+                        color = GrisMedio,
+                        fontSize = 12.sp
+                    )
+                }
+
+                value.trim().length < 3 -> {
+                    Text(
+                        text = "Debe tener al menos 3 caracteres (excluyendo espacios).",
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+                !regex.matches(value) -> {
+                    Text(
+                        text = "Solo se permiten letras, números, guion bajo y espacios.",
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+                else -> {
+                    Text(
+                        text = "Nombre de usuario válido.",
+                        color = GrisMedio,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     )
+
+    Spacer(modifier = Modifier.height(12.dp))
 }
+
+
+
 
 
 
@@ -506,8 +505,6 @@ fun BotonesRegistro(
     email: String, username: String, password: String, confirmPassword: String,
     isValidEmail: Boolean,
     yaExisteCorreo: Boolean,
-    usuarioValido: Boolean,
-    yaExisteUsuario: Boolean,
     termsAccepted: Boolean,
     navController: NavController,
     context: Context,
@@ -519,6 +516,12 @@ fun BotonesRegistro(
         onClick = {
             //Expresión regular: La regla de negocio que se definió para la contraseña.
             val passwordRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\$%^&*()\\-_=+\\[{\\]}|;:,.<>?/`~]).{8,}$")
+            //Expresión regular: La regla de negocio que se definió para el nombre de usuarios (caracteres válidos)
+            val usernameRegex = "^[a-zA-Z0-9_ ]*$".toRegex()
+            val limpio = username.filter { it.code != 8203 } // Elimina caracteres invisibles (como \u200B)
+            val valido = limpio.isNotBlank() &&
+                    limpio.trim().length >= 3 &&
+                    usernameRegex.matches(limpio)
             //Todas las validaciones generales
             when {
                 email.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
@@ -530,14 +533,8 @@ fun BotonesRegistro(
                 yaExisteCorreo-> {
                     Toast.makeText(context, "El correo electrónico ya está en uso.", Toast.LENGTH_SHORT).show()
                 }
-                !usuarioValido -> {
-                    Toast.makeText(context, "El nombre de usuario no puede contener espacios.", Toast.LENGTH_SHORT).show()
-                }
-                username.length < 3 -> {
-                    Toast.makeText(context, "El nombre de usuario debe tener al menos 3 caracteres.", Toast.LENGTH_SHORT).show()
-                }
-                yaExisteUsuario -> {
-                    Toast.makeText(context, "El nombre de usuario ya está en uso.", Toast.LENGTH_SHORT).show()
+                !valido -> {
+                    Toast.makeText(context, "El nombre de usuario no cumple con los requisitos.", Toast.LENGTH_SHORT).show()
                 }
                 !passwordRegex.matches(password) -> {
                     Toast.makeText(context, "La contraseña no cumple con los requisitos.", Toast.LENGTH_SHORT).show()

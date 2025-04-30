@@ -32,7 +32,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import java.util.Calendar
 import java.util.Locale
-import java.util.TimeZone
 import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.layout.ContentScale
@@ -41,10 +40,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.asImageBitmap
+import java.util.TimeZone
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +61,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     var altura by remember { mutableStateOf("") }
     var generoSeleccionado by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+
     val opcionesGenero = listOf("Masculino", "Femenino", "Prefiero no decirlo")
     var username by remember { mutableStateOf("") }  // Aquí almacenamos el username
 
@@ -127,7 +128,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
         bottomBar = {
             NavigationBar(tonalElevation = 8.dp) {
                 listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
-                    val icon = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)[index]
+                    val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
                     NavigationBarItem(
                         selected = index == 0,
                         onClick = {
@@ -169,9 +170,21 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
+            CampoUsuario(username)         { username = it}
             CampoNombre(nombre)            { nombre = it }
             CampoApellidos(apellidos)      { apellidos = it }
+            // Mostrar el campo de fecha de nacimiento
             CampoFechaNacimiento(fechasec) { showDatePicker = true }
+            // Mostrar el DatePicker y manejar la selección de fecha
+            FechaNacimientoSelector(
+                showDatePicker = showDatePicker,
+                onDismiss = { showDatePicker = false },
+                onValidDateSelected = { fechaSeleccionada ->
+                    fechasec = fechaSeleccionada
+                    showDatePicker = false
+                }
+            )
+
             CampoPeso(peso)                { peso = it }
             CampoAltura(altura)            { altura = it }
             SelectorGenero(opcionesGenero, generoSeleccionado) { generoSeleccionado = it }
@@ -233,39 +246,6 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-
-    // DatePickerDialog
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = { TextButton(onClick = { showDatePicker = false }) { Text("OK") } },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
-        ) {
-            val datePickerState = rememberDatePickerState()
-            DatePicker(
-                state = datePickerState,
-                showModeToggle = false,
-                colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = VerdePrincipal,
-                    todayDateBorderColor    = VerdePrincipal
-                )
-            )
-            LaunchedEffect(datePickerState.selectedDateMillis) {
-                datePickerState.selectedDateMillis?.let { millis ->
-                    val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-                        timeInMillis = millis
-                    }
-                    fechasec = String.format(
-                        Locale("es", "MX"),
-                        "%02d/%02d/%04d",
-                        cal.get(Calendar.MONTH) + 1,
-                        cal.get(Calendar.DAY_OF_MONTH),
-                        cal.get(Calendar.YEAR)
-                    )
-                }
-            }
         }
     }
 }
@@ -346,6 +326,63 @@ fun BotonEliminarImagenPerfil(onClick: () -> Unit) {
 }
 
 
+@Composable
+fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
+    val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
+    val limpio = value.filter { it.code != 8203 } // elimina caracteres invisibles si los hay
+
+    val valido = limpio.isNotBlank() &&
+            limpio.trim().length >= 3 &&
+            regex.matches(limpio)
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = { nuevoTexto ->
+            if (nuevoTexto.matches(regex)) {
+                onValueChange(nuevoTexto)
+            }
+        },
+        label = { Text("Nombre de usuario *") },
+        modifier = Modifier
+            .fillMaxWidth(0.97f)
+            .clip(RoundedCornerShape(16.dp)),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = if (valido) VerdePrincipal else Color.Red,
+            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
+            focusedLabelColor = if (valido) VerdePrincipal else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            errorLabelColor = Color.Red
+        ),
+        supportingText = {
+            when {
+                value.isBlank() -> {
+                    Text("El nombre no puede estar vacío o solo contener espacios.",
+                        color = Color.Red,
+                        fontSize = 12.sp)
+                }
+                value.trim().length < 3 -> {
+                    Text("Debe tener al menos 3 caracteres (excluyendo espacios).",
+                        color = Color.Red,
+                        fontSize = 12.sp)
+                }
+                !regex.matches(value) -> {
+                    Text("Solo se permiten letras, números, guion bajo y espacios.",
+                        color = Color.Red,
+                        fontSize = 12.sp)
+                }
+                else -> {
+                    Text("Nombre de usuario válido.",
+                        color = GrisMedio,
+                        fontSize = 12.sp)
+                }
+            }
+        }
+    )
+
+    Spacer(modifier = Modifier.height(12.dp))
+}
+
 
 @Composable
 fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
@@ -386,6 +423,83 @@ fun CampoApellidos(value: String, onValueChange: (String) -> Unit) {
     )
     Spacer(modifier = Modifier.height(12.dp))
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FechaNacimientoSelector(
+    showDatePicker: Boolean,
+    onDismiss: () -> Unit,
+    onValidDateSelected: (String) -> Unit
+) {
+    if (showDatePicker) {
+        val context = LocalContext.current
+        val datePickerState = rememberDatePickerState()
+
+        DatePickerDialog(
+            onDismissRequest = { onDismiss() },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val millisUTC = datePickerState.selectedDateMillis
+                        if (millisUTC != null) {
+                            // Ajustar a zona horaria local
+                            val offset = TimeZone.getDefault().getOffset(millisUTC)
+                            val correctedMillis = millisUTC + offset
+
+                            val cal = Calendar.getInstance().apply { timeInMillis = correctedMillis }
+                            val current = Calendar.getInstance()
+
+                            val age = current.get(Calendar.YEAR) - cal.get(Calendar.YEAR)
+                            val cumpleEdad = age > 12 || (age == 12 &&
+                                    (cal.get(Calendar.MONTH) < current.get(Calendar.MONTH) ||
+                                            (cal.get(Calendar.MONTH) == current.get(Calendar.MONTH) &&
+                                                    cal.get(Calendar.DAY_OF_MONTH) <= current.get(Calendar.DAY_OF_MONTH)))
+                                    )
+
+                            if (cumpleEdad) {
+                                val fecha = String.format(
+                                    Locale("es", "MX"),
+                                    "%02d/%02d/%04d",
+                                    cal.get(Calendar.DAY_OF_MONTH) + 1,
+                                    cal.get(Calendar.MONTH) + 1,
+                                    cal.get(Calendar.YEAR)
+                                )
+                                onValidDateSelected(fecha)
+                                onDismiss()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "La edad calculada no es válida para continuar.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        } else {
+                            onDismiss()
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onDismiss() }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                showModeToggle = false,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = VerdePrincipal,
+                    todayDateBorderColor = VerdePrincipal
+                )
+            )
+        }
+    }
+}
+
+
 
 @Composable
 fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
