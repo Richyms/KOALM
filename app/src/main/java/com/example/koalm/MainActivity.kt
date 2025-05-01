@@ -1,4 +1,5 @@
 package com.example.koalm
+import android.content.Context
 import androidx.credentials.CustomCredential
 import android.content.Intent
 import android.os.Bundle
@@ -27,6 +28,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private lateinit var credentialManager: CredentialManager

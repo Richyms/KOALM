@@ -49,7 +49,9 @@ fun AppNavigation(
         composable("configurar-habito-alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController)}
         composable("configurar-habito-lectura") { PantallaConfiguracionHabitoLectura(navController)}
         composable("estadisticas"){PantallaParametrosSalud(navController)}
-        /*Ajustar enlace de pantalla parametros salud*/
+        composable("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
+        composable("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
+    /*Ajustar enlace de pantalla parametros salud*/
         //composable("ritmo-cardiaco"){PantallaRitmoCardiaco(navController)}
         //composable("sueño-de-anoche"){PantallaSueno(navController)}
         //composable("nivel-de-estres"){PantallaEstres(navController)}

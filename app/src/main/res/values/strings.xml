@@ -56,4 +56,41 @@
     </string>
     <string name="label_duracion_meditacion">Duración de la Meditación</string>
 
+
+    <!-- Pantalla Gestión de hábitos personalizados -->
+    <string name="titulo_gestion_habitos_personalizados">Gestión de hábitos personalizados</string>
+    <string name="mensaje_no_habitos">No tienes hábitos personalizados</string>
+    <string name="mensaje_no_habitos_subtexto">No busques perfección, solo empieza.\nCada paso cuenta</string>
+    <string name="boton_agregar">Agregar</string>
+
+    <!-- Hábito personalizado -->
+    <string name="titulo_config_habito_personalizado">Configurar hábito personalizado</string>
+    <string name="label_nombre_habito">Nombre del hábito *</string>
+    <string name="label_frecuencia_P">Frecuencia: </string>
+    <string name="label_hora_recordatorio">Hora del recordatorio: </string>
+    <string name="label_finaliza_el">Finaliza el:</string>
+    <string name="boton_fecha">Fecha</string>
+    <string name="boton_dias">Días</string>
+    <string name="label_ultimo_dia">El último día es</string>
+    <string name="boton_seleccionar_fecha">Seleccionar Fecha</string>
+    <string name="label_despues_dias">Después de </string>
+    <string name="label_dias">días</string>
+    <string name="label_switch_activar_recordatorio">Activar recordatorios:</string>
+    <string name="label_tipo_notificacion">  Tipo de notificación:</string>
+    <string name="label_notificacion_personalizada">  Notifiación personalizada:</string>
+    <string name="label_configuracion_adicional">Configuraciones adicionaless del hábito</string>
+    <string name="label_vista_previa">Vista previa del hábito</string>
+
+    <string name="boton_Automatico">Automático</string>
+    <string name="boton_Personalizado">Personalizado</string>
+
+
+
+
+    <!-- Validaciones -->
+    <string name="error_nombre">¡Campo de nombre vacío!</string>
+    <string name="error_hora">¡Establece hora de recordatorio!</string>
+    <string name="mensaje_guardado">¡Hábito guardado exitosamente!</string>
+
+
 </resources>
