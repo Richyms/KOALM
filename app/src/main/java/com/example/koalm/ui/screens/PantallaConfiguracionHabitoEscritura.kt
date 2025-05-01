@@ -228,31 +228,40 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
             Spacer(Modifier.weight(1f))
 
             /* ----------------------------  Guardar  --------------------------- */
-            Button(
-                onClick = {
-                    if (!diasSeleccionados.any { it }) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.error_no_days_selected),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@Button
-                    }
-
-                    if (ContextCompat.checkSelfPermission(
-                            context, Manifest.permission.POST_NOTIFICATIONS
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        programarNotificacion(
-                            context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, notasHabilitadas
-                        )
-                    } else {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(stringResource(R.string.boton_guardar))
+                Button(
+                    onClick = {
+                        if (!diasSeleccionados.any { it }) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_no_days_selected),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+
+                        if (ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            programarNotificacion(
+                                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, notasHabilitadas
+                            )
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+                }
             }
         }
     }

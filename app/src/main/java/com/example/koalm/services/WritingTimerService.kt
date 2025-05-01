@@ -66,10 +66,12 @@ class WritingTimerService : Service() {
                     // Crear y mostrar la notificación inicial inmediatamente
                     val initialNotification = createInitialNotification(durationMinutes)
                     startForeground(NOTIFICATION_ID, initialNotification)
+                    Log.e(TAG, "onStartCommand: Notificación inicial mostrada")
                     
                     // Iniciar el temporizador en segundo plano
                     startTimer(durationMinutes)
                     isTimerActive = true
+                    Log.e(TAG, "onStartCommand: Temporizador iniciado correctamente")
                     
                 } catch (e: Exception) {
                     Log.e(TAG, "onStartCommand: Error al iniciar temporizador", e)
@@ -210,7 +212,7 @@ class WritingTimerService : Service() {
         timer?.cancel()
         
         // Enviar actualización inicial inmediatamente
-        sendTimerUpdate(totalMillis)
+        sendTimerUpdate(totalMillis, true)
         Log.e(TAG, "startTimer: Enviada actualización inicial")
         
         // Iniciar temporizador con un intervalo más corto para actualizaciones más frecuentes
@@ -230,7 +232,7 @@ class WritingTimerService : Service() {
                 notificationManager.notify(NOTIFICATION_ID, updatedNotification)
                 
                 // Emitir actualización del tiempo
-                sendTimerUpdate(millisUntilFinished)
+                sendTimerUpdate(millisUntilFinished, true)
             }
 
             override fun onFinish() {
@@ -238,7 +240,7 @@ class WritingTimerService : Service() {
                 // Mostrar notificación de finalización
                 showCompletionNotification()
                 // Emitir actualización final
-                sendTimerUpdate(0)
+                sendTimerUpdate(0, false)
                 stopSelf()
             }
         }.start()
@@ -246,13 +248,14 @@ class WritingTimerService : Service() {
         Log.e(TAG, "startTimer: Temporizador iniciado correctamente")
     }
 
-    private fun sendTimerUpdate(millisUntilFinished: Long) {
+    private fun sendTimerUpdate(millisUntilFinished: Long, isActive: Boolean) {
         val intent = Intent(TIMER_UPDATE_ACTION).apply {
             putExtra(EXTRA_REMAINING_TIME, millisUntilFinished)
+            putExtra(EXTRA_IS_ACTIVE, isActive)
             addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
             addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         }
-        Log.d(TAG, "sendTimerUpdate: Enviando actualización con tiempo restante: $millisUntilFinished ms")
+        Log.d(TAG, "sendTimerUpdate: Enviando actualización con tiempo restante: $millisUntilFinished ms, activo: $isActive")
         sendBroadcast(intent)
     }
 

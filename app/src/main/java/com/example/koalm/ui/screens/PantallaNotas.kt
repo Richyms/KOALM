@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,8 +52,12 @@ fun PantallaNotas(navController: NavHostController) {
     val context = LocalContext.current
     var notas by remember { mutableStateOf(listOf<Nota>()) }
     var mostrarDialogoNuevaNota by remember { mutableStateOf(false) }
-    var tiempoRestante by remember { mutableStateOf<Long?>(null) }
-    var timerActivo by remember { mutableStateOf(false) }
+    val timerViewModel: TimerViewModel = viewModel()
+    
+    // Observar el estado del temporizador desde el ViewModel
+    val tiempoRestante by timerViewModel.timeLeft.collectAsState()
+    val timerActivo by timerViewModel.isRunning.collectAsState()
+    
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     
@@ -88,45 +94,7 @@ fun PantallaNotas(navController: NavHostController) {
         }
     }
 
-    // Iniciar temporizador si se recibe la acción
-    LaunchedEffect(Unit) {
-        val intent = (context as? ComponentActivity)?.intent
-        if (intent?.action == "com.example.koalm.START_TIMER") {
-            val duracionMinutos = intent.getLongExtra("duration_minutes", 15)
-            Log.d("PantallaNotas", "Iniciando temporizador con duración: $duracionMinutos minutos")
-            
-            // Verificar si el temporizador ya está activo
-            val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
-                action = WritingTimerService.CHECK_TIMER_ACTION
-            }
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(checkTimerIntent)
-            } else {
-                context.startService(checkTimerIntent)
-            }
-            
-            // Iniciar servicio de temporizador
-            val timerIntent = Intent(context, WritingTimerService::class.java).apply {
-                action = WritingTimerService.START_TIMER_ACTION
-                putExtra("duration_minutes", duracionMinutos)
-                addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-            }
-            
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(timerIntent)
-                } else {
-                    context.startService(timerIntent)
-                }
-                Log.d("PantallaNotas", "Servicio de temporizador iniciado correctamente")
-            } catch (e: Exception) {
-                Log.e("PantallaNotas", "Error al iniciar el servicio: ${e.message}")
-            }
-        }
-    }
-
-    // Escuchar actualizaciones del temporizador
+    // Escuchar actualizaciones del temporizador del servicio
     DisposableEffect(Unit) {
         Log.d("PantallaNotas", "Configurando receptor de actualizaciones del temporizador")
         val receiver = object : BroadcastReceiver() {
@@ -136,8 +104,9 @@ fun PantallaNotas(navController: NavHostController) {
                     val remaining = intent.getLongExtra(WritingTimerService.EXTRA_REMAINING_TIME, 0)
                     Log.d("PantallaNotas", "Actualización de temporizador recibida: isActive=$isActive, remaining=$remaining ms")
                     
-                    timerActivo = isActive
-                    tiempoRestante = if (isActive) remaining else null
+                    // Actualizar el ViewModel
+                    timerViewModel.updateTimeLeft(remaining)
+                    timerViewModel.updateIsRunning(isActive)
                 }
             }
         }
@@ -157,6 +126,19 @@ fun PantallaNotas(navController: NavHostController) {
             } catch (e: Exception) {
                 Log.e("PantallaNotas", "Error al desregistrar receptor: ${e.message}")
             }
+        }
+    }
+
+    // Verificar estado del temporizador al iniciar
+    LaunchedEffect(Unit) {
+        val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
+            action = WritingTimerService.CHECK_TIMER_ACTION
+        }
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(checkTimerIntent)
+        } else {
+            context.startService(checkTimerIntent)
         }
     }
 
@@ -195,31 +177,49 @@ fun PantallaNotas(navController: NavHostController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Mostrar el temporizador si está activo
-            if (timerActivo && tiempoRestante != null) {
-                Log.d("PantallaNotas", "Mostrando temporizador con tiempo restante: ${tiempoRestante}ms")
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, VerdeBorde),
-                    colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+            /* ——————— Fila del temporizador ——————— */
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                /* Botón que inicia la cuenta atrás */
+                Button(
+                    onClick = {
+                        val intent = Intent(context, WritingTimerService::class.java).apply {
+                            action = WritingTimerService.START_TIMER_ACTION
+                            putExtra("duration_minutes", 1L)  // 1 minuto
+                        }
+                        
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            context.startForegroundService(intent)
+                        } else {
+                            context.startService(intent)
+                        }
+                        
+                        // Iniciar el temporizador en el ViewModel
+                        timerViewModel.start(60_000)  // 1 minuto en milisegundos
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = VerdePrincipal,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Tiempo restante",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = formatTime(tiempoRestante!!),
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Iniciar temporizador")
                 }
+
+                Text(
+                    text = if (timerActivo) formatTime(tiempoRestante) else "00:00",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = if (timerActivo) VerdePrincipal
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Lista de notas
@@ -285,8 +285,8 @@ fun PantallaNotas(navController: NavHostController) {
 }
 
 private fun formatTime(millis: Long): String {
-    val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(millis)
-    val seconds = java.util.concurrent.TimeUnit.MILLISECONDS.toSeconds(millis) % 60
+    val minutes = millis / 60_000
+    val seconds = (millis % 60_000) / 1_000
     return String.format("%02d:%02d", minutes, seconds)
 }
 
