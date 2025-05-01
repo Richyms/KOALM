@@ -43,12 +43,10 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun KoalmTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
         shapes = Shapes,
         content = content

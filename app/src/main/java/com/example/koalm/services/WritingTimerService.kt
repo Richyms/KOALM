@@ -21,10 +21,16 @@ class WritingTimerService : Service() {
         private const val NOTIFICATION_ID = 200
         private const val TAG = "KOALM_TIMER"
         const val TIMER_ACTION = "com.example.koalm.TIMER_ACTION"
+        const val START_TIMER_ACTION = "com.example.koalm.START_TIMER_ACTION"
+        const val TIMER_UPDATE_ACTION = "com.example.koalm.TIMER_UPDATE_ACTION"
+        const val CHECK_TIMER_ACTION = "com.example.koalm.CHECK_TIMER_ACTION"
+        const val EXTRA_REMAINING_TIME = "remaining_time"
+        const val EXTRA_IS_ACTIVE = "is_active"
     }
 
     private var timer: CountDownTimer? = null
     private var durationMinutes: Long = 0
+    private var isTimerActive = false
 
     override fun onCreate() {
         super.onCreate()
@@ -35,22 +41,42 @@ class WritingTimerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.e(TAG, "onStartCommand: Iniciando temporizador")
         
-        try {
-            // Extraer la duración inmediatamente
-            durationMinutes = intent?.getLongExtra("duration_minutes", 15) ?: 15
-            Log.e(TAG, "onStartCommand: Duración recibida: $durationMinutes minutos")
+        when (intent?.action) {
+            CHECK_TIMER_ACTION -> {
+                // Responder con el estado actual del temporizador
+                val responseIntent = Intent(TIMER_UPDATE_ACTION).apply {
+                    putExtra(EXTRA_IS_ACTIVE, isTimerActive)
+                    putExtra(EXTRA_REMAINING_TIME, if (isTimerActive) durationMinutes * 60 * 1000 else 0)
+                }
+                sendBroadcast(responseIntent)
+                return START_NOT_STICKY
+            }
             
-            // Crear y mostrar la notificación inicial inmediatamente
-            val initialNotification = createInitialNotification(durationMinutes)
-            startForeground(NOTIFICATION_ID, initialNotification)
-            
-            // Iniciar el temporizador en segundo plano
-            startTimer(durationMinutes)
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "onStartCommand: Error al iniciar temporizador", e)
-            stopSelf()
-            return START_NOT_STICKY
+            START_TIMER_ACTION -> {
+                if (isTimerActive) {
+                    Log.e(TAG, "onStartCommand: Temporizador ya activo, ignorando inicio")
+                    return START_NOT_STICKY
+                }
+                
+                try {
+                    // Extraer la duración inmediatamente
+                    durationMinutes = intent.getLongExtra("duration_minutes", 15)
+                    Log.e(TAG, "onStartCommand: Duración recibida: $durationMinutes minutos")
+                    
+                    // Crear y mostrar la notificación inicial inmediatamente
+                    val initialNotification = createInitialNotification(durationMinutes)
+                    startForeground(NOTIFICATION_ID, initialNotification)
+                    
+                    // Iniciar el temporizador en segundo plano
+                    startTimer(durationMinutes)
+                    isTimerActive = true
+                    
+                } catch (e: Exception) {
+                    Log.e(TAG, "onStartCommand: Error al iniciar temporizador", e)
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+            }
         }
 
         return START_NOT_STICKY
@@ -61,6 +87,7 @@ class WritingTimerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         timer?.cancel()
+        isTimerActive = false
         Log.e(TAG, "onDestroy: Servicio de temporizador destruido")
     }
 
@@ -182,7 +209,11 @@ class WritingTimerService : Service() {
         // Cancelar temporizador existente si hay uno
         timer?.cancel()
         
-        // Iniciar temporizador
+        // Enviar actualización inicial inmediatamente
+        sendTimerUpdate(totalMillis)
+        Log.e(TAG, "startTimer: Enviada actualización inicial")
+        
+        // Iniciar temporizador con un intervalo más corto para actualizaciones más frecuentes
         timer = object : CountDownTimer(totalMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 val minutesRemaining = TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)
@@ -191,23 +222,38 @@ class WritingTimerService : Service() {
                 Log.d(TAG, "onTick: Tiempo restante: $minutesRemaining:$secondsRemaining")
                 
                 // Actualizar la notificación con el tiempo restante
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 val updatedNotification = createTimerNotification(
                     minutesRemaining,
                     millisUntilFinished
                 )
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.notify(NOTIFICATION_ID, updatedNotification)
+                
+                // Emitir actualización del tiempo
+                sendTimerUpdate(millisUntilFinished)
             }
 
             override fun onFinish() {
                 Log.e(TAG, "onFinish: Temporizador completado")
                 // Mostrar notificación de finalización
                 showCompletionNotification()
+                // Emitir actualización final
+                sendTimerUpdate(0)
                 stopSelf()
             }
         }.start()
         
         Log.e(TAG, "startTimer: Temporizador iniciado correctamente")
+    }
+
+    private fun sendTimerUpdate(millisUntilFinished: Long) {
+        val intent = Intent(TIMER_UPDATE_ACTION).apply {
+            putExtra(EXTRA_REMAINING_TIME, millisUntilFinished)
+            addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+            addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+        }
+        Log.d(TAG, "sendTimerUpdate: Enviando actualización con tiempo restante: $millisUntilFinished ms")
+        sendBroadcast(intent)
     }
 
     private fun createInitialNotification(minutes: Long): android.app.Notification {

@@ -12,9 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -78,7 +78,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
             bottomBar = {
                 NavigationBar(tonalElevation = 8.dp) {
                     listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
-                        val icon = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)[index]
+                        val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
                         NavigationBarItem(
                             selected = index == 0,
                             onClick = { 
@@ -205,7 +205,7 @@ fun EstadisticasCard() {
 fun DrawerContenido(navController: NavHostController) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
-        Divider()
+        HorizontalDivider()
         listOf("Inicio", "Racha", "Estadísticas", "Test de emociones").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
@@ -216,12 +216,12 @@ fun DrawerContenido(navController: NavHostController) {
                 }
             })
         }
-        Divider()
+        HorizontalDivider()
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
         }
-        Divider()
+        HorizontalDivider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Recomendaciones de Kool", "Insignias y logros", "Información de la app").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })

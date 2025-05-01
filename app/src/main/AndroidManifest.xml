@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BROADCAST" />
 
     <application
         android:allowBackup="true"
@@ -41,6 +42,16 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.example.koalm.NOTIFICATION_ACTION" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Receptor para las actualizaciones del temporizador -->
+        <receiver
+            android:name=".services.TimerUpdateReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.koalm.TIMER_UPDATE_ACTION" />
             </intent-filter>
         </receiver>
 
