@@ -511,9 +511,19 @@ fun BotonesRegistro(
     onGoogleSignInClick: () -> Unit
 ) {
     val buttonModifier = Modifier.width(200.dp)
+    var isLoading by remember { mutableStateOf(false) }
+    val TAG = "Registro"
 
     Button(
         onClick = {
+            android.util.Log.d(TAG, "Iniciando proceso de registro")
+            android.util.Log.d(TAG, "Email: $email")
+            android.util.Log.d(TAG, "Username: $username")
+            android.util.Log.d(TAG, "Validaciones iniciales:")
+            android.util.Log.d(TAG, "- Email válido: $isValidEmail")
+            android.util.Log.d(TAG, "- Email ya existe: $yaExisteCorreo")
+            android.util.Log.d(TAG, "- Términos aceptados: $termsAccepted")
+
             //Expresión regular: La regla de negocio que se definió para la contraseña.
             val passwordRegex = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\$%^&*()\\-_=+\\[{\\]}|;:,.<>?/`~]).{8,}$")
             //Expresión regular: La regla de negocio que se definió para el nombre de usuarios (caracteres válidos)
@@ -522,39 +532,56 @@ fun BotonesRegistro(
             val valido = limpio.isNotBlank() &&
                     limpio.trim().length >= 3 &&
                     usernameRegex.matches(limpio)
+
+            android.util.Log.d(TAG, "Validaciones adicionales:")
+            android.util.Log.d(TAG, "- Username válido: $valido")
+            android.util.Log.d(TAG, "- Password cumple regex: ${passwordRegex.matches(password)}")
+            android.util.Log.d(TAG, "- Passwords coinciden: ${password == confirmPassword}")
+
             //Todas las validaciones generales
             when {
                 email.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
+                    android.util.Log.w(TAG, "Campos vacíos detectados")
                     Toast.makeText(context, "Por favor completa todos los campos.", Toast.LENGTH_SHORT).show()
                 }
                 !isValidEmail -> {
+                    android.util.Log.w(TAG, "Email inválido")
                     Toast.makeText(context, "El formato del correo no es válido.", Toast.LENGTH_SHORT).show()
                 }
-                yaExisteCorreo-> {
+                yaExisteCorreo -> {
+                    android.util.Log.w(TAG, "Email ya existe en la base de datos")
                     Toast.makeText(context, "El correo electrónico ya está en uso.", Toast.LENGTH_SHORT).show()
                 }
                 !valido -> {
+                    android.util.Log.w(TAG, "Username inválido")
                     Toast.makeText(context, "El nombre de usuario no cumple con los requisitos.", Toast.LENGTH_SHORT).show()
                 }
                 !passwordRegex.matches(password) -> {
+                    android.util.Log.w(TAG, "Password no cumple con los requisitos")
                     Toast.makeText(context, "La contraseña no cumple con los requisitos.", Toast.LENGTH_SHORT).show()
                 }
                 password != confirmPassword -> {
+                    android.util.Log.w(TAG, "Passwords no coinciden")
                     Toast.makeText(context, "Las contraseñas no coinciden.", Toast.LENGTH_SHORT).show()
                 }
                 !termsAccepted -> {
+                    android.util.Log.w(TAG, "Términos no aceptados")
                     Toast.makeText(context, "Debes aceptar los términos y condiciones.", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
+                    android.util.Log.d(TAG, "Todas las validaciones pasaron, iniciando registro en Firebase")
+                    isLoading = true
                     // Usando el servicio de Firebase
                     // 1) Crear usuario en Firebase Auth
                     FirebaseAuth.getInstance()
                         .createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
+                                android.util.Log.d(TAG, "Usuario creado exitosamente en Firebase Auth")
                                 // 1.1) Obtener UserID
                                 val auth = FirebaseAuth.getInstance()
                                 val userId = auth.currentUser!!.uid
+                                android.util.Log.d(TAG, "UserID obtenido: $userId")
 
                                 // 2) Construir un objeto Usuario mínimo (los primeros 3 campos del registro)
                                 val uLogin = Usuario(
@@ -565,59 +592,83 @@ fun BotonesRegistro(
 
                                 // 3) Guardar en Firestore con merge
                                 val db = FirebaseFirestore.getInstance()
+                                android.util.Log.d(TAG, "Intentando guardar usuario en Firestore")
                                 db.collection("usuarios")
                                     .document(email)
                                     .set(uLogin.toMap(), SetOptions.merge())
                                     .addOnSuccessListener {
+                                        android.util.Log.d(TAG, "Usuario guardado exitosamente en Firestore")
                                         // 4) Enviar verificación de correo
                                         auth.currentUser
                                             ?.sendEmailVerification()
                                             ?.addOnCompleteListener { verifyTask ->
+                                                isLoading = false
                                                 if (verifyTask.isSuccessful) {
+                                                    android.util.Log.d(TAG, "Correo de verificación enviado exitosamente")
                                                     Toast.makeText(
                                                         context,
                                                         "Se envió un correo de verificación a $email",
                                                         Toast.LENGTH_LONG
                                                     ).show()
+                                                    // 5) Navegar a login
+                                                    android.util.Log.d(TAG, "Navegando a pantalla de inicio de sesión")
+                                                    navController.navigate("iniciar") {
+                                                        popUpTo("registro") { inclusive = true }
+                                                        launchSingleTop = true
+                                                    }
                                                 } else {
+                                                    android.util.Log.e(TAG, "Error al enviar correo de verificación", verifyTask.exception)
                                                     Toast.makeText(
                                                         context,
                                                         "Error al enviar verificación: ${verifyTask.exception?.localizedMessage}",
                                                         Toast.LENGTH_LONG
                                                     ).show()
                                                 }
-                                                // 5) Navegar a login
-                                                navController.navigate("iniciar") {
-                                                    popUpTo("registro") { inclusive = true }
-                                                    launchSingleTop = true
-                                                }
                                             }
                                     }
                                     .addOnFailureListener { e ->
+                                        isLoading = false
+                                        android.util.Log.e(TAG, "Error al guardar usuario en Firestore", e)
                                         Toast.makeText(
                                             context,
                                             "Error guardando usuario: ${e.localizedMessage}",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     }
+                            } else {
+                                isLoading = false
+                                android.util.Log.e(TAG, "Error al crear usuario en Firebase Auth", task.exception)
+                                Toast.makeText(
+                                    context,
+                                    "Error al crear usuario: ${task.exception?.localizedMessage}",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
                 }
             }
         },
         modifier = buttonModifier,
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        enabled = !isLoading
     ) {
-        Text("Registrar", color = MaterialTheme.colorScheme.onPrimary)
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        } else {
+            Text("Registrar", color = MaterialTheme.colorScheme.onPrimary)
+        }
     }
 
     Spacer(modifier = Modifier.height(12.dp))
 
     OutlinedButton(
         onClick = { onGoogleSignInClick() },
-
         modifier = buttonModifier,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        enabled = !isLoading
     ) {
         Text("Iniciar con Google", color = MaterialTheme.colorScheme.onSurface)
     }

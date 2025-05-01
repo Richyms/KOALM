@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.asImageBitmap
 import java.util.TimeZone
+import androidx.compose.foundation.background
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,21 +155,14 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
-            ImagenUsuario(imagenBase64 = imagenBase64)
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BotonAnadirImagenPerfil(onClick = { launcher.launch("image/*") })
-                    BotonEliminarImagenPerfil(onClick = {
-                        imagenUri = null
-                        imagenBase64 = null  })
+            ImagenUsuario(
+                imagenBase64 = imagenBase64,
+                onEditClick = { launcher.launch("image/*") },
+                onDeleteClick = {
+                    imagenUri = null
+                    imagenBase64 = null
                 }
-            }
+            )
             Spacer(modifier = Modifier.height(20.dp))
             CampoUsuario(username)         { username = it}
             CampoNombre(nombre)            { nombre = it }
@@ -261,70 +255,89 @@ fun base64ToBitmap(base64Str: String): Bitmap? {
 }
 
 @Composable
-fun ImagenUsuario(imagenBase64: String?) {
+fun ImagenUsuario(imagenBase64: String?, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
     val isDark = isSystemInDarkTheme()
     val tint = if (isDark) Color.White else Color.Black
 
-    if (!imagenBase64.isNullOrEmpty()) {
-        val bitmap = remember(imagenBase64) { base64ToBitmap(imagenBase64) }
-
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Usuario",
-                modifier = Modifier
-                    .size(200.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Image(
-                painter = painterResource(id = R.drawable.profile),
-                contentDescription = "Usuario",
-                modifier = Modifier
-                    .size(200.dp),
-                colorFilter = ColorFilter.tint(tint)
-            )
-        }
-    } else {
-        Image(
-            painter = painterResource(id = R.drawable.profile),
-            contentDescription = "Usuario",
+    Box(
+        modifier = Modifier
+            .size(200.dp)
+    ) {
+        Box(
             modifier = Modifier
-                .size(200.dp),
-            colorFilter = ColorFilter.tint(tint)
-        )
+                .size(200.dp)
+                .clip(CircleShape)
+        ) {
+            if (!imagenBase64.isNullOrEmpty()) {
+                val bitmap = remember(imagenBase64) { base64ToBitmap(imagenBase64) }
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Usuario",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile),
+                        contentDescription = "Usuario",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        colorFilter = ColorFilter.tint(tint)
+                    )
+                }
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.profile),
+                    contentDescription = "Usuario",
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    colorFilter = ColorFilter.tint(tint)
+                )
+            }
+        }
+
+        // Botones de edición y eliminación en la parte inferior
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 16.dp) 
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_edit),
+                    contentDescription = "Editar foto",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(RojoClaro, CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = "Eliminar foto",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
     }
 }
-
-
-@Composable
-fun BotonAnadirImagenPerfil(onClick: () -> Unit) {
-    Button(
-        onClick   = onClick,
-        modifier = Modifier
-            .width(200.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-    ) {
-        Text("Añadir foto", color = MaterialTheme.colorScheme.onPrimary)
-    }
-}
-@Composable
-fun BotonEliminarImagenPerfil(onClick: () -> Unit) {
-    Button(
-        onClick   = onClick,
-        modifier = Modifier
-            .width(200.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = ButtonDefaults.buttonColors(containerColor = RojoClaro)
-    ) {
-        Text("Eliminar foto", color = MaterialTheme.colorScheme.onPrimary)
-    }
-}
-
 
 @Composable
 fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
@@ -344,8 +357,9 @@ fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
         },
         label = { Text("Nombre de usuario *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (valido) VerdePrincipal else Color.Red,
@@ -392,8 +406,9 @@ fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
         onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
         label = { Text("Nombre *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor   = VerdePrincipal,
@@ -412,8 +427,9 @@ fun CampoApellidos(value: String, onValueChange: (String) -> Unit) {
         onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
         label = { Text("Apellidos *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor   = VerdePrincipal,
@@ -510,9 +526,9 @@ fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
         label = { Text("Fecha de nacimiento *") },
         placeholder = { Text("MM/DD/YYYY") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() },
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         readOnly = true,
         trailingIcon = {
             Icon(
@@ -544,8 +560,9 @@ fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
         },
         label = { Text("Peso *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         trailingIcon = { Text("kg", color = GrisMedio) },
         colors = OutlinedTextFieldDefaults.colors(
@@ -566,8 +583,9 @@ fun CampoAltura(value: String, onValueChange: (String) -> Unit) {
         onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
         label = { Text("Altura *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         trailingIcon = { Text("cm", color = GrisMedio) },
         colors = OutlinedTextFieldDefaults.colors(
@@ -622,12 +640,12 @@ fun SelectorGenero(
 @Composable
 fun BotonGuardarPerfil(onClick: () -> Unit) {
     Button(
-        onClick   = onClick,
+        onClick = onClick,
         modifier = Modifier
             .width(200.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
     }
