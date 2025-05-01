@@ -37,7 +37,10 @@ import com.example.koalm.ui.theme.GrisClaro
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.ui.theme.VerdePrincipal
 import com.example.koalm.ui.viewmodels.TimerViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -49,8 +52,41 @@ fun PantallaNotas(navController: NavHostController) {
     var mostrarDialogoNuevaNota by remember { mutableStateOf(false) }
     var tiempoRestante by remember { mutableStateOf<Long?>(null) }
     var timerActivo by remember { mutableStateOf(false) }
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
     
     Log.d("PantallaNotas", "Iniciando composición de PantallaNotas")
+
+    // Cargar notas del usuario actual
+    LaunchedEffect(Unit) {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("notas")
+                .whereEqualTo("userId", userId)
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        Log.w("PantallaNotas", "Error escuchando cambios", e)
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot != null) {
+                        val nuevasNotas = mutableListOf<Nota>()
+                        for (doc in snapshot.documents) {
+                            val nota = Nota(
+                                id = doc.id,
+                                titulo = doc.getString("titulo") ?: "",
+                                contenido = doc.getString("contenido") ?: "",
+                                userId = doc.getString("userId"),
+                                fechaCreacion = doc.getString("fechaCreacion"),
+                                fechaModificacion = doc.getString("fechaModificacion")
+                            )
+                            nuevasNotas.add(nota)
+                        }
+                        notas = nuevasNotas
+                    }
+                }
+        }
+    }
 
     // Iniciar temporizador si se recibe la acción
     LaunchedEffect(Unit) {
@@ -227,7 +263,21 @@ fun PantallaNotas(navController: NavHostController) {
         DialogoNuevaNota(
             onDismiss = { mostrarDialogoNuevaNota = false },
             onNotaCreada = { nuevaNota ->
-                notas = notas + nuevaNota
+                val userId = auth.currentUser?.uid
+                if (userId != null) {
+                    // Crear un nuevo documento en Firestore
+                    val docRef = db.collection("notas").document()
+                    val notaConId = nuevaNota.copy(id = docRef.id) // Asignar el ID antes de guardar
+                    
+                    docRef.set(notaConId.toMap())
+                        .addOnSuccessListener {
+                            Log.d("PantallaNotas", "Nota creada con ID: ${docRef.id}")
+                            notas = notas + notaConId
+                        }
+                        .addOnFailureListener { e ->
+                            Log.w("PantallaNotas", "Error creando nota", e)
+                        }
+                }
                 mostrarDialogoNuevaNota = false
             }
         )
@@ -296,6 +346,8 @@ private fun DialogoNuevaNota(
     var titulo by remember { mutableStateOf("") }
     var contenido by remember { mutableStateOf("") }
     val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+    val auth = FirebaseAuth.getInstance()
+    val userId = auth.currentUser?.uid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -322,10 +374,11 @@ private fun DialogoNuevaNota(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (titulo.isNotBlank() && contenido.isNotBlank()) {
+                    if (titulo.isNotBlank() && contenido.isNotBlank() && userId != null) {
                         onNotaCreada(Nota(
                             titulo = titulo,
                             contenido = contenido,
+                            userId = userId,
                             fechaCreacion = fechaActual,
                             fechaModificacion = fechaActual
                         ))
