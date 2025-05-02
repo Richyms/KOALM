@@ -57,12 +57,14 @@ class NotificationService : Service() {
         diasSeleccionados: List<Boolean>,
         hora: LocalDateTime,
         descripcion: String,
-        durationMinutes: Long
+        durationMinutes: Long,
+        notasHabilitadas: Boolean
     ) {
         Log.e(TAG, "scheduleNotification: Programando notificaciones para los días seleccionados")
         Log.e(TAG, "scheduleNotification: Días seleccionados: $diasSeleccionados")
         Log.e(TAG, "scheduleNotification: Hora: $hora")
         Log.e(TAG, "scheduleNotification: Duración: $durationMinutes minutos")
+        Log.e(TAG, "scheduleNotification: Notas habilitadas: $notasHabilitadas")
         
         // Cancelar notificaciones existentes antes de programar nuevas
         cancelExistingNotifications(context)
@@ -99,6 +101,7 @@ class NotificationService : Service() {
                     putExtra("descripcion", descripcion.ifEmpty { context.getString(R.string.notification_default_text) })
                     putExtra("dia_semana", index)
                     putExtra("duration_minutes", durationMinutes)
+                    putExtra("notas_habilitadas", notasHabilitadas)
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(

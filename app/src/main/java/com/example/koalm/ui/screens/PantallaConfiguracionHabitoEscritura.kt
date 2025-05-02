@@ -1,15 +1,28 @@
-/*  PantallaConfiguracionHabitoEscritura.kt  */
+/*  PantallaConfiguracionHabitoEscritura.kt
+ *  Pantalla para configurar el hábito de escritura diaria.
+ *  Programa notificaciones recurrentes según los días, la hora y la duración especificados.
+ */
 package com.example.koalm.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-// import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-// import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -17,12 +30,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-// import androidx.compose.ui.geometry.CornerRadius
-// import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-// import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-// import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -30,7 +39,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-// import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.services.NotificationService
@@ -41,95 +51,60 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import android.Manifest
-import android.annotation.SuppressLint
-import android.content.pm.PackageManager
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import android.util.Log
-import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
-
-/* foundation */
-// import androidx.compose.foundation.Canvas          // ←  dibujar el track
-import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-
-/* ui */
-// import androidx.compose.ui.geometry.Size
-// import androidx.compose.ui.unit.IntOffset
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     val context = LocalContext.current
-    val TAG = "PantallaConfiguracion"
+    val TAG     = "PantallaConfiguracionHabito"
 
-    //------------------------------ Estados --------------------------------
+    /* -----------------------------  State  ------------------------------ */
     var descripcion       by remember { mutableStateOf("") }
     var notasHabilitadas  by remember { mutableStateOf(false) }
-    val diasSemana        = listOf("L","M","M","J","V","S","D")
-    var diasSeleccionados by remember { mutableStateOf(List(7){false}) }
 
-    /*  Duración  */
-    var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
+    //  Días de la semana (L-Do). Duplicamos "M" para Martes y Miércoles.
+    val diasSemana        = listOf("L","M","M","J","V","S","D")
+    var diasSeleccionados by remember { mutableStateOf(List(7) { false }) }
+
+    //  Duración
+    var duracionMin by remember { mutableStateOf(15f) }      // 1-180 min
     val rangoDuracion = 1f..180f
 
-    /*  Hora  */
-    var hora                 by remember { mutableStateOf(LocalTime.of(22,0)) }
-    var mostrarTimePicker    by remember { mutableStateOf(false) }
+    //  Hora de notificación
+    var hora              by remember { mutableStateOf(LocalTime.of(22, 0)) }
+    var mostrarTimePicker by remember { mutableStateOf(false) }
 
-    // Launcher para solicitar permisos
+    /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        Log.d(TAG, "Permiso de notificación: $isGranted")
         if (isGranted) {
-            // Programar notificación
-            val notificationService = NotificationService()
-            val now = LocalDateTime.now()
-            val notificationTime = LocalDateTime.of(
-                now.toLocalDate(),
-                hora
+            programarNotificacion(
+                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, notasHabilitadas
             )
-
-            Log.d(TAG, "Iniciando servicio de notificaciones")
-            context.startService(Intent(context, NotificationService::class.java))
-
-            notificationService.scheduleNotification(
-                context = context,
-                diasSeleccionados = diasSeleccionados,
-                hora = notificationTime,
-                descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
-                durationMinutes = duracionMin.toLong()
-            )
-
-            Toast.makeText(context, context.getString(R.string.success_notifications_scheduled), Toast.LENGTH_SHORT).show()
-            navController.navigateUp()
         } else {
-            Toast.makeText(context, context.getString(R.string.error_notification_permission), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                context.getString(R.string.error_notification_permission),
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
-    //------------------------------ UI -------------------------------------
+    /* ----------------------------------  UI  ---------------------------------- */
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.titulo_config_escritura)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 }
             )
         },
-        bottomBar = {
-            BarraNavegacionInferior(navController,"configurar_habito")
-        }
+        bottomBar = { BarraNavegacionInferior(navController, "configurar_habito") }
     ) { innerPadding ->
 
         Column(
@@ -140,7 +115,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            //--------------------- Tarjeta principal ----------------------
+            /* -----------------------  Tarjeta principal  ----------------------- */
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape   = RoundedCornerShape(16.dp),
@@ -152,7 +127,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
 
-                    /*  Descripción  */
+                    // Descripción del hábito
                     OutlinedTextField(
                         value = descripcion,
                         onValueChange = { descripcion = it },
@@ -161,12 +136,8 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    /*  Días  */
-                    Text(
-                        text = stringResource(R.string.label_frecuencia),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    // Selección de días
+                    Etiqueta(stringResource(R.string.label_frecuencia))
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -177,48 +148,40 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 label = d,
                                 selected = diasSeleccionados[i],
                                 onClick  = {
-                                    diasSeleccionados = diasSeleccionados.toMutableList()
-                                        .also { it[i] = !it[i] }
+                                    diasSeleccionados =
+                                        diasSeleccionados.toMutableList().also { it[i] = !it[i] }
                                 }
                             )
                         }
                     }
 
-                    /*  Hora  */
-                    Text(
-                        text = stringResource(R.string.label_hora),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    // Hora
+                    Etiqueta(stringResource(R.string.label_hora))
                     HoraField(hora) { mostrarTimePicker = true }
 
-                    /*  Duración (Slider personalizado)  */
+                    // Duración
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Etiqueta(stringResource(R.string.label_duracion_escritura))
                         Text(
-                            text = stringResource(R.string.label_duracion_escritura),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = formatearDuracion(duracionMin.roundToInt()),
+                            text  = formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         DurationSlider(
-                            value        = duracionMin,
+                            value         = duracionMin,
                             onValueChange = { duracionMin = it },
                             valueRange    = rangoDuracion,
-                            tickEvery     = 15,           // marca cada 15 min
+                            tickEvery     = 15,          // marca cada 15 min
                             modifier      = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = "Selecciona el tiempo que quieres que dure tu hábito de escritura",
+                            text  = stringResource(R.string.hint_duracion),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
-                    /*  Switch  */
+                    // Notas
                     Row(
                         Modifier.fillMaxWidth(),
                         Arrangement.SpaceBetween,
@@ -233,66 +196,77 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 }
             }
 
+            /* ----------------------------  Card de Notas  --------------------------- */
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate("notas") },
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, VerdeBorde),
+                colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.titulo_notas),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
             Spacer(Modifier.weight(1f))
 
-            /*  Guardar  */
-            Button(
-                onClick = {
-                    // Verificar si hay días seleccionados
-                    if (!diasSeleccionados.any { it }) {
-                        Toast.makeText(context, context.getString(R.string.error_no_days_selected), Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    Log.d(TAG, "Guardando configuración de notificaciones")
-                    Log.d(TAG, "Días seleccionados: $diasSeleccionados")
-                    Log.d(TAG, "Hora: $hora")
-                    Log.d(TAG, "Descripción: $descripcion")
-
-                    // Verificar permisos de notificación
-                    when {
-                        ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.POST_NOTIFICATIONS
-                        ) == PackageManager.PERMISSION_GRANTED -> {
-                            Log.d(TAG, "Permiso de notificación ya concedido")
-                            // Ya tenemos permiso, programar notificación
-                            val notificationService = NotificationService()
-                            val now = LocalDateTime.now()
-                            val notificationTime = LocalDateTime.of(
-                                now.toLocalDate(),
-                                hora
-                            )
-
-                            Log.d(TAG, "Iniciando servicio de notificaciones")
-                            context.startService(Intent(context, NotificationService::class.java))
-
-                            notificationService.scheduleNotification(
-                                context = context,
-                                diasSeleccionados = diasSeleccionados,
-                                hora = notificationTime,
-                                descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
-                                durationMinutes = duracionMin.toLong()
-                            )
-
-                            Toast.makeText(context, context.getString(R.string.success_notifications_scheduled), Toast.LENGTH_SHORT).show()
-                            navController.navigateUp()
+            /* ----------------------------  Guardar  --------------------------- */
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    onClick = {
+                        if (!diasSeleccionados.any { it }) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_no_days_selected),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
                         }
-                        else -> {
-                            Log.d(TAG, "Solicitando permiso de notificación")
-                            // Solicitar permiso
+
+                        if (ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            programarNotificacion(
+                                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, notasHabilitadas
+                            )
+                        } else {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.boton_guardar))
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+                }
             }
         }
     }
 
-    //------------------------ Time  Picker ------------------------------
+    /* ---------------------------  Time Picker  ---------------------------- */
     if (mostrarTimePicker) {
         TimePickerDialog(
             initialTime  = hora,
@@ -302,7 +276,18 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     }
 }
 
-/*────────────────────────────────  COMPONENTES  ─────────────────────────────*/
+/* ─────────────────────────────────  COMPONENTES  ────────────────────────────── */
+
+@Composable
+private fun Etiqueta(texto: String) = Text(
+    text = texto,
+    style = MaterialTheme.typography.titleMedium,
+    fontWeight = FontWeight.Medium
+)
+
+/**
+ * Muestra un día en forma de círculo seleccionable.
+ */
 @Composable
 fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
     val bg          = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
@@ -322,6 +307,9 @@ fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Campo que muestra la hora elegida y abre el `TimePickerDialog`.
+ */
 @Composable
 fun HoraField(hora: LocalTime, onClick: () -> Unit) {
     Surface(
@@ -339,20 +327,22 @@ fun HoraField(hora: LocalTime, onClick: () -> Unit) {
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Default.Edit, contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(8.dp))
             Text(
-                text = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
+                text  = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
                 style = MaterialTheme.typography.bodyLarge
             )
             Spacer(Modifier.weight(1f))
-            Icon(Icons.Default.Schedule, null,
+            Icon(Icons.Default.Schedule, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
-/*─────────────────────────────  SLIDER “PIXEL STYLE”  ───────────────────────*/
+/* ──────────────────────────  SLIDER «PIXEL STYLE»  ─────────────────────────── */
+
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun DurationSlider(
@@ -387,25 +377,28 @@ fun DurationSlider(
 
             // Ticks
             Row(
-                modifier = Modifier
+                Modifier
                     .fillMaxWidth()
                     .height(trackHeight)
                     .align(Alignment.Center),
                 horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment     = Alignment.CenterVertically
             ) {
-                val tickCount = ((valueRange.endInclusive - valueRange.start) / tickEvery).toInt() + 1
+                val tickCount =
+                    ((valueRange.endInclusive - valueRange.start) / tickEvery).toInt() + 1
                 repeat(tickCount) {
                     Box(
-                        modifier = Modifier
+                        Modifier
                             .size(trackHeight * 0.3f)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f))
+                            .background(
+                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                            )
                     )
                 }
             }
 
-            // Slider real — libre y con haptics
+            // Slider "real" (transparente, continuo)
             Slider(
                 value = value,
                 onValueChange = {
@@ -413,26 +406,26 @@ fun DurationSlider(
                     haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 },
                 valueRange = valueRange,
-                steps = 0, // ← para que sea continuo
+                steps = 0, // continuo
                 colors = SliderDefaults.colors(
-                    activeTrackColor = Color.Transparent,
+                    activeTrackColor   = Color.Transparent,
                     inactiveTrackColor = Color.Transparent,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                    thumbColor = Color.Transparent
+                    activeTickColor    = Color.Transparent,
+                    inactiveTickColor  = Color.Transparent,
+                    thumbColor         = Color.Transparent
                 ),
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             )
 
-            // Thumb visual, atado a la posición actual
-            val progress = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
-            val thumbOffset = with(density) { (progress * maxWidthPx).toDp() }
+            // Thumb visual ligado a la posición actual
+            val progress     = (value - valueRange.start) /
+                    (valueRange.endInclusive - valueRange.start)
+            val thumbOffset  = with(density) { (progress * maxWidthPx).toDp() }
 
             Box(
-                modifier = Modifier
+                Modifier
                     .width(thumbWidth)
-                    .height(trackHeight + 24.dp) // Aumentado a 24.dp para hacer el thumb más largo
+                    .height(trackHeight + 24.dp)
                     .align(Alignment.CenterStart)
                     .offset(x = thumbOffset)
                     .clip(RoundedCornerShape(thumbWidth))
@@ -442,8 +435,8 @@ fun DurationSlider(
     }
 }
 
+/* ────────────────────────────  TIME PICKER  ──────────────────────────────── */
 
-/*─────────────────────────────  TIME PICKER  ───────────────────────────────*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
@@ -451,13 +444,16 @@ fun TimePickerDialog(
     onTimePicked: (LocalTime) -> Unit,
     onDismiss   : () -> Unit,
 ) {
-    val state = rememberTimePickerState(initialTime.hour, initialTime.minute, false)
+    val state = rememberTimePickerState(
+        initialTime.hour, initialTime.minute, is24Hour = false
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                onTimePicked(LocalTime.of(state.hour, state.minute)); onDismiss()
+                onTimePicked(LocalTime.of(state.hour, state.minute))
+                onDismiss()
             }) { Text(stringResource(android.R.string.ok).uppercase()) }
         },
         dismissButton = {
@@ -469,10 +465,49 @@ fun TimePickerDialog(
     )
 }
 
-/*──────────────────────────  HELPERS  ─────────────────────────────────────*/
+/* ────────────────────────────  HELPERS  ─────────────────────────────────── */
+
 private fun formatearDuracion(min: Int): String = when {
-    min < 60           -> "$min minutos"
-    min == 60          -> "1 hora"
-    min % 60 == 0      -> "${min/60} horas"
-    else               -> "${min/60} horas ${min%60} min"
+    min  < 60      -> "$min min"
+    min == 60      -> "1 hora"
+    min % 60 == 0  -> "${min / 60} h"
+    else           -> "${min / 60} h ${min % 60} min"
+}
+
+/**
+ * Programa la notificación y navega atrás si todo salió bien.
+ */
+private fun programarNotificacion(
+    context: android.content.Context,
+    descripcion: String,
+    duracionMin: Float,
+    hora: LocalTime,
+    diasSeleccionados: List<Boolean>,
+    navController: NavHostController,
+    tag: String,
+    notasHabilitadas: Boolean
+) {
+    val notificationService = NotificationService()
+    val notificationTime    = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
+
+    Log.d(tag, "Iniciando servicio de notificaciones")
+    context.startService(Intent(context, NotificationService::class.java))
+
+    notificationService.scheduleNotification(
+        context           = context,
+        diasSeleccionados = diasSeleccionados,
+        hora              = notificationTime,
+        descripcion       = descripcion.ifEmpty {
+            context.getString(R.string.notification_default_text)
+        },
+        durationMinutes   = duracionMin.toLong(),
+        notasHabilitadas  = notasHabilitadas
+    )
+
+    Toast.makeText(
+        context,
+        context.getString(R.string.success_notifications_scheduled),
+        Toast.LENGTH_SHORT
+    ).show()
+    navController.navigateUp()
 }

@@ -27,8 +27,21 @@ class NotificationReceiver : BroadcastReceiver() {
         val descripcion = intent.getStringExtra("descripcion") ?: context.getString(R.string.notification_default_text)
         val diaSemana = intent.getIntExtra("dia_semana", -1)
         val durationMinutes = intent.getLongExtra("duration_minutes", 15)
+        val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
         
-        Log.e(TAG, "onReceive: Descripción: $descripcion, Día: $diaSemana, Duración: $durationMinutes minutos")
+        Log.e(TAG, "onReceive: Descripción: $descripcion, Día: $diaSemana, Duración: $durationMinutes minutos, Notas habilitadas: $notasHabilitadas")
+        
+        // Verificar si el temporizador ya está activo
+        val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
+            action = WritingTimerService.CHECK_TIMER_ACTION
+        }
+        
+        // Iniciar el servicio para verificar el estado
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(checkTimerIntent)
+        } else {
+            context.startService(checkTimerIntent)
+        }
         
         // Crear intent para abrir la app
         val activityIntent = Intent(context, MainActivity::class.java).apply {
@@ -40,16 +53,18 @@ class NotificationReceiver : BroadcastReceiver() {
         )
 
         // Crear intent para iniciar el temporizador
-        val timerIntent = Intent(context, WritingTimerService::class.java).apply {
-            action = START_TIMER_ACTION
+        val startTimerIntent = Intent(context, WritingTimerService::class.java).apply {
+            action = WritingTimerService.START_TIMER_ACTION
             putExtra("duration_minutes", durationMinutes)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         Log.e(TAG, "onReceive: Creando intent para temporizador con duración: $durationMinutes minutos")
         
-        val timerPendingIntent = PendingIntent.getService(
+        // Crear PendingIntent para la notificación
+        val startTimerPendingIntent = PendingIntent.getService(
             context,
             NOTIFICATION_ID + diaSemana,
-            timerIntent,
+            startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
@@ -66,9 +81,33 @@ class NotificationReceiver : BroadcastReceiver() {
             .addAction(
                 R.drawable.ic_notification,
                 context.getString(R.string.start_writing_action, durationMinutes),
-                timerPendingIntent
+                startTimerPendingIntent
             )
             .setVibrate(longArrayOf(0, 500)) // Vibra una sola vez por 500ms
+
+        // Agregar botón de notas si está habilitado
+        if (notasHabilitadas) {
+            val notesIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                action = "com.example.koalm.START_TIMER"
+                putExtra("duration_minutes", durationMinutes)
+                addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+            }
+            Log.d(TAG, "Creando intent para notas con duración: $durationMinutes minutos")
+            
+            val notesPendingIntent = PendingIntent.getActivity(
+                context,
+                NOTIFICATION_ID + diaSemana + 1,
+                notesIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            
+            builder.addAction(
+                R.drawable.ic_notification,
+                context.getString(R.string.open_notes_action),
+                notesPendingIntent
+            )
+        }
 
         // Mostrar la notificación
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

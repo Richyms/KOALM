@@ -61,6 +61,10 @@ android {
 }
 
 dependencies {
+    // - Imágenes
+    implementation(libs.picasso)
+    implementation(libs.coil.compose)
+
     // — Firebase & Firestore
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
@@ -111,3 +115,4 @@ dependencies {
 }
 
 apply(plugin = "com.google.gms.google-services")
+

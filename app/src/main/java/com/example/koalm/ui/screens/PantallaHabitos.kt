@@ -29,10 +29,23 @@ fun PantallaHabitos(navController: NavHostController) {
             )
         },
         bottomBar = {
-            BarraNavegacionInferior(
-                navController = navController,
-                rutaActual = "tipos_habitos"
-            )
+            NavigationBar(tonalElevation = 8.dp) {
+                listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
+                    val icon = listOf(Icons.Default.Home, Icons.Default.List, Icons.Default.Person)[index]
+                    NavigationBarItem(
+                        selected = index == 0,
+                        onClick = {
+                            when (index) {
+                                0 -> navController.navigate( "menu" )
+                                1 -> navController.navigate("tipos_habitos")
+                                2 -> navController.navigate( "personalizar" )
+                            }
+                        },
+                        icon = { Icon(icon, contentDescription = label) },
+                        label = { Text(label) }
+                    )
+                }
+            }
         }
     ) { innerPadding ->
         Column(

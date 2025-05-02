@@ -1,8 +1,8 @@
 package com.example.koalm.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,7 +22,7 @@ fun BarraNavegacionInferior(
     ) {
         listOf(
             Triple("Inicio", Icons.Default.Home, "menu"),
-            Triple("Hábitos", Icons.Default.List, "tipos_habitos"),
+            Triple("Hábitos", Icons.AutoMirrored.Filled.List, "tipos_habitos"),
             Triple("Perfil", Icons.Default.Person, "perfil")
         ).forEach { (label, icon, route) ->
             NavigationBarItem(

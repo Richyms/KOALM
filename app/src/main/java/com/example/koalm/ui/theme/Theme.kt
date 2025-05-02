@@ -37,18 +37,16 @@ private val DarkColorScheme = darkColorScheme(
     surface = Color.Black,
     onSurface = Color.White,
     surfaceVariant = GrisClaro,
-    onSurfaceVariant = Color.Black,
+    onSurfaceVariant = Color.White,
     surfaceTint = VerdePrincipal
 )
 
 @Composable
 fun KoalmTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
         shapes = Shapes,
         content = content

@@ -10,8 +10,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
@@ -42,18 +41,37 @@ class MainActivity : ComponentActivity() {
         credentialManager = CredentialManager.create(this)
 
         //Pantalla a la que ira depende si esta logeado o no devuelve una valor bool
-
         val startDestination = if (firebaseAuth.currentUser?.isEmailVerified == true) {
             "menu"
         } else {
             "iniciar"
         }
+
         // Lanza la UI Compose
         setContent {
-            MainApp(
-                onGoogleSignInClick = { handleGoogleSignIn() },
-                startDestination = startDestination
-            )
+            val navController = rememberNavController()
+            
+            // Manejar la acción del temporizador
+            LaunchedEffect(intent?.action) {
+                when (intent?.action) {
+                    "com.example.koalm.START_TIMER" -> {
+                        navController.navigate("notas")
+                    }
+                }
+            }
+            
+            KoalmTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNavigation(
+                        navController = navController,
+                        onGoogleSignInClick = { handleGoogleSignIn() },
+                        startDestination = startDestination
+                    )
+                }
+            }
         }
     }
 
@@ -114,33 +132,29 @@ class MainActivity : ComponentActivity() {
 
     private fun processCredential(response: GetCredentialResponse) {
         val cred = response.credential
-        if (cred is CustomCredential &&
-            cred.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
-        ) {
-            val idToken = GoogleIdTokenCredential.createFrom(cred.data).idToken
-            if (idToken != null) {
-                firebaseAuth.signInWithCredential(
-                    GoogleAuthProvider.getCredential(idToken, null)
-                ).addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        Toast.makeText(
-                            this,
-                            "Bienvenido ${firebaseAuth.currentUser?.displayName}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        startActivity(
-                            Intent(this, MainActivity::class.java).apply {
-                                putExtra("navigateTo", "habitos")
-                            }
-                        )
-                        finish()
-                    } else {
-                        Toast.makeText(
-                            this,
-                            "Error al iniciar sesión: ${task.exception?.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+        val idToken = GoogleIdTokenCredential.createFrom(cred.data).idToken
+        if (idToken != null) {
+            firebaseAuth.signInWithCredential(
+                GoogleAuthProvider.getCredential(idToken, null)
+            ).addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(
+                        this,
+                        "Bienvenido ${firebaseAuth.currentUser?.displayName}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    startActivity(
+                        Intent(this, MainActivity::class.java).apply {
+                            putExtra("navigateTo", "habitos")
+                        }
+                    )
+                    finish()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Error al iniciar sesión: ${task.exception?.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         } else {

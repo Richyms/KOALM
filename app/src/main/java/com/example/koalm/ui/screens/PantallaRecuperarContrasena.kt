@@ -28,7 +28,7 @@ import com.example.koalm.ui.theme.*
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ActionCodeSettings
-
+import com.google.firebase.firestore.FirebaseFirestore
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,45 +115,68 @@ fun MensajeExplicacion() {
     )
 }
 
-
 @Composable
 fun BotonEnviarCorreo(
     correo: String,
     navController: NavController,
     context: android.content.Context
 ) {
-    val auth = FirebaseAuth.getInstance()
+    var correoExiste by remember { mutableStateOf<Boolean?>(null) }
+    var mostrarMensajeError by remember { mutableStateOf(false) }
 
-    val emailValido =
-        correo.isNotBlank() &&
-                android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()
+    // Función de validación del correo
+    fun validarCorreoExistente(correo: String) {
+        FirebaseFirestore.getInstance()
+            .collection("usuarios")
+            .whereEqualTo("email", correo)
+            .get()
+            .addOnSuccessListener { docs ->
+                correoExiste = !docs.isEmpty
+                if (correoExiste == true) {
+                    // Si existe, enviar correo de restablecimiento
+                    val auth = FirebaseAuth.getInstance()
+                    val actionCodeSettings = ActionCodeSettings.newBuilder()
+                        .setUrl("https://koalm-94491.web.app")
+                        .setHandleCodeInApp(false)
+                        .setAndroidPackageName("com.example.koalm", true, "35")
+                        .build()
+
+                    auth.sendPasswordResetEmail(correo, actionCodeSettings)
+                        .addOnSuccessListener {
+                            Toast.makeText(
+                                context,
+                                "Revisa tu bandeja de entrada; te enviamos el enlace.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            navController.navigate("restablecer")
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, it.localizedMessage, Toast.LENGTH_LONG).show()
+                        }
+                } else {
+                    // Si no existe, mostrar mensaje de error
+                    mostrarMensajeError = true
+                        Toast.makeText(
+                            context,
+                            "No existe una cuenta asociada a este correo.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                }
+            }
+            .addOnFailureListener {
+                correoExiste = false
+                mostrarMensajeError = true
+            }
+    }
+
+    val emailValido = correo.isNotBlank() &&
+            android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()
 
     Button(
         enabled = emailValido,
         onClick = {
-            val auth = FirebaseAuth.getInstance()
-
-            val actionCodeSettings = ActionCodeSettings.newBuilder()
-                .setUrl("https://koalm-94491.web.app")
-                .setHandleCodeInApp(false)
-                .setAndroidPackageName("com.example.koalmV1", true, "35")
-                .build()
-
-            auth.sendPasswordResetEmail(correo, actionCodeSettings)
-                .addOnSuccessListener {
-                    Toast.makeText(
-                        context,
-                        "Revisa tu bandeja de entrada; te enviamos el enlace.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    // navController.popBackStack()
-                    navController.navigate("restablecer")
-                }
-                .addOnFailureListener {
-                    Toast.makeText(context, it.localizedMessage, Toast.LENGTH_LONG).show()
-                }
-
-
+            // Al presionar el botón, validamos si el correo existe
+            validarCorreoExistente(correo)
         },
         colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
     ) {

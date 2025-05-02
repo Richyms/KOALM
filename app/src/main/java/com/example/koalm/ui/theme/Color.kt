@@ -31,3 +31,6 @@ val MarronKoala = Color(0xFF5D4037)         // Íconos y detalles visuales
 // MODO OSCURO
 
 val FondoOscuro = Color(0xFF0E1312)
+
+//Eliminar
+val RojoClaro = Color(0xFFEC615B)

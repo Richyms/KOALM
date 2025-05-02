@@ -32,6 +32,21 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import java.util.Calendar
 import java.util.Locale
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.layout.ContentScale
+import android.util.Base64
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.graphics.asImageBitmap
+import java.util.TimeZone
+import androidx.compose.foundation.background
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,28 +62,49 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     var altura by remember { mutableStateOf("") }
     var generoSeleccionado by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+
     val opcionesGenero = listOf("Masculino", "Femenino", "Prefiero no decirlo")
+    var username by remember { mutableStateOf("") }  // Aquí almacenamos el username
 
     // Instancias de Auth y Firestore
     val auth = FirebaseAuth.getInstance()
     val uid  = auth.currentUser?.uid
+    val email  = auth.currentUser?.email
     val db   = FirebaseFirestore.getInstance()
 
+    // Subir imagen a Firebase
+    var imagenUri by remember { mutableStateOf<Uri?>(null) }
+    var imagenBase64 by remember { mutableStateOf<String?>(null) }
+
+    // Launcher para abrir la galería y seleccionar una imagen
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            imagenUri = it
+            val inputStream = context.contentResolver.openInputStream(it)
+            val bytes = inputStream?.readBytes()
+            imagenBase64 = Base64.encodeToString(bytes, Base64.DEFAULT)
+            inputStream?.close()
+        }
+    }
     // Leer los datos guardados una sola vez al componer
-    LaunchedEffect(uid) {
-        if (uid != null) {
+    LaunchedEffect(email) {
+        if (email != null) {
             db.collection("usuarios")
-                .document(uid)
+                .document(email)
                 .get()
                 .addOnSuccessListener { doc ->
+                    username = doc.getString("username").orEmpty()
                     val u = doc.toObject(Usuario::class.java)
                     u?.let {
-                        nombre             = it.nombre    ?: ""
-                        apellidos          = it.apellido  ?: ""
-                        fechasec           = it.nacimiento?: ""
-                        peso               = it.peso?.toString()   ?: ""
-                        altura             = it.altura?.toString() ?: ""
-                        generoSeleccionado = it.genero   ?: ""
+                        imagenBase64       = it.imagenBase64.orEmpty()
+                        nombre             = it.nombre.orEmpty()
+                        apellidos          = it.apellido.orEmpty()
+                        fechasec           = it.nacimiento.orEmpty()
+                        peso               = it.peso?.toString().orEmpty()
+                        altura             = it.altura?.toString().orEmpty()
+                        generoSeleccionado = it.genero.orEmpty()
                     }
                 }
                 .addOnFailureListener { e ->
@@ -89,6 +125,25 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
+        },
+        bottomBar = {
+            NavigationBar(tonalElevation = 8.dp) {
+                listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
+                    val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
+                    NavigationBarItem(
+                        selected = index == 0,
+                        onClick = {
+                            when (index) {
+                                0 -> navController.navigate( "menu" )
+                                1 -> navController.navigate("tipos_habitos")
+                                2 -> navController.navigate( "personalizar" )
+                            }
+                        },
+                        icon = { Icon(icon, contentDescription = label) },
+                        label = { Text(label) }
+                    )
+                }
+            }
         }
     ) { innerPadding ->
         Column(
@@ -100,11 +155,30 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
-            ImagenUsuario()
+            ImagenUsuario(
+                imagenBase64 = imagenBase64,
+                onEditClick = { launcher.launch("image/*") },
+                onDeleteClick = {
+                    imagenUri = null
+                    imagenBase64 = null
+                }
+            )
             Spacer(modifier = Modifier.height(20.dp))
+            CampoUsuario(username)         { username = it}
             CampoNombre(nombre)            { nombre = it }
             CampoApellidos(apellidos)      { apellidos = it }
+            // Mostrar el campo de fecha de nacimiento
             CampoFechaNacimiento(fechasec) { showDatePicker = true }
+            // Mostrar el DatePicker y manejar la selección de fecha
+            FechaNacimientoSelector(
+                showDatePicker = showDatePicker,
+                onDismiss = { showDatePicker = false },
+                onValidDateSelected = { fechaSeleccionada ->
+                    fechasec = fechaSeleccionada
+                    showDatePicker = false
+                }
+            )
+
             CampoPeso(peso)                { peso = it }
             CampoAltura(altura)            { altura = it }
             SelectorGenero(opcionesGenero, generoSeleccionado) { generoSeleccionado = it }
@@ -112,22 +186,45 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
 
             BotonGuardarPerfil {
                 if (uid != null) {
-                    // Construir objeto Usuario
+                    if (email == null) {
+                        Toast.makeText(context, "No se pudo obtener el correo", Toast.LENGTH_SHORT).show()
+                        return@BotonGuardarPerfil
+                    }
+
+                    // Validar campos requeridos
+                    if (
+                    // imagenBase64 Es solo si quieeere
+                        username.isBlank() ||
+                        nombre.isBlank() ||
+                        apellidos.isBlank() ||
+                        fechasec.isEmpty() ||
+                        peso.isEmpty() ||
+                        peso.toFloatOrNull() == null ||
+                        altura.isEmpty() ||
+                        altura.toIntOrNull() == null ||
+                        generoSeleccionado.isEmpty()
+                    ) {
+                        Toast.makeText(context, "Por favor completa todos los campos correctamente.", Toast.LENGTH_SHORT).show()
+                        return@BotonGuardarPerfil
+                    }
+
+                    // Construir objeto usuario
                     val usuario = Usuario(
-                        id         = uid,
+                        imagenBase64 = imagenBase64,
                         userId     = uid,
-                        email      = auth.currentUser?.email,
-                        username   = auth.currentUser?.email?.substringBefore("@"),
+                        email      = email,
+                        username   = username,
                         nombre     = nombre,
                         apellido   = apellidos,
                         nacimiento = fechasec,
-                        peso       = peso.toIntOrNull(),
+                        peso       = String.format(Locale.US, "%.2f", peso.toFloatOrNull() ?: 0f).toFloat(),
                         altura     = altura.toIntOrNull(),
                         genero     = generoSeleccionado
                     )
+
                     // Guardar (merge) en Firestore
                     db.collection("usuarios")
-                        .document(uid)
+                        .document(email)
                         .set(usuario.toMap(), SetOptions.merge())
                         .addOnSuccessListener {
                             Toast.makeText(context, "Perfil guardado correctamente", Toast.LENGTH_SHORT).show()
@@ -145,50 +242,161 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
 
-    // DatePickerDialog
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = { TextButton(onClick = { showDatePicker = false }) { Text("OK") } },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+//Función auxiliar para la imagen del usuario
+fun base64ToBitmap(base64Str: String): Bitmap? {
+    return try {
+        val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+@Composable
+fun ImagenUsuario(imagenBase64: String?, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
+    val isDark = isSystemInDarkTheme()
+    val tint = if (isDark) Color.White else Color.Black
+
+    Box(
+        modifier = Modifier
+            .size(200.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .clip(CircleShape)
         ) {
-            val datePickerState = rememberDatePickerState()
-            DatePicker(
-                state = datePickerState,
-                showModeToggle = false,
-                colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = VerdePrincipal,
-                    todayDateBorderColor    = VerdePrincipal
-                )
-            )
-            LaunchedEffect(datePickerState.selectedDateMillis) {
-                datePickerState.selectedDateMillis?.let { millis ->
-                    val cal = Calendar.getInstance().apply { timeInMillis = millis }
-                    fechasec = String.format(
-                        Locale("es", "MX"),
-                        "%02d/%02d/%04d",
-                        cal.get(Calendar.MONTH) + 1,
-                        cal.get(Calendar.DAY_OF_MONTH),
-                        cal.get(Calendar.YEAR)
+            if (!imagenBase64.isNullOrEmpty()) {
+                val bitmap = remember(imagenBase64) { base64ToBitmap(imagenBase64) }
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Usuario",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile),
+                        contentDescription = "Usuario",
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        colorFilter = ColorFilter.tint(tint)
                     )
                 }
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.profile),
+                    contentDescription = "Usuario",
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    colorFilter = ColorFilter.tint(tint)
+                )
+            }
+        }
+
+        // Botones de edición y eliminación en la parte inferior
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 16.dp) 
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_edit),
+                    contentDescription = "Editar foto",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(RojoClaro, CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = "Eliminar foto",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
     }
 }
 
 @Composable
-fun ImagenUsuario() {
-    val isDark = isSystemInDarkTheme()
-    val tint   = if (isDark) Color.White else Color.Black
-    Image(
-        painter = painterResource(id = R.drawable.profile),
-        contentDescription = "Usuario",
-        modifier = Modifier.size(200.dp),
-        colorFilter = ColorFilter.tint(tint)
+fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
+    val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
+    val limpio = value.filter { it.code != 8203 } // elimina caracteres invisibles si los hay
+
+    val valido = limpio.isNotBlank() &&
+            limpio.trim().length >= 3 &&
+            regex.matches(limpio)
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = { nuevoTexto ->
+            if (nuevoTexto.matches(regex)) {
+                onValueChange(nuevoTexto)
+            }
+        },
+        label = { Text("Nombre de usuario *") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = if (valido) VerdePrincipal else Color.Red,
+            unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
+            focusedLabelColor = if (valido) VerdePrincipal else Color.Red,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            errorLabelColor = Color.Red
+        ),
+        supportingText = {
+            when {
+                value.isBlank() -> {
+                    Text("El nombre no puede estar vacío o solo contener espacios.",
+                        color = Color.Red,
+                        fontSize = 12.sp)
+                }
+                value.trim().length < 3 -> {
+                    Text("Debe tener al menos 3 caracteres (excluyendo espacios).",
+                        color = Color.Red,
+                        fontSize = 12.sp)
+                }
+                !regex.matches(value) -> {
+                    Text("Solo se permiten letras, números, guion bajo y espacios.",
+                        color = Color.Red,
+                        fontSize = 12.sp)
+                }
+                else -> {
+                    Text("Nombre de usuario válido.",
+                        color = GrisMedio,
+                        fontSize = 12.sp)
+                }
+            }
+        }
     )
+
+    Spacer(modifier = Modifier.height(12.dp))
 }
+
 
 @Composable
 fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
@@ -196,10 +404,11 @@ fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = filtered,
         onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
-        label = { Text("Nombre") },
+        label = { Text("Nombre *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor   = VerdePrincipal,
@@ -216,10 +425,11 @@ fun CampoApellidos(value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = filtered,
         onValueChange = { onValueChange(it.filter { c -> c.isLetter() || c.isWhitespace() }) },
-        label = { Text("Apellidos") },
+        label = { Text("Apellidos *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor   = VerdePrincipal,
@@ -230,18 +440,95 @@ fun CampoApellidos(value: String, onValueChange: (String) -> Unit) {
     Spacer(modifier = Modifier.height(12.dp))
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FechaNacimientoSelector(
+    showDatePicker: Boolean,
+    onDismiss: () -> Unit,
+    onValidDateSelected: (String) -> Unit
+) {
+    if (showDatePicker) {
+        val context = LocalContext.current
+        val datePickerState = rememberDatePickerState()
+
+        DatePickerDialog(
+            onDismissRequest = { onDismiss() },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val millisUTC = datePickerState.selectedDateMillis
+                        if (millisUTC != null) {
+                            // Ajustar a zona horaria local
+                            val offset = TimeZone.getDefault().getOffset(millisUTC)
+                            val correctedMillis = millisUTC + offset
+
+                            val cal = Calendar.getInstance().apply { timeInMillis = correctedMillis }
+                            val current = Calendar.getInstance()
+
+                            val age = current.get(Calendar.YEAR) - cal.get(Calendar.YEAR)
+                            val cumpleEdad = age > 12 || (age == 12 &&
+                                    (cal.get(Calendar.MONTH) < current.get(Calendar.MONTH) ||
+                                            (cal.get(Calendar.MONTH) == current.get(Calendar.MONTH) &&
+                                                    cal.get(Calendar.DAY_OF_MONTH) <= current.get(Calendar.DAY_OF_MONTH)))
+                                    )
+
+                            if (cumpleEdad) {
+                                val fecha = String.format(
+                                    Locale("es", "MX"),
+                                    "%02d/%02d/%04d",
+                                    cal.get(Calendar.DAY_OF_MONTH) + 1,
+                                    cal.get(Calendar.MONTH) + 1,
+                                    cal.get(Calendar.YEAR)
+                                )
+                                onValidDateSelected(fecha)
+                                onDismiss()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "La edad calculada no es válida para continuar.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        } else {
+                            onDismiss()
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onDismiss() }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                showModeToggle = false,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = VerdePrincipal,
+                    todayDateBorderColor = VerdePrincipal
+                )
+            )
+        }
+    }
+}
+
+
+
 @Composable
 fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
     val iconTint = if (isSystemInDarkTheme()) Color.White else Color.Black
     OutlinedTextField(
         value = value,
         onValueChange = {},
-        label = { Text("Fecha de nacimiento") },
+        label = { Text("Fecha de nacimiento *") },
         placeholder = { Text("MM/DD/YYYY") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() },
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         readOnly = true,
         trailingIcon = {
             Icon(
@@ -262,14 +549,20 @@ fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
 
 @Composable
 fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
-    val filtered = value.filter { it.isDigit() }
     OutlinedTextField(
-        value = filtered,
-        onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
-        label = { Text("Peso") },
+        value = value,
+        onValueChange = { newValue ->
+            // Expresión regular: hasta 3 dígitos antes del punto, opcionalmente punto y hasta 2 dígitos después
+            val regex = Regex("^\\d{0,3}(\\.\\d{0,2})?$")
+            if (newValue.isEmpty() || newValue.matches(regex)) {
+                onValueChange(newValue)
+            }
+        },
+        label = { Text("Peso *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         trailingIcon = { Text("kg", color = GrisMedio) },
         colors = OutlinedTextFieldDefaults.colors(
@@ -281,16 +574,18 @@ fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
     Spacer(modifier = Modifier.height(12.dp))
 }
 
+
 @Composable
 fun CampoAltura(value: String, onValueChange: (String) -> Unit) {
     val filtered = value.filter { it.isDigit() }
     OutlinedTextField(
         value = filtered,
         onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
-        label = { Text("Altura") },
+        label = { Text("Altura *") },
         modifier = Modifier
-            .fillMaxWidth(0.97f)
-            .clip(RoundedCornerShape(16.dp)),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(12.dp),
         singleLine = true,
         trailingIcon = { Text("cm", color = GrisMedio) },
         colors = OutlinedTextFieldDefaults.colors(
@@ -309,7 +604,7 @@ fun SelectorGenero(
     onSelect: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth(0.97f)) {
-        Text("Género", style = MaterialTheme.typography.labelMedium)
+        Text("Género *", style = MaterialTheme.typography.labelMedium)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -345,12 +640,12 @@ fun SelectorGenero(
 @Composable
 fun BotonGuardarPerfil(onClick: () -> Unit) {
     Button(
-        onClick   = onClick,
+        onClick = onClick,
         modifier = Modifier
             .width(200.dp)
-            .padding(50.dp),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
     }
