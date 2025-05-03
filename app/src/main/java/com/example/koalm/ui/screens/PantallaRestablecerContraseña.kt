@@ -1,5 +1,7 @@
 package com.example.koalm.ui.screens
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -63,6 +65,9 @@ fun PantallaRestablecerContrasena(navController: NavController) {
                 color = GrisMedio,
                 textAlign = TextAlign.Center
             )
+            Handler(Looper.getMainLooper()).postDelayed({
+                navController.navigate("iniciar")
+            }, 7000)  //7000 milisegundos = 7 segundos
         }
     }
 }

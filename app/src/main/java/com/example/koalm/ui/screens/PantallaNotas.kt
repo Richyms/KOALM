@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.koalm.R
@@ -115,7 +116,12 @@ fun PantallaNotas(navController: NavHostController) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
-            context.registerReceiver(receiver, filter)
+            ContextCompat.registerReceiver(
+                context,
+                receiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
         }
         Log.d("PantallaNotas", "Receptor registrado para acción: ${WritingTimerService.TIMER_UPDATE_ACTION}")
 
@@ -337,7 +343,6 @@ private fun TarjetaNota(nota: Nota) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DialogoNuevaNota(
     onDismiss: () -> Unit,
