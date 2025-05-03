@@ -1,5 +1,6 @@
-package com.example.koalmv1.ui.screens
+package com.example.koalm.ui.screens
 
+import android.annotation.SuppressLint
 import android.app.TimePickerDialog
 import android.content.Context
 import android.widget.TimePicker
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,20 +20,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.koalm.R
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfigurarDesconexionDigital(navController: NavController? = null) {
     val context = LocalContext.current
     var selectedTime by remember { mutableStateOf("10:00 pm") }
     var descripcion by remember { mutableStateOf("Desconectar para reconectar... contigo mismo.") }
     var selectedDays by remember { mutableStateOf(setOf<String>()) }
+
 
     Column(
         modifier = Modifier
@@ -41,7 +45,7 @@ fun PantallaConfigurarDesconexionDigital(navController: NavController? = null) {
         // Icono de regreso y título
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { navController?.navigateUp() }) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -77,7 +81,7 @@ fun PantallaConfigurarDesconexionDigital(navController: NavController? = null) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val dias = listOf("D", "L", "M", "M", "J", "V", "S")
+                val dias = listOf("L", "M", "M", "J", "V", "S", "D")
                 dias.forEach { dia ->
                     val isSelected = selectedDays.contains(dia)
                     DiaSeleccionable(
@@ -129,17 +133,22 @@ fun PantallaConfigurarDesconexionDigital(navController: NavController? = null) {
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.weight(1f))
 
-        Button(
-            onClick = { /* Guardar acción */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9B63))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Guardar", color = Color.White)
+        Button(
+                onClick = { /* Guardar acción */ },
+                modifier = Modifier
+                    .width(200.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+            }
         }
     }
 }
@@ -168,6 +177,7 @@ fun DiaSeleccionable(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 // Función para mostrar el TimePicker
+@SuppressLint("DefaultLocale")
 fun showTimePicker(context: Context, onTimeSelected: (String) -> Unit) {
     val calendar = Calendar.getInstance()
     val hour = calendar.get(Calendar.HOUR_OF_DAY)

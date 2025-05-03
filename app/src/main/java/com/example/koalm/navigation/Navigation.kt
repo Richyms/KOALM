@@ -43,6 +43,7 @@ fun AppNavigation(
         composable("salud_mental") { PantallaSaludMental(navController) }
         composable("salud_fisica") { PantallaSaludFisica(navController) }
         composable("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) } // Falta corregir la api minSdkVersion a v.31
+        composable("configurar-habito-desconexionDigital") { PantallaConfigurarDesconexionDigital(navController) }
         composable("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditación(navController) }
         composable("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
         composable("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }

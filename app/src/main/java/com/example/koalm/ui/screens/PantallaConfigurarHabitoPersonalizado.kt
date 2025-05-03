@@ -236,9 +236,9 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                     )
 
                     Text(
-                    text = stringResource(R.string.label_configuracion_adicional),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                        text = stringResource(R.string.label_configuracion_adicional),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
 
                     Divider(
@@ -276,24 +276,24 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
 
 
                     if (frecuenciaActivo) {
-                    /*Text(
+                        /*Text(
                         text = stringResource(R.string.label_frecuencia_P),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )*/
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        listOf("S", "L", "M", "M", "J", "V", "S").forEachIndexed { index, dia ->
-                            DiaCircle(label = dia, selected = diasSeleccionados[index]) {
-                                diasSeleccionados = diasSeleccionados.toMutableList()
-                                    .also { it[index] = !it[index] }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            listOf("S", "L", "M", "M", "J", "V", "S").forEachIndexed { index, dia ->
+                                DiaCircle(label = dia, selected = diasSeleccionados[index]) {
+                                    diasSeleccionados = diasSeleccionados.toMutableList()
+                                        .also { it[index] = !it[index] }
+                                }
                             }
                         }
                     }
-                }
                     Divider(
                         color = Color.Gray,
                         thickness = 1.dp,
@@ -419,26 +419,25 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             }
 
 
+                            // 🟢 Botón + Agregar
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clickable {
 
-                                // 🟢 Botón + Agregar
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clickable {
+                                        horarios.add(LocalTime.now())
 
-                                                horarios.add(LocalTime.now())
-
-                                        }
-                                        .padding(top = 8.dp)
-                                ) {
-                                    Icon(Icons.Default.AddCircle, contentDescription = "Agregar")
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(text = "Agregar.", fontSize = 14.sp)
-                                }
-
-                                }
+                                    }
+                                    .padding(top = 8.dp)
+                            ) {
+                                Icon(Icons.Default.AddCircle, contentDescription = "Agregar")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Agregar.", fontSize = 14.sp)
+                            }
 
                         }
+
+                    }
 
 
 
@@ -487,126 +486,135 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                     )*/
 
                     if (finalizarActivo) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { modoFecha = true },
-                            border = BorderStroke(1.dp, VerdeBorde),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (modoFecha) Color.White else Color.Black
-                            ),
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = stringResource(R.string.boton_fecha))
-                        }
-
-                        OutlinedButton(
-                            onClick = { modoFecha = false },
-                            border = BorderStroke(1.dp, VerdeBorde),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (!modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (!modoFecha) Color.White else Color.Black
-                            ),
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = stringResource(R.string.boton_dias))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (modoFecha) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.label_ultimo_dia),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
+                            OutlinedButton(
+                                onClick = { modoFecha = true },
+                                border = BorderStroke(1.dp, VerdeBorde),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (modoFecha) Color.White else Color.Black
+                                ),
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(text = stringResource(R.string.boton_fecha))
+                            }
 
                             OutlinedButton(
-                                onClick = { mostrarDatePicker = true },
+                                onClick = { modoFecha = false },
                                 border = BorderStroke(1.dp, VerdeBorde),
-                                shape = RoundedCornerShape(50),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                )
+                                    containerColor = if (!modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (!modoFecha) Color.White else Color.Black
+                                ),
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Icon(Icons.Default.CalendarToday, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = stringResource(R.string.boton_dias))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if (modoFecha) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    fechaSeleccionada?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                                        ?: stringResource(R.string.boton_seleccionar_fecha),
-                                    color = Color.Black
+                                    text = stringResource(R.string.label_ultimo_dia),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                OutlinedButton(
+                                    onClick = { mostrarDatePicker = true },
+                                    border = BorderStroke(1.dp, VerdeBorde),
+                                    shape = RoundedCornerShape(50),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Icon(Icons.Default.CalendarToday, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        fechaSeleccionada?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                            ?: stringResource(R.string.boton_seleccionar_fecha),
+                                        color = Color.Black
+                                    )
+                                }
+                            }
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.label_despues_dias),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
+
+                                OutlinedTextField(
+                                    value = diasDuracion,
+                                    onValueChange = { diasDuracion = it },
+                                    modifier = Modifier
+                                        .width(70.dp)
+                                        .height(48.dp),
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(50),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
+
+                                Text(
+                                    text = stringResource(R.string.label_dias),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = stringResource(R.string.label_despues_dias),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
-
-                            OutlinedTextField(
-                                value = diasDuracion,
-                                onValueChange = { diasDuracion = it },
-                                modifier = Modifier
-                                    .width(70.dp)
-                                    .height(48.dp),
-                                singleLine = true,
-                                shape = RoundedCornerShape(50),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
-
-                            Text(
-                                text = stringResource(R.string.label_dias),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
                     }
                 }
             }
 
             Spacer(Modifier.weight(1f))
-
-            Button(
-                onClick = {
-                    if (nombreHabito.isBlank()) {
-                        Toast.makeText(context, errorNombre, Toast.LENGTH_SHORT).show()
-                    } else if (horaRecordatorio == null) {
-                        Toast.makeText(context, errorHora, Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, mensajeExito, Toast.LENGTH_SHORT).show()
-                        navController.navigateUp()
-                    }
-                },
-                modifier = Modifier
-                    .width(150.dp)
-                    .align(Alignment.CenterHorizontally)
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(text = stringResource(R.string.boton_guardar))
+                Button(
+                    onClick = {
+                        if (nombreHabito.isBlank()) {
+                            Toast.makeText(context, errorNombre, Toast.LENGTH_SHORT).show()
+                        } else if (horaRecordatorio == null) {
+                            Toast.makeText(context, errorHora, Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, mensajeExito, Toast.LENGTH_SHORT).show()
+                            navController.navigateUp()
+                        }
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(
+                        stringResource(R.string.boton_guardar),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     }

@@ -77,7 +77,6 @@ fun PantallaSaludMental(navController: NavHostController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
     Card(
@@ -87,6 +86,9 @@ fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
             }
             if(habito.titulo == "Meditación"){
                 navController.navigate("configurar_habito_meditacion")
+            }
+            if(habito.titulo == "Desconexión digital"){
+                navController.navigate("configurar-habito-desconexionDigital")
             }
             if(habito.titulo == "Lectura"){
                 navController.navigate("configurar-habito-lectura")

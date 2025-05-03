@@ -232,16 +232,32 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.weight(1f))
 
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Configuración de sueño guardada", Toast.LENGTH_SHORT).show()
-                    navController.navigateUp()
-                },
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Guardar")
+                Button(
+                    onClick = {
+                        Toast.makeText(
+                            context,
+                            "Configuración de sueño guardada",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        navController.navigateUp()
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(
+                        stringResource(R.string.boton_guardar),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     }

@@ -69,7 +69,6 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -149,17 +148,26 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.weight(1f))
 
             // 🟢 Botón guardar
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
             Button(
                 onClick = {
                     Toast.makeText(context, "Configuración de lectura guardada", Toast.LENGTH_SHORT).show()
                     navController.navigateUp()
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .width(200.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Guardar")
+                Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+               }
             }
         }
     }
