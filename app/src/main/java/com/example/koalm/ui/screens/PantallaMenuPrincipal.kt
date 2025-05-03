@@ -354,10 +354,3 @@ fun HabitoItem(titulo: String, descripcion: String, imagenId: Int) {
     }
 }
 
-@Preview(showSystemUi = true, showBackground = true)
-@Composable
-fun VistaPreviaPantallaMenuPrincipal() {
-    val navController = rememberNavController()
-    PantallaMenuPrincipal(navController = navController)
-}
-

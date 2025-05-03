@@ -60,7 +60,7 @@ fun AppNavigation(
                 ritmo = 135
             )
         }
-        //composable("sueño-de-anoche"){PantallaSueno(navController)}
+        composable("sueño-de-anoche"){PantallaSueno(navController)}
         //composable("nivel-de-estres"){PantallaEstres(navController)}
         //composable("control-de-peso"){PantallaControlPeso(navContoller)}
         //composable("actividad-diaria"{No esta}
