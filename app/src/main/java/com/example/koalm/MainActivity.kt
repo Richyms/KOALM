@@ -51,11 +51,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             
-            // Manejar la acción del temporizador
-            LaunchedEffect(intent?.action) {
-                when (intent?.action) {
-                    "com.example.koalm.START_TIMER" -> {
+            // Manejar la navegación desde notificaciones
+            LaunchedEffect(intent?.action, intent?.getStringExtra("route")) {
+                when {
+                    intent?.action == "com.example.koalm.START_TIMER" -> {
                         navController.navigate("notas")
+                    }
+                    intent?.getStringExtra("route") == "notas" -> {
+                        navController.navigate("notas") {
+                            popUpTo("menu") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 }
             }

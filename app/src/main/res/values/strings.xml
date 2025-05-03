@@ -28,10 +28,14 @@
     <string name="label_duracion_escritura">Duración de escritura</string>
 
     <!-- Notificaciones -->
-    <string name="notification_channel_name">Recordatorio de escritura</string>
-    <string name="notification_channel_description">Canal para recordatorios de escritura diaria</string>
-    <string name="notification_title">¡Es hora de escribir!</string>
-    <string name="notification_default_text">Es hora de escribir</string>
+    <string name="notification_channel_name">Notificaciones de escritura</string>
+    <string name="notification_channel_description">Canal para notificaciones del hábito de escritura</string>
+    <string name="meditation_notification_channel_name">Notificaciones de meditación</string>
+    <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación</string>
+    <string name="notification_title">¡Hora de escribir!</string>
+    <string name="meditation_notification_title">¡Hora de meditar!</string>
+    <string name="notification_default_text">Es hora de practicar tu hábito de escritura</string>
+    <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación</string>
     <string name="notification_notes_button">Abrir notas</string>
     <string name="error_no_days_selected">Selecciona al menos un día</string>
     <string name="error_notification_permission">Se requieren permisos de notificación</string>
@@ -40,13 +44,14 @@
     <!-- Temporizador -->
     <string name="timer_channel_name">Temporizador de escritura</string>
     <string name="timer_channel_description">Canal para el temporizador de escritura</string>
-    <string name="timer_notification_title">Tiempo de escritura</string>
+    <string name="timer_notification_title">Temporizador de Escritura</string>
     <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
     <string name="timer_remaining_text">Tiempo restante: %s</string>
     <string name="timer_completion_title">¡Tiempo completado!</string>
     <string name="timer_completion_text">Has completado tu sesión de escritura</string>
     <string name="start_writing_action">Comenzar %d min</string>
     <string name="open_notes_action">Abrir notas</string>
+    <string name="start_timer">Iniciar temporizador</string>
     
     <!-- Notas -->
     <string name="titulo_notas">Mis notas</string>

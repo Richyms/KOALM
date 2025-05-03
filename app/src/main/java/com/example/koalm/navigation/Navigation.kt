@@ -52,7 +52,9 @@ fun AppNavigation(
         composable("estadisticas"){PantallaParametrosSalud(navController)}
         composable("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         composable("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
-    /*Ajustar enlace de pantalla parametros salud*/
+        composable("notas") { PantallaNotas(navController) }
+        composable("temporizador_meditacion") {PantallaTemporizadorMeditacion(navController)} 
+        /*Ajustar enlace de pantalla parametros salud*/
         composable("ritmo-cardiaco"){ // esto es temporal, para pasar los datos del back
             PantallaRitmoCardiaco(
                 navController = navController,

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
+import com.example.koalm.MainActivity
 import com.example.koalm.R
 import com.example.koalm.services.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
@@ -199,7 +200,24 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { navController.navigate("notas") },
+                    .clickable { 
+                        try {
+                            navController.navigate("notas") {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al navegar a notas: ${e.message}")
+                            Toast.makeText(
+                                context,
+                                "Error al abrir las notas",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
                 shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.dp, VerdeBorde),
                 colors = CardDefaults.cardColors(containerColor = VerdeContenedor)

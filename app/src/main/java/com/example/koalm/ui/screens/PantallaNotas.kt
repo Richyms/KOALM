@@ -137,14 +137,13 @@ fun PantallaNotas(navController: NavHostController) {
 
     // Verificar estado del temporizador al iniciar
     LaunchedEffect(Unit) {
-        val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
-            action = WritingTimerService.CHECK_TIMER_ACTION
-        }
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(checkTimerIntent)
-        } else {
+        try {
+            val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
+                action = WritingTimerService.CHECK_TIMER_ACTION
+            }
             context.startService(checkTimerIntent)
+        } catch (e: Exception) {
+            Log.e("PantallaNotas", "Error al verificar el temporizador: ${e.message}")
         }
     }
 

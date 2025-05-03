@@ -68,6 +68,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 @Composable
 fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
     val context = LocalContext.current
+    val TAG = "PantallaConfiguracionHabitoMeditacion"
 
     //------------------------------ Estados -------------------------------------
     var descripcion         by remember { mutableStateOf("") }
@@ -86,6 +87,22 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
     var sonidoshambHabilitados by remember { mutableStateOf(false) }
     var ejerciciorespiracionHabilitados by remember { mutableStateOf(false)}
 
+    /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            programarNotificacion(
+                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, sonidoshambHabilitados
+            )
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(R.string.error_notification_permission),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     //------------------------------ UI ------------------------------------------
     Scaffold(
@@ -216,21 +233,81 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
                     }
                 }
             }
+
+            /* ----------------------------  Card de Meditación  --------------------------- */
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { 
+                        try {
+                            navController.navigate("temporizador_meditacion") {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al navegar al temporizador: ${e.message}")
+                            Toast.makeText(
+                                context,
+                                "Error al abrir el temporizador",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, VerdeBorde),
+                colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Iniciar Meditación",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
             Spacer(Modifier.weight(1f))
 
-            /*  Guardar  */
+            /* ----------------------------  Guardar  --------------------------- */
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Button(
                     onClick = {
-                        Toast.makeText(
-                            context,
-                            "Configuración de meditación guardada",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        navController.navigateUp()
+                        if (!diasSeleccionados.any { it }) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_no_days_selected),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+
+                        if (ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            programarNotificacion(
+                                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, sonidoshambHabilitados
+                            )
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                     },
                     modifier = Modifier
                         .width(200.dp)
@@ -238,10 +315,7 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(
-                        stringResource(R.string.boton_guardar),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -259,8 +333,47 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
 
 /*──────────────────────────  HELPERS  ─────────────────────────────────────*/
 private fun formatearDuracion(min: Int): String = when {
-    min < 60           -> "$min minutos"
-    min == 60          -> "1 hora"
-    min % 60 == 0      -> "${min/60} horas"
-    else               -> "${min/60} horas ${min%60} min"
+    min < 60           -> "$min min"
+    min == 60          -> "1 hora"
+    min % 60 == 0      -> "${min/60} h"
+    else               -> "${min/60} h ${min%60} min"
+}
+
+/**
+ * Programa la notificación y navega atrás si todo salió bien.
+ */
+private fun programarNotificacion(
+    context: android.content.Context,
+    descripcion: String,
+    duracionMin: Float,
+    hora: LocalTime,
+    diasSeleccionados: List<Boolean>,
+    navController: NavHostController,
+    tag: String,
+    sonidosHabilitados: Boolean
+) {
+    val notificationService = NotificationService()
+    val notificationTime    = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
+
+    Log.d(tag, "Iniciando servicio de notificaciones")
+    context.startService(Intent(context, NotificationService::class.java))
+
+    notificationService.scheduleNotification(
+        context           = context,
+        diasSeleccionados = diasSeleccionados,
+        hora              = notificationTime,
+        descripcion       = descripcion.ifEmpty {
+            context.getString(R.string.meditation_notification_default_text)
+        },
+        durationMinutes   = duracionMin.toLong(),
+        notasHabilitadas  = sonidosHabilitados,
+        isMeditation      = true
+    )
+
+    Toast.makeText(
+        context,
+        context.getString(R.string.success_notifications_scheduled),
+        Toast.LENGTH_SHORT
+    ).show()
+    navController.navigateUp()
 }
