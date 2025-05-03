@@ -109,18 +109,6 @@
             color: #888;
         }
 
-        .input-field-label.error {
-            color: red;
-        }
-
-        .input-field-label.success {
-            color: #4CAF50;
-        }
-
-        .input-field-label.neutral {
-            color: #777;
-        }
-
         button {
             width: 100%;
             max-width: 200px;
@@ -209,6 +197,10 @@
       height: 24px;
     }
 
+    .validacion {
+      margin-left: 14px;
+    }
+
 
     </style>
 
@@ -242,7 +234,7 @@
             </div>
         </div>
 
-        <div id="passwordValidationMessage" class="validation-message neutral">
+        <div id="passwordValidationMessage" class="validation-message neutral" style="margin-left: 14px;" >
             La contraseña debe tener al menos 8 caracteres, una letra minúscula, una mayúscula, un número y un carácter especial.
         </div>
     </div>
@@ -266,7 +258,7 @@
             </div>
         </div>
 
-        <div id="confirmValidationMessage" class="validation-message neutral">
+        <div id="confirmValidationMessage" class="validation-message neutral" style="margin-left: 14px;" >
             La contraseñas deben coincidir.
         </div>
     </div>
@@ -418,6 +410,7 @@
         div.textContent = message;
         div.classList.remove("neutral", "success", "error");
         div.classList.add(type); // 'neutral', 'success', o 'error'
+        div.classList.add("validacion");
     };
 
     const updateInputStyle = (input, type) => {
