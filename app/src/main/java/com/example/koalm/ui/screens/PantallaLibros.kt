@@ -1,5 +1,6 @@
 package com.example.koalm.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -203,7 +204,7 @@ fun PantallaLibros(navController: NavHostController) {
                     
                     docRef.set(libroConId.toMap())
                         .addOnSuccessListener {
-                            libros = libros + libroConId
+                            Log.d("PantallaLibros", "Libro creado con ID: ${docRef.id}")
                         }
                 }
                 mostrarDialogoNuevoLibro = false

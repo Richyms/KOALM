@@ -311,7 +311,6 @@ fun PantallaNotas(navController: NavHostController) {
                     docRef.set(notaConId.toMap())
                         .addOnSuccessListener {
                             Log.d("PantallaNotas", "Nota creada con ID: ${docRef.id}")
-                            notas = notas + notaConId
                         }
                         .addOnFailureListener { e ->
                             Log.w("PantallaNotas", "Error creando nota", e)
