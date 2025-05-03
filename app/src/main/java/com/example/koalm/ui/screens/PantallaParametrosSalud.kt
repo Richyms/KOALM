@@ -22,7 +22,7 @@ import com.example.koalm.R
 import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
-
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +95,15 @@ fun PantallaParametrosSalud(navController: NavController) {
                 modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
             )
 
-            InfoCard("Sueño", "7 h 7 min", Icons.Default.Bedtime, progreso = 0.88f) // dato para recuperar del back
+            InfoCard(
+                titulo = "Sueño",
+                dato = "7 h 7 min",
+                icono = Icons.Default.Bedtime,
+                progreso = 0.88f,
+                onClick = { navController.navigate("sueño-de-anoche") }
+            )
+
+            // dato para recuperar del back
             InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite) // dato para recuperar del back
             InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f) // dato para recuperar del back
             InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f) // dato para recuperar del back
@@ -121,17 +129,22 @@ fun InfoCard(
     titulo: String,
     dato: String,
     icono: ImageVector,
-    progreso: Float? = null
+    progreso: Float? = null,
+    onClick: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .let {
+                if (onClick != null) it.clickable { onClick() } else it
+            },
         shape = RoundedCornerShape(12.dp),
         tonalElevation = 2.dp,
         color = VerdeContenedor,
         border = BorderStroke(1.dp, Color.LightGray)
-    ) {
+    )
+    {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp)
