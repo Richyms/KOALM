@@ -206,12 +206,12 @@ fun TimePickerDialogLectura(
         }
     )
 }
-
-
-/*──────────────────────────  HELPERS  ─────────────────────────────────────*/
 private fun formatearDuracion(min: Int): String = when {
     min < 60           -> "$min minutos"
     min == 60          -> "1 hora"
     min % 60 == 0      -> "${min/60} horas"
     else               -> "${min/60} horas ${min%60} min"
 }
+
+
+

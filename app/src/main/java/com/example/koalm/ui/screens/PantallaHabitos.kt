@@ -73,7 +73,8 @@ fun PantallaHabitos(navController: NavHostController) {
             HabitoCategoriaCard(
                 titulo = "Personalizado",
                 descripcion = "Crea y administra tus propias ideas para mejorar tu vida.",
-                icono = Icons.Default.Edit
+                icono = Icons.Default.Edit,
+                onClick = { navController.navigate("gestion_habitos_personalizados") }
             )
         }
     }

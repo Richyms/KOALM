@@ -42,17 +42,25 @@ fun AppNavigation(
         composable("tipos_habitos") { PantallaHabitos(navController) }
         composable("salud_mental") { PantallaSaludMental(navController) }
         composable("salud_fisica") { PantallaSaludFisica(navController) }
-        composable("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
+        composable("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) } // Falta corregir la api minSdkVersion a v.31
         composable("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditación(navController) }
         composable("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
         composable("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
         composable("configurar-habito-alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController)}
         composable("configurar-habito-lectura") { PantallaConfiguracionHabitoLectura(navController)}
         composable("estadisticas"){PantallaParametrosSalud(navController)}
-        composable("notas") { PantallaNotas(navController) }
-        /*Ajustar enlace de pantalla parametros salud*/
-        //composable("ritmo-cardiaco"){PantallaRitmoCardiaco(navController)}
-        //composable("sueño-de-anoche"){PantallaSueno(navController)}
+        composable("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
+        composable("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
+    /*Ajustar enlace de pantalla parametros salud*/
+        composable("ritmo-cardiaco"){ // esto es temporal, para pasar los datos del back
+            PantallaRitmoCardiaco(
+                navController = navController,
+                fechaUltimaInfo = "23/04/25",
+                datos = listOf(180f, 60f, 140f, 90f, 88f, 112f, 50f, 145f, 160f, 190f),
+                ritmo = 135
+            )
+        }
+        composable("sueño-de-anoche"){PantallaSueno(navController)}
         //composable("nivel-de-estres"){PantallaEstres(navController)}
         //composable("control-de-peso"){PantallaControlPeso(navContoller)}
         //composable("actividad-diaria"{No esta}
@@ -63,6 +71,7 @@ fun AppNavigation(
         //composable("meta-diaria-pasos"){PantallaMetaPasos(navController}
         //composable("meta-diaria-movimiento"){no esta}
         //composable("meta-diaria-calorias"){no esta}
+        composable("racha_habitos") { PantallaRachaHabitos(navController) }
 
     }
 }

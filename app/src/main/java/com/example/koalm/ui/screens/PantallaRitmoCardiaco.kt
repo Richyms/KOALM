@@ -14,11 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.*
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import androidx.compose.ui.draw.clip
@@ -30,7 +28,6 @@ fun PantallaRitmoCardiaco(
     ritmo: Int,
     fechaUltimaInfo: String,
     datos: List<Float>,
-    zonas: List<Pair<String, String>>
 ) {
     Scaffold(
         topBar = {
@@ -175,25 +172,14 @@ fun PantallaRitmoCardiaco(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Colores
-            val colores = listOf(
-                AzulLigero,
-                VerdeAerobico,
-                AmarilloIntensivo,
-                NaranjaAnaerobico,
-                RojoVOMAx
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             val zonasFormateadas = listOf(
-                Triple("Ligero", "00:02:11", Color(0xFF00CFF9)),
-                Triple("Intensivo", "00:03:52", Color(0xFFFFA20D)),
-                Triple("VO Máx", "00:01:23", Color(0xFFFF1A1A)),
-                Triple("Aeróbico", "00:17:01", Color(0xFF8D9D3D)),
-                Triple("Anaeróbico", "00:08:59", Color(0xFFFF5E3A))
+                Triple("Ligero", "00:02:11", AzulLigero),
+                Triple("Intensivo", "00:03:52", AmarilloIntensivo),
+                Triple("VO Máx", "00:01:23", RojoVOMAx),
+                Triple("Aeróbico", "00:17:01", VerdeAerobico),
+                Triple("Anaeróbico", "00:08:59", NaranjaAnaerobico)
             )
 
             Column(
@@ -254,26 +240,4 @@ fun colorZona(valor: Float): Color {
         valor <= 170f -> NaranjaAnaerobico // Anaeróbico
         else -> RojoVOMAx // VO Máx
     }
-}
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun VistaPreviaPantallaRitmoCardiaco() {
-    val navController = rememberNavController()
-    val datos = listOf(180f, 60f, 140f, 90f, 88f, 112f, 50f, 145f, 160f, 190f)
-    val zonas = listOf(
-        "Ligero" to "00:02:11",
-        "Intensivo" to "00:03:52",
-        "VO Máx" to "00:01:23",
-        "Aeróbico" to "00:17:01",
-        "Anaeróbico" to "00:08:59"
-    )
-    PantallaRitmoCardiaco(
-        navController = navController,
-        ritmo = 135,
-        fechaUltimaInfo = "23/04/25",
-        datos = datos,
-        zonas = zonas
-    )
 }

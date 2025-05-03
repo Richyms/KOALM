@@ -85,4 +85,53 @@
     <string name="placeholder_descripcion_lectura">Leer es como viajar... pero sin hacer fila en el aeropuerto.</string>
     <string name="label_duracion_lectura">Duración de Lectura</string>
 
+
+    <!-- Pantalla Gestión de hábitos personalizados -->
+    <string name="titulo_gestion_habitos_personalizados">Gestión de hábitos personalizados</string>
+    <string name="mensaje_no_habitos">No tienes hábitos personalizados</string>
+    <string name="mensaje_no_habitos_subtexto">No busques perfección, solo empieza.\nCada paso cuenta</string>
+    <string name="boton_agregar">Agregar</string>
+
+    <!-- Hábito personalizado -->
+    <string name="titulo_config_habito_personalizado">Configurar hábito personalizado</string>
+    <string name="label_nombre_habito">Nombre del hábito *</string>
+    <string name="label_frecuencia_P">Frecuencia: </string>
+    <string name="label_hora_recordatorio">Hora del recordatorio: </string>
+    <string name="label_finaliza_el">Finaliza el:</string>
+    <string name="boton_fecha">Fecha</string>
+    <string name="boton_dias">Días</string>
+    <string name="label_ultimo_dia">El último día es</string>
+    <string name="boton_seleccionar_fecha">Seleccionar Fecha</string>
+    <string name="label_despues_dias">Después de </string>
+    <string name="label_dias">días</string>
+    <string name="label_switch_activar_recordatorio">Activar recordatorios:</string>
+    <string name="label_tipo_notificacion">  Tipo de notificación:</string>
+    <string name="label_notificacion_personalizada">  Notifiación personalizada:</string>
+    <string name="label_configuracion_adicional">Configuraciones adicionaless del hábito</string>
+    <string name="label_vista_previa">Vista previa del hábito</string>
+
+    <string name="boton_Automatico">Automático</string>
+    <string name="boton_Personalizado">Personalizado</string>
+
+    <!-- Racha de Habitos -->
+    <string name="titulo_racha_habitos">Racha de Hábitos</string>
+    <string name="label_sin_racha">Aún no tienes una racha activa</string>
+    <string name="mensaje_sin_racha">
+        No busques perfección, solo empieza. Cada paso cuenta
+    </string>
+    <string name="titulo_racha_en_progreso">¡Tu racha está en progreso!</string>
+    <string name="mensaje_racha_en_progreso">
+        Seguir con tus hábitos es recordarte cada día lo mucho que te valoras
+    </string>
+    <string name="titulo_racha_finalizada">¡Enhorabuena!</string>
+    <string name="mensaje_racha_finzalizada">
+        Una semana de hábitos cumplidos demuestra que la constancia crea cambios
+    </string>
+
+    <!-- Validaciones -->
+    <string name="error_nombre">¡Campo de nombre vacío!</string>
+    <string name="error_hora">¡Establece hora de recordatorio!</string>
+    <string name="mensaje_guardado">¡Hábito guardado exitosamente!</string>
+
+
 </resources>

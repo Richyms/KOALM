@@ -31,14 +31,15 @@ import com.example.koalm.ui.theme.*
 @Composable
 fun PantallaSueno(
     navController: NavHostController,
-    puntos: Int,
-    fechaStr: String,
-    horasDormidas: Int,
-    minutosDormidos: Int,
-    suenoLigeroStr: String,
-    suenoProfundoStr: String,
-    tiempoDespiertoStr: String
 ) {
+    // Estos datos van a ser recuperados del back
+    val puntos = 10
+    val fechaStr = "2024-04-21"
+    val horasDormidas = 4
+    val minutosDormidos = 27
+    val suenoLigeroStr = "3 h 22 m"
+    val suenoProfundoStr = "4 h 44 m"
+    val tiempoDespiertoStr = "0 h 21 m"
 
     val fecha = LocalDate.parse(fechaStr)
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yy")
@@ -241,13 +242,7 @@ fun VistaPreviaSueno() {
     val navController = rememberNavController()
     PantallaSueno(
         navController = navController,
-        puntos = 10,
-        fechaStr = "2024-04-21",
-        horasDormidas = 4,
-        minutosDormidos = 27,
-        suenoLigeroStr = "3 h 22 m",
-        suenoProfundoStr = "4 h 44 m",
-        tiempoDespiertoStr = "0 h 21 m"
+
     )
 }
 

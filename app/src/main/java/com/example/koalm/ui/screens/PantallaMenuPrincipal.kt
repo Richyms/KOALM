@@ -37,6 +37,8 @@ import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -210,7 +212,7 @@ fun DrawerContenido(navController: NavHostController) {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
                     //"Inicio" -> navController.navigate("inicio")
-                    //"Racha" -> navController.navigate("racha")
+                    "Racha" -> navController.navigate("racha_habitos")
                     "Estadísticas" -> navController.navigate("estadisticas")
                     //"Test de emociones" -> navController.navigate("test_emociones")
                 }
@@ -351,3 +353,4 @@ fun HabitoItem(titulo: String, descripcion: String, imagenId: Int) {
         }
     }
 }
+

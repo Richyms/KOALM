@@ -15,16 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
-
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,9 +82,9 @@ fun PantallaParametrosSalud(navController: NavController) {
                     .fillMaxWidth()
                     .padding(8.dp, 0.dp)
             ) {
-                InfoMiniCard("Pasos", "7400/10000", Icons.AutoMirrored.Filled.DirectionsWalk)
-                InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime)
-                InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment)
+                InfoMiniCard("Pasos", "7400/10000", Icons.AutoMirrored.Filled.DirectionsWalk) // dato para recuperar del back
+                InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime) // dato para recuperar del back
+                InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment) // dato para recuperar del back
             }
 
             // Cambiar fecha
@@ -97,11 +95,19 @@ fun PantallaParametrosSalud(navController: NavController) {
                 modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
             )
 
-            InfoCard("Sueño", "7 h 7 min", Icons.Default.Bedtime, progreso = 0.88f)
-            InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite)
-            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f)
-            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f)
-            InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun)
+            InfoCard(
+                titulo = "Sueño",
+                dato = "7 h 7 min",
+                icono = Icons.Default.Bedtime,
+                progreso = 0.88f,
+                onClick = { navController.navigate("sueño-de-anoche") }
+            )
+
+            // dato para recuperar del back
+            InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite) // dato para recuperar del back
+            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f) // dato para recuperar del back
+            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f) // dato para recuperar del back
+            InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun) // dato para recuperar del back
         }
     }
 }
@@ -123,17 +129,22 @@ fun InfoCard(
     titulo: String,
     dato: String,
     icono: ImageVector,
-    progreso: Float? = null
+    progreso: Float? = null,
+    onClick: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .let {
+                if (onClick != null) it.clickable { onClick() } else it
+            },
         shape = RoundedCornerShape(12.dp),
         tonalElevation = 2.dp,
         color = VerdeContenedor,
         border = BorderStroke(1.dp, Color.LightGray)
-    ) {
+    )
+    {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp)
@@ -162,9 +173,9 @@ fun InfoCard(
                             tint = Negro,
                             modifier = Modifier.size(20.dp)
                         )
-                    } else if (titulo == "Sueño") { // cambiar la hora
+                    } else if (titulo == "Sueño") {
                         Text(
-                            text = "/8 h",
+                            text = "/8 h", // dato para recuperar del back
                             fontSize = 10.sp,
                             color = Negro,
                             fontWeight = FontWeight.SemiBold
@@ -177,9 +188,3 @@ fun InfoCard(
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun VistaPreviaSalud() {
-    val navController = rememberNavController()
-    PantallaParametrosSalud(navController)
-}

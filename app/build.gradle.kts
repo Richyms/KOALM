@@ -107,6 +107,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //colores
+    implementation("com.github.skydoves:colorpicker-compose:1.1.2")
+
+
 }
 
 apply(plugin = "com.google.gms.google-services")
