@@ -113,8 +113,20 @@
     <string name="boton_Automatico">Automático</string>
     <string name="boton_Personalizado">Personalizado</string>
 
-
-
+    <!-- Racha de Habitos -->
+    <string name="titulo_racha_habitos">Racha de Hábitos</string>
+    <string name="label_sin_racha">Aún no tienes una racha activa</string>
+    <string name="mensaje_sin_racha">
+        No busques perfección, solo empieza. Cada paso cuenta
+    </string>
+    <string name="titulo_racha_en_progreso">¡Tu racha está en progreso!</string>
+    <string name="mensaje_racha_en_progreso">
+        Seguir con tus hábitos es recordarte cada día lo mucho que te valoras
+    </string>
+    <string name="titulo_racha_finalizada">¡Enhorabuena!</string>
+    <string name="mensaje_racha_finzalizada">
+        Una semana de hábitos cumplidos demuestra que la constancia crea cambios
+    </string>
 
     <!-- Validaciones -->
     <string name="error_nombre">¡Campo de nombre vacío!</string>

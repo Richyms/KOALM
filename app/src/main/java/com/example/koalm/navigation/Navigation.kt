@@ -71,6 +71,7 @@ fun AppNavigation(
         //composable("meta-diaria-pasos"){PantallaMetaPasos(navController}
         //composable("meta-diaria-movimiento"){no esta}
         //composable("meta-diaria-calorias"){no esta}
+        composable("racha_habitos") { PantallaRachaHabitos(navController) }
 
     }
 }

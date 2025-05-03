@@ -210,7 +210,7 @@ fun DrawerContenido(navController: NavHostController) {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
                     //"Inicio" -> navController.navigate("inicio")
-                    //"Racha" -> navController.navigate("racha")
+                    "Racha" -> navController.navigate("racha_habitos")
                     "Estadísticas" -> navController.navigate("estadisticas")
                     //"Test de emociones" -> navController.navigate("test_emociones")
                 }
