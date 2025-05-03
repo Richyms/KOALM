@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
+import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
@@ -78,23 +79,10 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 )
             },
             bottomBar = {
-                NavigationBar(tonalElevation = 8.dp) {
-                    listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
-                        val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
-                        NavigationBarItem(
-                            selected = index == 0,
-                            onClick = { 
-                                when (index) {
-                                    0 -> navController.navigate( "menu" )
-                                    1 -> navController.navigate("tipos_habitos")
-                                    2 -> navController.navigate( "personalizar" )
-                                }
-                            },
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label) }
-                        )
-                    }
-                }
+                BarraNavegacionInferior(
+                    navController = navController,
+                    rutaActual = "menu"
+                )
             }
         ) { innerPadding ->
             Column(

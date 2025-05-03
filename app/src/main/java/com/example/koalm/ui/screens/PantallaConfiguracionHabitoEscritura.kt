@@ -72,7 +72,11 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     val rangoDuracion = 1f..180f
 
     //  Hora de notificación
-    var hora              by remember { mutableStateOf(LocalTime.of(22, 0)) }
+    var hora              by remember { 
+        mutableStateOf(
+            LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
+        ) 
+    }
     var mostrarTimePicker by remember { mutableStateOf(false) }
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
@@ -203,9 +207,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     .clickable { 
                         try {
                             navController.navigate("notas") {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }

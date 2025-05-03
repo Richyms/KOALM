@@ -64,6 +64,13 @@ class MainActivity : ComponentActivity() {
                             restoreState = true
                         }
                     }
+                    intent?.getStringExtra("route") == "libros" -> {
+                        navController.navigate("libros") {
+                            popUpTo("menu") { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
                 }
             }
             

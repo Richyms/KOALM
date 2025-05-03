@@ -11,6 +11,7 @@ import android.util.Log
 import com.example.koalm.R
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.NotificationBase
+import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
 import java.time.LocalDateTime
 
@@ -21,7 +22,8 @@ class NotificationService : Service() {
 
     private val notificationServices: Map<String, NotificationBase> = mapOf(
         "escritura" to WritingNotificationService(),
-        "meditacion" to MeditationNotificationService()
+        "meditacion" to MeditationNotificationService(),
+        "lectura" to ReadingNotificationService()
     )
 
     override fun onCreate() {
@@ -61,13 +63,20 @@ class NotificationService : Service() {
         descripcion: String,
         durationMinutes: Long,
         notasHabilitadas: Boolean,
-        isMeditation: Boolean = false
+        isMeditation: Boolean = false,
+        isReading: Boolean = false
     ) {
-        val service = if (isMeditation) "meditacion" else "escritura"
-        val additionalData = if (isMeditation) 
-            mapOf("sonidos_habilitados" to notasHabilitadas)
-        else 
-            mapOf("notas_habilitadas" to notasHabilitadas)
+        val service = when {
+            isMeditation -> "meditacion"
+            isReading -> "lectura"
+            else -> "escritura"
+        }
+        
+        val additionalData = when {
+            isMeditation -> mapOf("sonidos_habilitados" to notasHabilitadas)
+            isReading -> mapOf("notas_habilitadas" to notasHabilitadas)
+            else -> mapOf("notas_habilitadas" to notasHabilitadas)
+        }
             
         notificationServices[service]?.scheduleNotification(
             context = context,

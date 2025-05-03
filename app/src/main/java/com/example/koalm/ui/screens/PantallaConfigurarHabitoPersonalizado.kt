@@ -154,22 +154,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
             ) {
 
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
                     Text(
                         text = stringResource(R.string.label_vista_previa),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
                     OutlinedTextField(
                         value = nombreHabito,
                         onValueChange = { nombreHabito = it },
@@ -228,32 +218,15 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
                     Text(
                         text = stringResource(R.string.label_configuracion_adicional),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-
-
-
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        //horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             text = stringResource(R.string.label_frecuencia_P),
@@ -274,14 +247,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         )
                     }
 
-
                     if (frecuenciaActivo) {
-                        /*Text(
-                        text = stringResource(R.string.label_frecuencia_P),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )*/
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -294,27 +260,10 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             }
                         }
                     }
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-                    /*Text(
-                        text = stringResource(R.string.label_hora_recordatorio),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        HoraField(hora = horaRecordatorio) { mostrarTimePicker = true }
-                    }*/
-
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        //horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             text = stringResource(R.string.label_switch_activar_recordatorio),
@@ -334,8 +283,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             )
                         )
                     }
-
-
 
                     if (recordatorioActivo) {
                         Text(
@@ -383,10 +330,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Medium
                             )
-                            /* Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                HoraField(hora = horaRecordatorio) { mostrarTimePicker = true }*/
 
-                            // 🟢 Lista de horarios
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 horarios.forEachIndexed { index, hora ->
                                     Row(
@@ -394,7 +338,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        // Campo de hora
                                         Box(modifier = Modifier.width(200.dp)) {
                                             HoraField(hora = hora) {
                                                 mostrarTimePicker = true
@@ -402,7 +345,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                             }
                                         }
 
-                                        // Botón eliminar alineado a la derecha
                                         IconButton(onClick = {
                                             horarios.removeAt(index)
                                         }) {
@@ -414,19 +356,13 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                         }
                                     }
                                 }
-
-
                             }
 
-
-                            // 🟢 Botón + Agregar
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .clickable {
-
                                         horarios.add(LocalTime.now())
-
                                     }
                                     .padding(top = 8.dp)
                             ) {
@@ -434,20 +370,8 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(text = "Agregar.", fontSize = 14.sp)
                             }
-
                         }
-
                     }
-
-
-
-
-
-
-
-
-
-
 
                     Divider(
                         color = Color.Gray,
@@ -458,7 +382,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        //horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             text = stringResource(R.string.label_finaliza_el),
@@ -478,12 +401,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             )
                         )
                     }
-
-                    /*Text(
-                        text = stringResource(R.string.label_finaliza_el),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )*/
 
                     if (finalizarActivo) {
                         Row(
@@ -561,7 +478,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                     fontWeight = FontWeight.Medium
                                 )
 
-                                Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
+                                Spacer(modifier = Modifier.width(8.dp))
 
                                 OutlinedTextField(
                                     value = diasDuracion,
@@ -575,7 +492,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
                                 )
 
-                                Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
+                                Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
                                     text = stringResource(R.string.label_dias),
@@ -588,7 +505,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                 }
             }
 
-            Spacer(Modifier.weight(1f))
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -673,9 +589,9 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                 state = datePickerState,
                 showModeToggle = false,
                 colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = VerdeContenedor, // fondo del día seleccionado
-                    selectedDayContentColor = Color.Black,        // texto del día seleccionado
-                    todayDateBorderColor = VerdeBorde             // borde para hoy
+                    selectedDayContainerColor = VerdeContenedor,
+                    selectedDayContentColor = Color.Black,
+                    todayDateBorderColor = VerdeBorde
                 )
             )
         }
@@ -686,7 +602,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
 
     if (mostrarSelectorIconos) {
         val iconos = listOf(
-            // Salud y Bienestar
             Icons.Default.Favorite,
             Icons.Default.FitnessCenter,
             Icons.Default.SelfImprovement,
@@ -694,13 +609,11 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
             Icons.Default.AccessibilityNew,
             Icons.Default.MonitorHeart,
 
-            // Educación y Lectura
             Icons.Default.Book,
             Icons.Default.MenuBook,
             Icons.Default.School,
             Icons.Default.Lightbulb,
 
-            // Trabajo y Productividad
             Icons.Default.Work,
             Icons.Default.Check,
             Icons.Default.Task,
@@ -708,28 +621,24 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
             Icons.Default.Schedule,
             Icons.Default.List,
 
-            // Tecnología y Comunicación
             Icons.Default.Phone,
             Icons.Default.Email,
             Icons.Default.Notifications,
             Icons.Default.Smartphone,
             Icons.Default.Devices,
 
-            // Hogar y Vida diaria
             Icons.Default.Home,
             Icons.Default.Bedtime,
             Icons.Default.Kitchen,
             Icons.Default.WbSunny,
             Icons.Default.ShoppingCart,
 
-            // Emociones y Sociales
             Icons.Default.Face,
             Icons.Default.Mood,
             Icons.Default.EmojiEmotions,
             Icons.Default.ThumbUp,
             Icons.Default.People,
 
-            // Varios
             Icons.Default.Star,
             Icons.Default.MusicNote,
             Icons.Default.Pets,
@@ -744,7 +653,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
             title = { Text("Selecciona un icono") },
             text = {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(4), // 4 columnas
+                    columns = GridCells.Fixed(4),
                     modifier = Modifier
                         .height(200.dp)
                         .fillMaxWidth(),

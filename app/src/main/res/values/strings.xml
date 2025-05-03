@@ -32,11 +32,16 @@
     <string name="notification_channel_description">Canal para notificaciones del hábito de escritura</string>
     <string name="meditation_notification_channel_name">Notificaciones de meditación</string>
     <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación</string>
+    <string name="reading_notification_channel_name">Notificaciones de lectura</string>
+    <string name="reading_notification_channel_description">Canal para notificaciones del hábito de lectura</string>
     <string name="notification_title">¡Hora de escribir!</string>
     <string name="meditation_notification_title">¡Hora de meditar!</string>
+    <string name="reading_notification_title">¡Hora de leer!</string>
     <string name="notification_default_text">Es hora de practicar tu hábito de escritura</string>
     <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación</string>
-    <string name="notification_notes_button">Abrir notas</string>
+    <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura</string>
+    <string name="notification_notes_button">Abrir Notas</string>
+    <string name="notification_books_button">Mis Libros</string>
     <string name="error_no_days_selected">Selecciona al menos un día</string>
     <string name="error_notification_permission">Se requieren permisos de notificación</string>
     <string name="success_notifications_scheduled">Notificaciones programadas</string>

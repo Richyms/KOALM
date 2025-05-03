@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material3.*
@@ -53,6 +55,7 @@ fun PantallaNotas(navController: NavHostController) {
     val context = LocalContext.current
     var notas by remember { mutableStateOf(listOf<Nota>()) }
     var mostrarDialogoNuevaNota by remember { mutableStateOf(false) }
+    var notaAEditar by remember { mutableStateOf<Nota?>(null) }
     val timerViewModel: TimerViewModel = viewModel()
     
     // Observar el estado del temporizador desde el ViewModel
@@ -242,10 +245,41 @@ fun PantallaNotas(navController: NavHostController) {
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
-                            Text(
-                                text = nota.titulo,
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = nota.titulo,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Row {
+                                    IconButton(
+                                        onClick = { notaAEditar = nota }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "Editar",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            nota.id?.let { id ->
+                                                db.collection("notas").document(id).delete()
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = nota.contenido,
@@ -287,59 +321,82 @@ fun PantallaNotas(navController: NavHostController) {
             }
         )
     }
+
+    if (notaAEditar != null) {
+        DialogoEditarNota(
+            nota = notaAEditar!!,
+            onDismiss = { notaAEditar = null },
+            onNotaEditada = { notaEditada ->
+                notaEditada.id?.let { id ->
+                    db.collection("notas").document(id)
+                        .update(notaEditada.toMap())
+                        .addOnSuccessListener {
+                            notas = notas.map { if (it.id == id) notaEditada else it }
+                        }
+                }
+                notaAEditar = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun DialogoEditarNota(
+    nota: Nota,
+    onDismiss: () -> Unit,
+    onNotaEditada: (Nota) -> Unit
+) {
+    var titulo by remember { mutableStateOf(nota.titulo) }
+    var contenido by remember { mutableStateOf(nota.contenido) }
+    val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar Nota") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = titulo,
+                    onValueChange = { titulo = it },
+                    label = { Text(stringResource(R.string.titulo_nota)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = contenido,
+                    onValueChange = { contenido = it },
+                    label = { Text(stringResource(R.string.contenido_nota)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (titulo.isNotBlank() && contenido.isNotBlank()) {
+                        onNotaEditada(nota.copy(
+                            titulo = titulo,
+                            contenido = contenido,
+                            fechaModificacion = fechaActual
+                        ))
+                    }
+                }
+            ) { Text("Guardar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
 private fun formatTime(millis: Long): String {
     val minutes = millis / 60_000
     val seconds = (millis % 60_000) / 1_000
     return String.format("%02d:%02d", minutes, seconds)
-}
-
-@Composable
-private fun TarjetaNota(nota: Nota) {
-    // Colores y borde suaves para asemejar el mock-up
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, GrisClaro),
-        colors = CardDefaults.cardColors(
-            containerColor = GrisClaro.copy(alpha = 0.25f) // leve tono verde/gris
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.Top
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.CheckBoxOutlineBlank,
-                contentDescription = null,
-                tint = VerdePrincipal
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = nota.titulo,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = nota.contenido,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 3,                          // trunca el texto
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Creada: ${nota.fechaCreacion ?: "Fecha no disponible"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
 }
 
 @Composable

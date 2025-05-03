@@ -76,7 +76,11 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
     var diasSeleccionados   by remember { mutableStateOf(List(7){false})}
 
     /* Hora */
-    var hora by remember { mutableStateOf(LocalTime.of(22,0)) }
+    var hora by remember { 
+        mutableStateOf(
+            LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
+        ) 
+    }
     var mostrarTimePicker    by remember { mutableStateOf(false) }
 
     /* Duración */
