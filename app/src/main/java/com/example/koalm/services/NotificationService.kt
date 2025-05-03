@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import com.example.koalm.R
+import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.NotificationBase
 import com.example.koalm.services.notifications.ReadingNotificationService
@@ -23,7 +24,8 @@ class NotificationService : Service() {
     private val notificationServices: Map<String, NotificationBase> = mapOf(
         "escritura" to WritingNotificationService(),
         "meditacion" to MeditationNotificationService(),
-        "lectura" to ReadingNotificationService()
+        "lectura" to ReadingNotificationService(),
+        "desconexion" to DigitalDisconnectNotificationService()
     )
 
     override fun onCreate() {
@@ -64,17 +66,20 @@ class NotificationService : Service() {
         durationMinutes: Long,
         notasHabilitadas: Boolean,
         isMeditation: Boolean = false,
-        isReading: Boolean = false
+        isReading: Boolean = false,
+        isDigitalDisconnect: Boolean = false
     ) {
         val service = when {
             isMeditation -> "meditacion"
             isReading -> "lectura"
+            isDigitalDisconnect -> "desconexion"
             else -> "escritura"
         }
         
         val additionalData = when {
             isMeditation -> mapOf("sonidos_habilitados" to notasHabilitadas)
             isReading -> mapOf("notas_habilitadas" to notasHabilitadas)
+            isDigitalDisconnect -> mapOf("duration_minutes" to durationMinutes)
             else -> mapOf("notas_habilitadas" to notasHabilitadas)
         }
             

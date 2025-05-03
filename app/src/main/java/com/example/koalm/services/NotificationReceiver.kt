@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.example.koalm.MainActivity
 import com.example.koalm.R
+import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.services.notifications.NotificationConstants
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.ReadingNotificationService
@@ -29,10 +30,12 @@ class NotificationReceiver : BroadcastReceiver() {
                 val durationMinutes = intent.getLongExtra("duration_minutes", 0)
                 val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isReading = intent.getBooleanExtra("is_reading", false)
+                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
                 
                 when {
                     isMeditation -> showMeditationNotification(context, descripcion, diaSemana)
                     isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
+                    isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
                     else -> {
                         val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
                         showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
@@ -42,7 +45,13 @@ class NotificationReceiver : BroadcastReceiver() {
             NotificationConstants.START_TIMER_ACTION -> {
                 val durationMinutes = intent.getLongExtra("duration_minutes", 0)
                 val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
-                startWritingTimer(context, durationMinutes, notasHabilitadas)
+                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
+                
+                if (isDigitalDisconnect) {
+                    startDigitalDisconnectTimer(context, durationMinutes)
+                } else {
+                    startWritingTimer(context, durationMinutes, notasHabilitadas)
+                }
             }
         }
     }
@@ -211,6 +220,81 @@ class NotificationReceiver : BroadcastReceiver() {
             .build()
         
         notificationManager.notify(WritingNotificationService.NOTIFICATION_ID + diaSemana, notification)
+    }
+
+    private fun showDigitalDisconnectNotification(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long
+    ) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                DigitalDisconnectNotificationService().channelId,
+                context.getString(DigitalDisconnectNotificationService().channelName),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(DigitalDisconnectNotificationService().channelDescription)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = NotificationConstants.START_TIMER_ACTION
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_digital_disconnect", true)
+        }
+        
+        val startTimerPendingIntent = PendingIntent.getBroadcast(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana,
+            startTimerIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val openDisconnectIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "desconexion")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+        
+        val openDisconnectPendingIntent = PendingIntent.getActivity(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 100,
+            openDisconnectIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val notification = NotificationCompat.Builder(context, DigitalDisconnectNotificationService().channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(DigitalDisconnectNotificationService().defaultTitle))
+            .setContentText(descripcion)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_timer,
+                context.getString(R.string.start_timer),
+                startTimerPendingIntent
+            )
+            .addAction(
+                R.drawable.ic_notification,
+                context.getString(R.string.notification_disconnect_button),
+                openDisconnectPendingIntent
+            )
+            .build()
+        
+        notificationManager.notify(DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana, notification)
+    }
+
+    private fun startDigitalDisconnectTimer(context: Context, durationMinutes: Long) {
+        val intent = Intent(context, DigitalDisconnectTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
+        }
+        ContextCompat.startForegroundService(context, intent)
     }
 
     private fun startWritingTimer(context: Context, durationMinutes: Long, notasHabilitadas: Boolean) {

@@ -55,6 +55,22 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".services.DigitalDisconnectTimerUpdateReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.koalm.DIGITAL_DISCONNECT_TIMER_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Servicio para manejar el temporizador de desconexión digital -->
+        <service
+            android:name=".services.DigitalDisconnectTimerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
         <activity
             android:name=".PersonalizarPerfil"
             android:exported="false"

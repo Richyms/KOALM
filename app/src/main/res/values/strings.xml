@@ -143,5 +143,14 @@
     <string name="error_hora">¡Establece hora de recordatorio!</string>
     <string name="mensaje_guardado">¡Hábito guardado exitosamente!</string>
 
+    <!-- Desconexion Digital Notification -->
+    <string name="digital_disconnect_notification_channel_name">Desconexión Digital</string>
+    <string name="digital_disconnect_notification_channel_description">Notificaciones para recordar tu tiempo de desconexión digital</string>
+    <string name="digital_disconnect_notification_title">¡Hora de desconectar!</string>
+    <string name="digital_disconnect_notification_default_text">Es hora de tomar un descanso digital</string>
+    <string name="digital_disconnect_timer_title">Desconexión Digital en progreso</string>
+    <string name="notification_disconnect_button">Ir a Desconexión</string>
+    <string name="digital_disconnect_completion_title">¡Desconexión completada!</string>
+    <string name="digital_disconnect_completion_text">Has completado tu tiempo de desconexión digital</string>
 
 </resources>
