@@ -111,6 +111,10 @@ dependencies {
     //colores
     implementation("com.github.skydoves:colorpicker-compose:1.1.2")
 
+    //Podometro
+    implementation ("androidx.compose.runtime:runtime-livedata")
+
+
 
 }
 

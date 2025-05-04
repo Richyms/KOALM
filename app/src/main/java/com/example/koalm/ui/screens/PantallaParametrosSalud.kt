@@ -1,14 +1,18 @@
 package com.example.koalm.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,16 +21,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel             // ← ViewModel en Compose
 import androidx.navigation.NavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.clickable
+import com.example.koalm.viewmodels.StepCounterViewModel        // ← tu ViewModel de pasos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaParametrosSalud(navController: NavController) {
+fun PantallaParametrosSalud(
+    navController: NavController,
+    viewModel: StepCounterViewModel = viewModel()              // ← inyectamos el VM
+) {
+    /* --------- Pasos en tiempo real --------- */
+    val pasos by viewModel.steps.observeAsState(0)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,6 +77,8 @@ fun PantallaParametrosSalud(navController: NavController) {
                 .padding(vertical = 5.dp, horizontal = 26.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            /* --- Cabecera/imagen --- */
             Image(
                 painter = painterResource(id = R.drawable.training),
                 contentDescription = "Koala salud",
@@ -76,18 +87,23 @@ fun PantallaParametrosSalud(navController: NavController) {
                     .offset(y = (-10).dp)
             )
 
+            /* --- Tarjetas mini --- */
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp, 0.dp)
             ) {
-                InfoMiniCard("Pasos", "7400/10000", Icons.AutoMirrored.Filled.DirectionsWalk) // dato para recuperar del back
-                InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime) // dato para recuperar del back
-                InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment) // dato para recuperar del back
+                InfoMiniCard(
+                    "Pasos",
+                    "$pasos/10000",                                  // ← valor dinámico
+                    Icons.AutoMirrored.Filled.DirectionsWalk
+                )
+                InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime)
+                InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment)
             }
 
-            // Cambiar fecha
+            /* --- Fecha última actualización (placeholder) --- */
             Text(
                 text = "Este dato es de la última información registrada, dd/mm/yy",
                 fontSize = 9.sp,
@@ -95,22 +111,26 @@ fun PantallaParametrosSalud(navController: NavController) {
                 modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
             )
 
+            /* --- Cartas grandes --- */
             InfoCard(
                 titulo = "Sueño",
-                dato = "7 h 7 min",
+                dato = "7 h 7 min",
                 icono = Icons.Default.Bedtime,
                 progreso = 0.88f,
                 onClick = { navController.navigate("sueño-de-anoche") }
             )
 
-            // dato para recuperar del back
-            InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite) // dato para recuperar del back
-            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f) // dato para recuperar del back
-            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f) // dato para recuperar del back
-            InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun) // dato para recuperar del back
+            InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite)
+            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f)
+            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f)
+            InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun)
         }
     }
 }
+
+/* ------------------------------------------------------------------ */
+/*  COMPONENTES REUTILIZABLES                                         */
+/* ------------------------------------------------------------------ */
 
 @Composable
 fun InfoMiniCard(titulo: String, dato: String, icono: ImageVector) {
@@ -136,15 +156,12 @@ fun InfoCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .let {
-                if (onClick != null) it.clickable { onClick() } else it
-            },
+            .let { if (onClick != null) it.clickable { onClick() } else it },
         shape = RoundedCornerShape(12.dp),
         tonalElevation = 2.dp,
         color = VerdeContenedor,
         border = BorderStroke(1.dp, Color.LightGray)
-    )
-    {
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp)
@@ -153,12 +170,13 @@ fun InfoCard(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(titulo, fontWeight = FontWeight.Bold)
-                if (dato.isNotBlank()) {
-                    Text(dato)
-                }
+                if (dato.isNotBlank()) Text(dato)
             }
             if (progreso != null) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     CircularProgressIndicator(
                         progress = { progreso },
                         modifier = Modifier.fillMaxSize(),
@@ -166,16 +184,15 @@ fun InfoCard(
                         color = VerdePrincipal
                     )
 
-                    if (titulo == "Ansiedad") {
-                        Icon(
+                    when (titulo) {
+                        "Ansiedad" -> Icon(
                             imageVector = Icons.Default.SentimentNeutral,
                             contentDescription = "Nivel de ansiedad",
                             tint = Negro,
                             modifier = Modifier.size(20.dp)
                         )
-                    } else if (titulo == "Sueño") {
-                        Text(
-                            text = "/8 h", // dato para recuperar del back
+                        "Sueño" -> Text(
+                            text = "/8 h",
                             fontSize = 10.sp,
                             color = Negro,
                             fontWeight = FontWeight.SemiBold
@@ -183,8 +200,6 @@ fun InfoCard(
                     }
                 }
             }
-
         }
     }
 }
-
