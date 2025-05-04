@@ -58,15 +58,14 @@ fun AppNavigation(
         composable("sueño-de-anoche"){PantallaSueno(navController)}
         composable("nivel-de-estres"){PantallaEstres(navController)}
         composable("objetivos-peso") { PantallaObjetivosPeso(navController) }
-
-        //composable("actividad-diaria"{No esta}
+        composable("actividad-diaria"){ PantallaActividadDiaria(navController) }
         /*Contol de peso*/
-        //composable("objetivos-peso"){PantallaObjetivosPeso(navController)}
-        //composable("actualizar-peso"){PantallaActualizarPeso(navController)}
+        composable("objetivos-peso"){PantallaObjetivosPeso(navController)}
+        composable("actualizar-peso"){PantallaActualizarPeso(navController)}
         /*Control de actividad fisica*/
-        //composable("meta-diaria-pasos"){PantallaMetaPasos(navController}
-        //composable("meta-diaria-movimiento"){no esta}
-        //composable("meta-diaria-calorias"){no esta}
+        composable("meta-diaria-pasos"){PantallaMetaPasos(navController)}
+        composable("meta-diaria-movimiento"){PantallaMetaMovimiento(navController)}
+        composable("meta-diaria-calorias"){PantallaMetaCalorias(navController)}
         composable("racha_habitos") { PantallaRachaHabitos(navController) }
 
     }
