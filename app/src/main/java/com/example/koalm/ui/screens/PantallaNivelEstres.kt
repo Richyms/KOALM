@@ -15,12 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 
@@ -28,12 +26,7 @@ import com.example.koalm.ui.theme.*
 @Composable
 fun PantallaEstres(
     navController: NavHostController,
-    nivel: String,
-    promedio: String,
-    mayorInicio: String,
-    mayorFin: String,
-    valores: List<Float>,
-    colores: List<Color>
+    datos: DatosEstres = datosMockEstres
 ) {
     Scaffold(
         topBar = {
@@ -59,20 +52,16 @@ fun PantallaEstres(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.SentimentNeutral,
                     contentDescription = null,
                     tint = VerdePrincipal,
                     modifier = Modifier.size(40.dp)
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Text(
-                    text = nivel,
+                    text = datos.nivel,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -98,7 +87,6 @@ fun PantallaEstres(
                                 .width(40.dp)
                         ) {
                             val niveles = listOf("Alto" to 0.8f, "Medio" to 0.5f, "Bajo" to 0.2f)
-
                             niveles.forEach { (texto, y) ->
                                 Text(
                                     text = texto,
@@ -106,7 +94,6 @@ fun PantallaEstres(
                                     modifier = Modifier
                                         .align(Alignment.BottomCenter)
                                         .offset(y = -(y * 170).dp)
-
                                 )
                             }
                         }
@@ -116,12 +103,10 @@ fun PantallaEstres(
                                 .weight(1f)
                                 .fillMaxHeight()
                         ) {
-                            // Líneas punteadas
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 val heightPx = size.height
                                 val widthPx = size.width
                                 val lineY = listOf(0.2f, 0.5f, 0.8f)
-
                                 lineY.forEach { y ->
                                     val yPos = heightPx * (1 - y)
                                     drawLine(
@@ -139,13 +124,13 @@ fun PantallaEstres(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                                 verticalAlignment = Alignment.Bottom
                             ) {
-                                valores.forEachIndexed { index, valor ->
+                                datos.valores.forEachIndexed { index, valor ->
                                     Box(
                                         modifier = Modifier
                                             .width(6.dp)
                                             .height((valor * 160).dp)
                                             .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
-                                            .background(colores.getOrNull(index) ?: GrisCard)
+                                            .background(datos.colores.getOrNull(index) ?: GrisCard)
                                     )
                                 }
                             }
@@ -172,22 +157,28 @@ fun PantallaEstres(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         Column {
-                            Text("Promedio de estrés", fontWeight = FontWeight.SemiBold)
+                            Text("Promedio de estrés", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).background(VerdePrincipal, CircleShape))
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(VerdePrincipal, CircleShape)
+                                )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(promedio)
+                                Text(datos.promedio)
                             }
                         }
 
                         Column {
-                            Text("Mayor estrés", fontWeight = FontWeight.SemiBold)
-                            Text("$mayorInicio - $mayorFin")
+                            Text("Mayor estrés", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("${datos.mayorInicio} - ${datos.mayorFin}")
                         }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
-                    // el BOTON esta en vemos :)
+
                     Button(
                         onClick = { /* TODO: Agregar acción real */ },
                         colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal),
@@ -199,32 +190,32 @@ fun PantallaEstres(
                     ) {
                         Text("Realizar test", fontSize = 16.sp)
                     }
-
                 }
             }
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun VistaPreviaPantallaEstres() {
-    val navController = rememberNavController()
-    val valores = listOf(0.6f, 0.7f, 1f, 0.8f, 0.4f, 0.6f, 0.5f, 0.3f, 0.2f, 0.4f, 0.3f, 0.5f, 0.6f, 0.4f, 0.8f, 0.7f, 0.6f, 0.5f, 0.7f, 0.9f, 1f, 0.9f, 0.6f, 0.3f)
-    val colores = valores.map { valor ->
+data class DatosEstres(
+    val nivel: String,
+    val promedio: String,
+    val mayorInicio: String,
+    val mayorFin: String,
+    val valores: List<Float>,
+    val colores: List<Color>
+)
+
+val datosMockEstres = DatosEstres( // Estos datos van a ser recuperados del back
+    nivel = "Medio",
+    promedio = "Bajo-Medio",
+    mayorInicio = "00:09:52",
+    mayorFin = "00:10:49",
+    valores = listOf(0.6f, 0.7f, 1f, 0.8f, 0.4f, 0.6f, 0.5f, 0.3f, 0.2f, 0.4f, 0.3f, 0.5f, 0.6f, 0.4f, 0.8f, 0.7f, 0.6f, 0.5f, 0.7f, 0.9f, 1f, 0.9f, 0.6f, 0.3f),
+    colores = listOf(0.6f, 0.7f, 1f, 0.8f, 0.4f, 0.6f, 0.5f, 0.3f, 0.2f, 0.4f, 0.3f, 0.5f, 0.6f, 0.4f, 0.8f, 0.7f, 0.6f, 0.5f, 0.7f, 0.9f, 1f, 0.9f, 0.6f, 0.3f).map {
         when {
-            valor > 0.8f -> MarronKoala
-            valor > 0.5f -> GrisMedio
+            it > 0.8f -> MarronKoala
+            it > 0.5f -> GrisMedio
             else -> VerdePrincipal
         }
     }
-    PantallaEstres(
-        navController = navController,
-        nivel = "Medio",
-        promedio = "Bajo-Medio",
-        mayorInicio = "00:09:52",
-        mayorFin = "00:10:49",
-        valores = valores,
-        colores = colores
-    )
-}
+)

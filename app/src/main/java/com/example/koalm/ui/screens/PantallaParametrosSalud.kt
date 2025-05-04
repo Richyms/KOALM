@@ -97,7 +97,10 @@ fun PantallaParametrosSalud(
                 navController.navigate("ritmo-cardiaco")
             }
 
-            InfoCard("Ansiedad", datos.ansiedad, Icons.Default.PsychologyAlt, datos.progresoAnsiedad)
+            InfoCard("Estrés", datos.ansiedad, Icons.Default.PsychologyAlt, datos.progresoAnsiedad) {
+                navController.navigate("nivel-de-estres")
+            }
+
             InfoCard("Peso", datos.peso, Icons.Default.MonitorWeight, datos.progresoPeso)
             InfoCard("Actividad diaria", datos.actividadDiaria, Icons.AutoMirrored.Filled.DirectionsRun)
 
