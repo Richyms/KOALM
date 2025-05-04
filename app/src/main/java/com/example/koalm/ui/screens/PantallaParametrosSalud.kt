@@ -23,10 +23,17 @@ import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaParametrosSalud(navController: NavController) {
+fun PantallaParametrosSalud(
+    navController: NavController,
+    datos: DatosSalud = datosMockSalud
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -40,24 +47,9 @@ fun PantallaParametrosSalud(navController: NavController) {
         },
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-                    label = { Text("Inicio") },
-                    selected = false,
-                    onClick = { /* Navegar a Inicio */ }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Star, contentDescription = "Hábitos") },
-                    label = { Text("Hábitos") },
-                    selected = false,
-                    onClick = { /* Navegar a Hábitos */ }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-                    label = { Text("Perfil") },
-                    selected = true,
-                    onClick = { /* Ya estás aquí */ }
-                )
+                NavigationBarItem(icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") }, label = { Text("Inicio") }, selected = false, onClick = {})
+                NavigationBarItem(icon = { Icon(Icons.Default.Star, contentDescription = "Hábitos") }, label = { Text("Hábitos") }, selected = false, onClick = {})
+                NavigationBarItem(icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, selected = true, onClick = {})
             }
         }
     ) { innerPadding ->
@@ -65,9 +57,12 @@ fun PantallaParametrosSalud(navController: NavController) {
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(vertical = 5.dp, horizontal = 26.dp),
+                .padding(horizontal = 26.dp)
+                .verticalScroll(rememberScrollState()), // 🚀 scroll vertical aquí
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(5.dp))
+
             Image(
                 painter = painterResource(id = R.drawable.training),
                 contentDescription = "Koala salud",
@@ -80,37 +75,35 @@ fun PantallaParametrosSalud(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp, 0.dp)
+                    .padding(vertical = 8.dp)
             ) {
-                InfoMiniCard("Pasos", "7400/10000", Icons.AutoMirrored.Filled.DirectionsWalk) // dato para recuperar del back
-                InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime) // dato para recuperar del back
-                InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment) // dato para recuperar del back
+                InfoMiniCard("Pasos", datos.pasos, Icons.AutoMirrored.Filled.DirectionsWalk)
+                InfoMiniCard("Tiempo Activo", datos.tiempoActivo, Icons.Default.AccessTime)
+                InfoMiniCard("Calorías", datos.calorias, Icons.Default.LocalFireDepartment)
             }
 
-            // Cambiar fecha
             Text(
-                text = "Este dato es de la última información registrada, dd/mm/yy",
-                fontSize = 9.sp,
+                text = "Este dato es de la última información registrada, ${datos.fechaUltimaActualizacion}",
+                fontSize = 11.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
             )
 
-            InfoCard(
-                titulo = "Sueño",
-                dato = "7 h 7 min",
-                icono = Icons.Default.Bedtime,
-                progreso = 0.88f,
-                onClick = { navController.navigate("sueño-de-anoche") }
-            )
+            InfoCard("Sueño", datos.sueño, Icons.Default.Bedtime, datos.progresoSueño) {
+                navController.navigate("sueño-de-anoche")
+            }
 
-            // dato para recuperar del back
-            InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite) // dato para recuperar del back
-            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f) // dato para recuperar del back
-            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f) // dato para recuperar del back
-            InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun) // dato para recuperar del back
+            InfoCard("Ritmo Cardíaco", datos.ritmoCardiaco, Icons.Default.Favorite)
+            InfoCard("Ansiedad", datos.ansiedad, Icons.Default.PsychologyAlt, datos.progresoAnsiedad)
+            InfoCard("Peso", datos.peso, Icons.Default.MonitorWeight, datos.progresoPeso)
+            InfoCard("Actividad diaria", datos.actividadDiaria, Icons.AutoMirrored.Filled.DirectionsRun)
+
+            Spacer(modifier = Modifier.height(70.dp)) // Espacio final para evitar que se tape con la barra
         }
     }
 }
+
+
 
 @Composable
 fun InfoMiniCard(titulo: String, dato: String, icono: ImageVector) {
@@ -120,7 +113,7 @@ fun InfoMiniCard(titulo: String, dato: String, icono: ImageVector) {
             Spacer(modifier = Modifier.width(2.dp))
             Text(titulo, style = MaterialTheme.typography.labelSmall)
         }
-        Text(dato, fontWeight = FontWeight.Bold)
+        Text(dato, fontWeight = FontWeight.Bold, fontSize = 15.sp)
     }
 }
 
@@ -187,4 +180,45 @@ fun InfoCard(
         }
     }
 }
+
+data class DatosSalud(
+    val fechaUltimaActualizacion: String,
+    val pasos: String,
+    val tiempoActivo: String,
+    val calorias: String,
+    val sueño: String,
+    val progresoSueño: Float,
+    val ritmoCardiaco: String,
+    val ansiedad: String,
+    val progresoAnsiedad: Float,
+    val peso: String,
+    val progresoPeso: Float,
+    val actividadDiaria: String
+)
+
+val datosMockSalud = DatosSalud(
+    fechaUltimaActualizacion = "02/05/2024",
+    pasos = "7400/8000",
+    tiempoActivo = "73/100 min",
+    calorias = "320/500 kcal",
+    sueño = "7 h 7 min",
+    progresoSueño = 0.88f,
+    ritmoCardiaco = "88 PPM",
+    ansiedad = "Moderado",
+    progresoAnsiedad = 0.6f,
+    peso = "-2.5 kg perdidos",
+    progresoPeso = .88f,
+    actividadDiaria = "Completada"
+)
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun VistaPreviaPantallaParametrosSalud() {
+    val navController = rememberNavController()
+    PantallaParametrosSalud(
+        navController = navController,
+        datos = datosMockSalud
+    )
+}
+
 
