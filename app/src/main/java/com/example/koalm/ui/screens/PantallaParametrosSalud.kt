@@ -103,13 +103,7 @@ fun PantallaParametrosSalud(
                 InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment)
             }
 
-            /* --- Fecha última actualización (placeholder) --- */
-            Text(
-                text = "Este dato es de la última información registrada, dd/mm/yy",
-                fontSize = 9.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
-            )
+         
 
             /* --- Cartas grandes --- */
             InfoCard(
