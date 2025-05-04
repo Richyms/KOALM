@@ -35,7 +35,8 @@ import androidx.credentials.exceptions.GetCredentialException
 
 class MainActivity : ComponentActivity() {
 
-    /* ----------  CONSTANTES  ---------- */
+
+//Constante para los pasos
     private val ACTIVITY_RECOGNITION_REQ = 101   // requestCode para el permiso de pasos
 
     /* ----------  ATRIBUTOS  ---------- */
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            /* --- Tema y navegación principal --- */
+        //Navegacion principal
             KoalmTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -103,8 +104,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /* ----------  PERMISO DE PODÓMETRO  ---------- */
-    private fun requestActivityRecognitionIfNeeded() {
+//Permisos para el podometro
+private fun requestActivityRecognitionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val granted = ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACTIVITY_RECOGNITION
@@ -122,7 +123,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<String>,      //  ←  sin “out”
+        permissions: Array<String>,
         grantResults: IntArray    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == ACTIVITY_RECOGNITION_REQ) {
@@ -138,7 +139,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /* ----------  AUTH CON GOOGLE (Credential Manager)  ---------- */
     private fun handleGoogleSignIn() {
         val option = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(true)
@@ -217,9 +217,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/* ------------------------------------------------------------------ */
-/*  COMPOSABLE DE ENVOLTURA (si lo usas en otros lugares)             */
-/* ------------------------------------------------------------------ */
+
 @Composable
 fun MainApp(
     onGoogleSignInClick: () -> Unit,
