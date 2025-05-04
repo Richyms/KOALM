@@ -52,14 +52,7 @@ fun AppNavigation(
         composable("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         composable("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
     /*Ajustar enlace de pantalla parametros salud*/
-        composable("ritmo-cardiaco"){ // esto es temporal, para pasar los datos del back
-            PantallaRitmoCardiaco(
-                navController = navController,
-                fechaUltimaInfo = "23/04/25",
-                datos = listOf(180f, 60f, 140f, 90f, 88f, 112f, 50f, 145f, 160f, 190f),
-                ritmo = 135
-            )
-        }
+        composable("ritmo-cardiaco"){ PantallaRitmoCardiaco(navController) }
         composable("sueño-de-anoche"){PantallaSueno(navController)}
         //composable("nivel-de-estres"){PantallaEstres(navController)}
         //composable("control-de-peso"){PantallaControlPeso(navContoller)}

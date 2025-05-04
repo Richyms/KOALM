@@ -93,12 +93,15 @@ fun PantallaParametrosSalud(
                 navController.navigate("sueño-de-anoche")
             }
 
-            InfoCard("Ritmo Cardíaco", datos.ritmoCardiaco, Icons.Default.Favorite)
+            InfoCard("Ritmo Cardíaco", datos.ritmoCardiaco, Icons.Default.Favorite) {
+                navController.navigate("ritmo-cardiaco")
+            }
+
             InfoCard("Ansiedad", datos.ansiedad, Icons.Default.PsychologyAlt, datos.progresoAnsiedad)
             InfoCard("Peso", datos.peso, Icons.Default.MonitorWeight, datos.progresoPeso)
             InfoCard("Actividad diaria", datos.actividadDiaria, Icons.AutoMirrored.Filled.DirectionsRun)
 
-            Spacer(modifier = Modifier.height(70.dp)) // Espacio final para evitar que se tape con la barra
+            Spacer(modifier = Modifier.height(70.dp))
         }
     }
 }
