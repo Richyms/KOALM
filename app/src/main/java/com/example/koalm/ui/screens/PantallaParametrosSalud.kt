@@ -101,7 +101,9 @@ fun PantallaParametrosSalud(
                 navController.navigate("nivel-de-estres")
             }
 
-            InfoCard("Peso", datos.peso, Icons.Default.MonitorWeight, datos.progresoPeso)
+            InfoCard("Peso", datos.peso, Icons.Default.MonitorWeight, datos.progresoPeso) {
+                navController.navigate("objetivos-peso")
+            }
             InfoCard("Actividad diaria", datos.actividadDiaria, Icons.AutoMirrored.Filled.DirectionsRun)
 
             Spacer(modifier = Modifier.height(70.dp))
