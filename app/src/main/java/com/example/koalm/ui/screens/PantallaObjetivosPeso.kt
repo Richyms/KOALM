@@ -21,10 +21,7 @@ import com.example.koalm.ui.theme.VerdePrincipal
 @Composable
 fun PantallaObjetivosPeso(
     navController: NavHostController,
-    pesoInicial: Float,
-    fechaInicial: String,
-    pesoActual: Float,
-    pesoObjetivo: Float
+    datos: DatosPeso = datosMockPeso
 ) {
     Scaffold(
         topBar = {
@@ -50,7 +47,6 @@ fun PantallaObjetivosPeso(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Peso inicial
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -59,49 +55,54 @@ fun PantallaObjetivosPeso(
                 Text("Peso inicial", fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "$pesoInicial kg el $fechaInicial",
+                        text = "${datos.pesoInicial} kg el ${datos.fechaInicial}",
                         color = VerdePrincipal,
-                        fontSize = 14.sp
+                        fontSize = 16.sp
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = VerdePrincipal)
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = VerdePrincipal,
+                        modifier = Modifier.size(17.dp)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Peso actual
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Peso actual", fontWeight = FontWeight.SemiBold)
-                Text("$pesoActual kg", color = VerdePrincipal)
+                Text("${datos.pesoActual} kg", color = VerdePrincipal, fontSize = 16.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Peso objetivo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Peso objetivo", fontWeight = FontWeight.SemiBold)
-                Text("$pesoObjetivo kg", color = VerdePrincipal)
+                Text("${datos.pesoObjetivo} kg", color = VerdePrincipal, fontSize = 16.sp)
             }
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun VistaPreviaPantallaObjetivos() {
-    val navController = rememberNavController()
-    PantallaObjetivosPeso(
-        navController = navController,
-        pesoInicial = 74.5f,
-        fechaInicial = "1 de febrero del 2025",
-        pesoActual = 72f,
-        pesoObjetivo = 69f
-    )
-}
+
+data class DatosPeso(
+    val pesoInicial: Float,
+    val fechaInicial: String,
+    val pesoActual: Float,
+    val pesoObjetivo: Float
+)
+
+val datosMockPeso = DatosPeso(
+    pesoInicial = 74.5f,
+    fechaInicial = "01/02/2025",
+    pesoActual = 72f,
+    pesoObjetivo = 69f
+)

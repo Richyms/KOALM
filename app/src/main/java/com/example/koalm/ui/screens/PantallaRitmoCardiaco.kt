@@ -25,9 +25,7 @@ import androidx.compose.ui.draw.clip
 @Composable
 fun PantallaRitmoCardiaco(
     navController: NavHostController,
-    ritmo: Int,
-    fechaUltimaInfo: String,
-    datos: List<Float>,
+    datos: DatosRitmoCardiaco = datosMockRitmo
 ) {
     Scaffold(
         topBar = {
@@ -61,11 +59,11 @@ fun PantallaRitmoCardiaco(
                     modifier = Modifier.size(50.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("$ritmo LPM", fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                Text("${datos.ritmo} LPM", fontSize = 36.sp, fontWeight = FontWeight.Bold)
             }
 
             Text(
-                "Este dato es de la última información registrada, $fechaUltimaInfo",
+                "Este dato es de la última información registrada, ${datos.fechaUltimaInfo}",
                 fontSize = 11.sp,
                 color = Color.Gray
             )
@@ -86,10 +84,10 @@ fun PantallaRitmoCardiaco(
 
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
-                            val stepX = size.width / (datos.size - 1)
+                            val stepX = size.width / (datos.datos.size - 1)
                             val stepY = size.height / 200f
 
-                            val puntos = datos.mapIndexed { i, v ->
+                            val puntos = datos.datos.mapIndexed { i, v ->
                                 Offset(x = i * stepX, y = size.height - v * stepY)
                             }
 
@@ -100,15 +98,11 @@ fun PantallaRitmoCardiaco(
                                 close()
                             }
 
-                            // Gradiente
                             drawPath(
                                 path = path,
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(Color(0xFFB7EACB), Color.Transparent)
-                                )
+                                brush = Brush.verticalGradient(colors = listOf(Color(0xFFB7EACB), Color.Transparent))
                             )
 
-                            // Línea
                             for (i in 0 until puntos.size - 1) {
                                 drawLine(
                                     color = Color(0xFFF8844F),
@@ -118,46 +112,34 @@ fun PantallaRitmoCardiaco(
                                 )
                             }
 
-                            // Puntos
-                            datos.forEachIndexed { index, valor ->
-                                val punto = puntos[index]
+                            datos.datos.forEachIndexed { index, valor ->
                                 drawCircle(
                                     color = colorZona(valor),
                                     radius = 4.dp.toPx(),
-                                    center = punto
+                                    center = puntos[index]
                                 )
                             }
 
-                            // Líneas horizontales (Y)
-                            val etiquetasY = listOf(56, 84, 112, 140, 196)
-                            val stepEtiY = size.height / 200f
-                            etiquetasY.forEach { y ->
-                                val posY = size.height - (y * stepEtiY)
-                                drawLine(
-                                    color = Color.LightGray.copy(alpha = 0.5f),
-                                    start = Offset(0f, posY),
-                                    end = Offset(size.width, posY),
-                                    strokeWidth = 1f,
-                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-                                )
-
-                                // Etiqueta Y
+                            val etiquetasTextoY = listOf(56, 84, 112, 140, 196)
+                            etiquetasTextoY.forEach { valor ->
+                                val posY = size.height - (valor * stepY)
                                 drawContext.canvas.nativeCanvas.drawText(
-                                    y.toString(),
-                                    -60f,
-                                    posY - 2.dp.toPx(),
+                                    valor.toString(),
+                                    -82f,
+                                    posY + 4.dp.toPx(),
                                     android.graphics.Paint().apply {
                                         color = GrisMedio.toArgb()
-                                        textSize = 24f
+                                        textSize = 28f
                                     }
                                 )
                             }
                         }
+
+
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Etiquetas de tiempo (X)
                     val etiquetasX = listOf("0", "3", "6", "12", "15", "18", "21", "24")
                     Row(
                         modifier = Modifier
@@ -193,12 +175,12 @@ fun PantallaRitmoCardiaco(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(10.dp)
+                                        .size(12.dp)
                                         .clip(CircleShape)
                                         .background(color)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(tiempo, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(tiempo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(zona, fontSize = 12.sp, color = GrisMedio)
@@ -208,19 +190,18 @@ fun PantallaRitmoCardiaco(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Segunda fila
                 Row(horizontalArrangement = Arrangement.spacedBy(64.dp)) {
                     zonasFormateadas.drop(3).forEach { (zona, tiempo, color) ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(8.dp)
+                                        .size(12.dp)
                                         .clip(CircleShape)
                                         .background(color)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(tiempo, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(tiempo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(zona, fontSize = 12.sp, color = GrisMedio)
@@ -241,3 +222,15 @@ fun colorZona(valor: Float): Color {
         else -> RojoVOMAx // VO Máx
     }
 }
+
+data class DatosRitmoCardiaco(
+    val ritmo: Int,
+    val fechaUltimaInfo: String,
+    val datos: List<Float>
+)
+
+val datosMockRitmo = DatosRitmoCardiaco(
+    ritmo = 135,
+    fechaUltimaInfo = "23/04/25",
+    datos = listOf(180f, 60f, 140f, 90f, 88f, 112f, 50f, 145f, 160f, 190f)
+)

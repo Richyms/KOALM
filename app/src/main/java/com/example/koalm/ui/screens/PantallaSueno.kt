@@ -3,48 +3,49 @@ package com.example.koalm.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import androidx.compose.ui.text.font.FontWeight
-import com.example.koalm.ui.theme.GrisCard
+import com.example.koalm.ui.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import com.example.koalm.ui.theme.*
 
+data class DatosSueno(
+    val puntos: Int,
+    val fecha: String,
+    val horas: Int,
+    val minutos: Int,
+    val sueñoLigero: Float,
+    val sueñoProfundo: Float,
+    val tiempoDespierto: Float,
+    val historialSemanal: List<DiaSueno>
+)
+
+data class DiaSueno(
+    val ligero: Float,
+    val profundo: Float,
+    val despierto: Float
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaSueno(
     navController: NavHostController,
+    datos: DatosSueno = datosMockSueño
 ) {
-    // Estos datos van a ser recuperados del back
-    val puntos = 10
-    val fechaStr = "2024-04-21"
-    val horasDormidas = 4
-    val minutosDormidos = 27
-    val suenoLigeroStr = "3 h 22 m"
-    val suenoProfundoStr = "4 h 44 m"
-    val tiempoDespiertoStr = "0 h 21 m"
-
-    val fecha = LocalDate.parse(fechaStr)
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yy")
-    val fechaFormateada = fecha.format(formatter)
-
+    val fecha = LocalDate.parse(datos.fecha)
+    val fechaFormateada = fecha.format(DateTimeFormatter.ofPattern("dd/MM/yy"))
 
     Scaffold(
         topBar = {
@@ -70,11 +71,9 @@ fun PantallaSueno(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "$puntos",
+                    text = "${datos.puntos}",
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.alignByBaseline()
@@ -108,21 +107,12 @@ fun PantallaSueno(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "$horasDormidas h $minutosDormidos m",
+                        text = "${datos.horas} h ${datos.minutos} m",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Medium
                     )
 
                     val dias = listOf("L", "M", "X", "J", "V", "S", "D")
-                    val suenoData = listOf(
-                        Triple(3.2f, 4.0f, 0.5f),
-                        Triple(3.0f, 4.2f, 0.3f),
-                        Triple(3.1f, 4.1f, 0.4f),
-                        Triple(3.4f, 4.0f, 0.4f),
-                        Triple(3.2f, 4.0f, 0.3f),
-                        Triple(2.5f, 3.5f, 0.4f),
-                        Triple(2.0f, 1.5f, 1.2f)
-                    )
 
                     Row(
                         modifier = Modifier
@@ -131,16 +121,15 @@ fun PantallaSueno(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        dias.zip(suenoData).forEach { (dia, datos) ->
+                        dias.zip(datos.historialSemanal).forEach { (dia, sueno) ->
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Bottom
                             ) {
                                 BarraSueno(
-                                    suenoLigero = datos.first,
-                                    suenoProfundo = datos.second,
-                                    despierto = datos.third,
-                                    width = 9.dp
+                                    suenoLigero = sueno.ligero,
+                                    suenoProfundo = sueno.profundo,
+                                    despierto = sueno.despierto
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(dia, fontSize = 12.sp)
@@ -148,20 +137,17 @@ fun PantallaSueno(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(22.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Leyenda
                     Column(
                         horizontalAlignment = Alignment.Start,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 34.dp, vertical = 5.dp)
                     ) {
-                        LeyendaColor(duracion = "$suenoLigeroStr h", etiqueta = "Sueño ligero", color = GrisMedio)
-                        LeyendaColor(duracion = "$suenoProfundoStr h", etiqueta = "Sueño profundo", color = VerdePrincipal)
-                        LeyendaColor(duracion = "$tiempoDespiertoStr h", etiqueta = "Tiempo despierto", color = MarronKoala)
-
+                        LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
+                        LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
+                        LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
                     }
                 }
             }
@@ -173,9 +159,7 @@ fun PantallaSueno(
 fun BarraSueno(
     suenoLigero: Float,
     suenoProfundo: Float,
-    despierto: Float,
-    height: Dp = 150.dp,
-    width: Dp = 6.dp
+    despierto: Float
 ) {
     val total = suenoLigero + suenoProfundo + despierto
     val ligeroRatio = suenoLigero / total
@@ -184,8 +168,8 @@ fun BarraSueno(
 
     Box(
         modifier = Modifier
-            .height(height)
-            .width(width)
+            .height(150.dp)
+            .width(14.dp)
     ) {
         Column(
             modifier = Modifier
@@ -199,14 +183,12 @@ fun BarraSueno(
                     .weight(despiertoRatio)
                     .background(MarronKoala)
             )
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(profundoRatio)
                     .background(VerdePrincipal)
             )
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -217,9 +199,6 @@ fun BarraSueno(
     }
 }
 
-
-
-
 @Composable
 fun LeyendaColor(duracion: String, etiqueta: String, color: Color) {
     Row(
@@ -228,22 +207,31 @@ fun LeyendaColor(duracion: String, etiqueta: String, color: Color) {
     ) {
         Box(
             modifier = Modifier
-                .size(10.dp)
+                .size(14.dp)
                 .background(color = color, shape = CircleShape)
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text("$duracion  -  $etiqueta", fontSize = 18.sp)
+        Spacer(modifier = Modifier.width(10.dp))
+        Text("$duracion  -  $etiqueta", fontSize = 16.sp)
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun VistaPreviaSueno() {
-    val navController = rememberNavController()
-    PantallaSueno(
-        navController = navController,
 
+val datosMockSueño = DatosSueno( // Estos datos van a ser recuperados del back
+    puntos = 87,
+    fecha = "2024-05-02",
+    horas = 7,
+    minutos = 15,
+    sueñoLigero = 3.2f,
+    sueñoProfundo = 3.8f,
+    tiempoDespierto = 0.5f,
+    historialSemanal = listOf(
+        DiaSueno(3.0f, 3.5f, 0.5f), // Lunes
+        DiaSueno(3.2f, 3.6f, 0.3f), // Martes
+        DiaSueno(3.1f, 3.4f, 0.5f), // Miércoles
+        DiaSueno(3.4f, 3.2f, 0.4f), // Jueves
+        DiaSueno(3.0f, 4.0f, 0.2f), // Viernes
+        DiaSueno(2.5f, 3.0f, 0.7f), // Sábado
+        DiaSueno(2.0f, 2.5f, 1.0f)  // Domingo
     )
-}
-
+)
 
