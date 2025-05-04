@@ -30,14 +30,14 @@ fun PantallaTestAnsiedad(navController: NavController? = null) {
     )
 
     val opciones = listOf("Nunca", "Varios días", "Más de la mitad del tiempo", "Casi todos los días")
-    val respuestas = remember { mutableStateListOf(*Array(preguntas.size) { -1 }) }
+    val respuestas = remember { mutableStateListOf<Int>().apply { repeat(preguntas.size) { add(-1) } } }
 
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController = navController)
         },
         topBar = {
-            TopAppBar(
+            SmallTopAppBar(
                 title = {
                     Text("Test de ansiedad", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 },
@@ -48,7 +48,6 @@ fun PantallaTestAnsiedad(navController: NavController? = null) {
                 }
             )
         }
-
     ) { padding ->
         Column(
             modifier = Modifier
@@ -70,9 +69,7 @@ fun PantallaTestAnsiedad(navController: NavController? = null) {
 
             Button(
                 onClick = {
-                    // Aquí puedes manejar el cálculo de resultados, por ejemplo:
                     val resultado = calcularResultado(respuestas)
-                    // O navegar a otra pantalla con el resultado:
                     navController?.navigate("resultado/$resultado")
                 },
                 modifier = Modifier
@@ -148,12 +145,12 @@ fun BottomNavigationBar(navController: NavController?) {
 }
 
 fun calcularResultado(respuestas: List<Int>): Int {
-    // Ejemplo de cómo podrías calcular un resultado basado en las respuestas
-    return respuestas.count { it != -1 } // Contar cuántas preguntas fueron respondidas
+    // Ejemplo básico: cuenta cuántas respuestas fueron seleccionadas (no -1)
+    return respuestas.count { it != -1 }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewPantallaTestAnsiedad() {
-    PantallaTestAnsiedad()
+    PantallaTestAnsiedad(navController = null)
 }
