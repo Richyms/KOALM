@@ -1,11 +1,13 @@
 package com.example.koalm.ui.screens
 
+/* ----------  IMPORTS  ---------- */
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
@@ -13,27 +15,32 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel             // ← ViewModel en Compose
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
-import com.example.koalm.viewmodels.StepCounterViewModel        // ← tu ViewModel de pasos
+import com.example.koalm.viewmodels.StepCounterViewModel
 
+/* ----------  UI PRINCIPAL  ---------- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaParametrosSalud(
     navController: NavController,
-    viewModel: StepCounterViewModel = viewModel()              // ← inyectamos el VM
+    datos: DatosSalud = datosMockSalud,
+    viewModel: StepCounterViewModel = viewModel()          // ← VM de pasos
 ) {
-    /* --------- Pasos en tiempo real --------- */
+    /* Pasos en vivo */
     val pasos by viewModel.steps.observeAsState(0)
 
     Scaffold(
@@ -49,24 +56,9 @@ fun PantallaParametrosSalud(
         },
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-                    label = { Text("Inicio") },
-                    selected = false,
-                    onClick = { /* Navegar a Inicio */ }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Star, contentDescription = "Hábitos") },
-                    label = { Text("Hábitos") },
-                    selected = false,
-                    onClick = { /* Navegar a Hábitos */ }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-                    label = { Text("Perfil") },
-                    selected = true,
-                    onClick = { /* Ya estás aquí */ }
-                )
+                NavigationBarItem(icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },  label = { Text("Inicio") },  selected = false, onClick = {})
+                NavigationBarItem(icon = { Icon(Icons.Default.Star, contentDescription = "Hábitos") }, label = { Text("Hábitos") }, selected = false, onClick = {})
+                NavigationBarItem(icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, selected = true,  onClick = {})
             }
         }
     ) { innerPadding ->
@@ -74,11 +66,12 @@ fun PantallaParametrosSalud(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(vertical = 5.dp, horizontal = 26.dp),
+                .padding(horizontal = 26.dp)
+                .verticalScroll(rememberScrollState()),     // scroll vertical
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(5.dp))
 
-            /* --- Cabecera/imagen --- */
             Image(
                 painter = painterResource(id = R.drawable.training),
                 contentDescription = "Koala salud",
@@ -87,45 +80,38 @@ fun PantallaParametrosSalud(
                     .offset(y = (-10).dp)
             )
 
-            /* --- Tarjetas mini --- */
+            /* ---------- Tarjetas mini ---------- */
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp, 0.dp)
+                    .padding(vertical = 8.dp)
             ) {
-                InfoMiniCard(
-                    "Pasos",
-                    "$pasos/10000",                                  // ← valor dinámico
-                    Icons.AutoMirrored.Filled.DirectionsWalk
-                )
-                InfoMiniCard("Tiempo Activo", "73/100 min", Icons.Default.AccessTime)
-                InfoMiniCard("Calorías", "320/500 kcal", Icons.Default.LocalFireDepartment)
+                InfoMiniCard("Pasos", "$pasos/10000", Icons.AutoMirrored.Filled.DirectionsWalk)
+                InfoMiniCard("Tiempo Activo", datos.tiempoActivo, Icons.Default.AccessTime)
+                InfoMiniCard("Calorías", datos.calorias, Icons.Default.LocalFireDepartment)
             }
 
-         
-
-            /* --- Cartas grandes --- */
-            InfoCard(
-                titulo = "Sueño",
-                dato = "7 h 7 min",
-                icono = Icons.Default.Bedtime,
-                progreso = 0.88f,
-                onClick = { navController.navigate("sueño-de-anoche") }
+            Text(
+                text = "Este dato es de la última información registrada, ${datos.fechaUltimaActualizacion}",
+                fontSize = 11.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
             )
 
-            InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite)
-            InfoCard("Ansiedad", "Moderado", Icons.Default.PsychologyAlt, progreso = 0.6f)
-            InfoCard("Peso", "-2.5 kg perdidos", Icons.Default.MonitorWeight, progreso = 0.5f)
-            InfoCard("Actividad diaria", "", Icons.AutoMirrored.Filled.DirectionsRun)
+            /* ---------- Tarjetas grandes ---------- */
+            InfoCard("Sueño",            datos.sueño,          Icons.Default.Bedtime,     datos.progresoSueño)     { navController.navigate("sueño-de-anoche") }
+            InfoCard("Ritmo Cardíaco",   datos.ritmoCardiaco,  Icons.Default.Favorite)    { navController.navigate("ritmo-cardiaco") }
+            InfoCard("Estrés",           datos.ansiedad,       Icons.Default.PsychologyAlt, datos.progresoAnsiedad){ navController.navigate("nivel-de-estres") }
+            InfoCard("Peso",             datos.peso,           Icons.Default.MonitorWeight, datos.progresoPeso)     { navController.navigate("objetivos-peso") }
+            InfoCard("Actividad diaria", datos.actividadDiaria,Icons.AutoMirrored.Filled.DirectionsRun)            { navController.navigate("actividad-diaria") }
+
+            Spacer(modifier = Modifier.height(70.dp)) // deja espacio para bottomBar
         }
     }
 }
 
-/* ------------------------------------------------------------------ */
-/*  COMPONENTES REUTILIZABLES                                         */
-/* ------------------------------------------------------------------ */
-
+/* ----------  COMPONENTES AUXILIARES  ---------- */
 @Composable
 fun InfoMiniCard(titulo: String, dato: String, icono: ImageVector) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -134,7 +120,7 @@ fun InfoMiniCard(titulo: String, dato: String, icono: ImageVector) {
             Spacer(modifier = Modifier.width(2.dp))
             Text(titulo, style = MaterialTheme.typography.labelSmall)
         }
-        Text(dato, fontWeight = FontWeight.Bold)
+        Text(dato, fontWeight = FontWeight.Bold, fontSize = 15.sp)
     }
 }
 
@@ -167,33 +153,73 @@ fun InfoCard(
                 if (dato.isNotBlank()) Text(dato)
             }
             if (progreso != null) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(40.dp)
-                ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
                     CircularProgressIndicator(
                         progress = { progreso },
                         modifier = Modifier.fillMaxSize(),
                         strokeWidth = 4.dp,
                         color = VerdePrincipal
                     )
-
-                    when (titulo) {
-                        "Ansiedad" -> Icon(
-                            imageVector = Icons.Default.SentimentNeutral,
-                            contentDescription = "Nivel de ansiedad",
-                            tint = Negro,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        "Sueño" -> Text(
+                    if (titulo == "Sueño") {
+                        Text(
                             text = "/8 h",
                             fontSize = 10.sp,
                             color = Negro,
                             fontWeight = FontWeight.SemiBold
+                        )
+                    } else if (titulo == "Estrés") {
+                        Icon(
+                            imageVector = Icons.Default.SentimentNeutral,
+                            contentDescription = "Nivel de estrés",
+                            tint = Negro,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
         }
     }
+}
+
+/* ----------  MODELO DE DATOS (mockeable)  ---------- */
+data class DatosSalud(
+    val fechaUltimaActualizacion: String,
+    val pasos: String,
+    val tiempoActivo: String,
+    val calorias: String,
+    val sueño: String,
+    val progresoSueño: Float,
+    val ritmoCardiaco: String,
+    val ansiedad: String,
+    val progresoAnsiedad: Float,
+    val peso: String,
+    val progresoPeso: Float,
+    val actividadDiaria: String
+)
+
+/* ----------  Datos de prueba para Preview  ---------- */
+val datosMockSalud = DatosSalud(
+    fechaUltimaActualizacion = "02/05/2025",
+    pasos = "7400/10000",
+    tiempoActivo = "73/100 min",
+    calorias = "320/500 kcal",
+    sueño = "7 h 7 min",
+    progresoSueño = 0.88f,
+    ritmoCardiaco = "88 PPM",
+    ansiedad = "Moderado",
+    progresoAnsiedad = 0.6f,
+    peso = "-2.5 kg perdidos",
+    progresoPeso = 0.5f,
+    actividadDiaria = "Completada"
+)
+
+/* ----------  PREVIEW  ---------- */
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun VistaPreviaPantallaParametrosSalud() {
+    val navController = rememberNavController()
+    PantallaParametrosSalud(
+        navController = navController,
+        datos = datosMockSalud
+    )
 }

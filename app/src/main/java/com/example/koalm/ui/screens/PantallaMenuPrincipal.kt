@@ -194,12 +194,12 @@ fun DrawerContenido(navController: NavHostController) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider()
-        listOf("Inicio", "Racha", "Estadísticas", "Test de emociones").forEach {
+        listOf("Inicio", "Racha", "Parametros de salud", "Test de emociones").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
                     //"Inicio" -> navController.navigate("inicio")
                     "Racha" -> navController.navigate("racha_habitos")
-                    "Estadísticas" -> navController.navigate("estadisticas")
+                    "Parametros de salud" -> navController.navigate("estadisticas")
                     //"Test de emociones" -> navController.navigate("test_emociones")
                 }
             })
