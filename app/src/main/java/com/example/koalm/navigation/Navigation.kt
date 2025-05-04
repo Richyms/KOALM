@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.koalm.ui.screens.*
+import com.example.koalmv1.ui.screens.PantallaConfigurarDesconexionDigital
 
 @Composable
 fun AppNavigation(
@@ -51,6 +52,7 @@ fun AppNavigation(
         composable("estadisticas"){PantallaParametrosSalud(navController)}
         composable("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         composable("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
+        composable("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
     /*Ajustar enlace de pantalla parametros salud*/
         composable("ritmo-cardiaco"){ PantallaRitmoCardiaco(navController) }
         composable("sueño-de-anoche"){PantallaSueno(navController)}
