@@ -1,4 +1,4 @@
-package com.example.koalm.viewmodels
+/*package com.example.koalm.viewmodels
 
 import android.app.Application
 import android.content.Context
@@ -53,3 +53,4 @@ class StepCounterViewModel(application: Application)
         _steps.value = 0
     }
 }
+*/

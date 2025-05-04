@@ -69,6 +69,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
 
     // — Google Sign‑In
     implementation(libs.play.services.auth)
