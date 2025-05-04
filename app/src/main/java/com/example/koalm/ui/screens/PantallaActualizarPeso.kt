@@ -1,5 +1,6 @@
 package com.example.koalm.ui.screens
 
+import android.graphics.Paint
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -10,22 +11,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdePrincipal
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+
+// ✅ Renombrada la clase para evitar conflictos
+data class DatosActualizarPeso(
+    val pesoActual: Float,
+    val fecha: String
+)
+
+val datosMockActualizarPeso = DatosActualizarPeso(
+    pesoActual = 72f,
+    fecha = "6 abril, 2025"
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaActualizarPeso(
     navController: NavHostController,
-    pesoActual: Float,
-    fecha: String,
-    onGuardar: () -> Unit
+    datos: DatosActualizarPeso = datosMockActualizarPeso,
+    onGuardar: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -62,7 +73,7 @@ fun PantallaActualizarPeso(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Peso (kg)", fontWeight = FontWeight.SemiBold)
-                Text(pesoActual.toString(), color = VerdePrincipal)
+                Text(datos.pesoActual.toString(), color = VerdePrincipal)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -76,7 +87,7 @@ fun PantallaActualizarPeso(
                 Text("Fecha", fontWeight = FontWeight.SemiBold)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = fecha,
+                        text = datos.fecha,
                         color = VerdePrincipal,
                         fontSize = 14.sp
                     )
@@ -91,11 +102,7 @@ fun PantallaActualizarPeso(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun VistaPreviaPantallaActualizarPeso() {
-    val navController = rememberNavController()
     PantallaActualizarPeso(
-        navController = navController,
-        pesoActual = 72f,
-        fecha = "6 abril, 2025",
-        onGuardar = {}
+        navController = rememberNavController()
     )
 }

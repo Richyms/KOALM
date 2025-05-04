@@ -93,6 +93,9 @@ fun HabitoMentalCard(habito: HabitoMental, navController: NavHostController) {
             if(habito.titulo == "Lectura"){
                 navController.navigate("configurar-habito-lectura")
             }
+            if(habito.titulo == "Desconexión digital"){
+                navController.navigate("configurar_habito_desconexion_digital")
+            }
 
         },
         modifier = Modifier

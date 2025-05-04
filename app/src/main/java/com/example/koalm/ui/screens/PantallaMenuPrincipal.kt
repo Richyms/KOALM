@@ -38,8 +38,6 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
-import androidx.navigation.compose.rememberNavController
-import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
