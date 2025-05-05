@@ -53,6 +53,8 @@ fun AppNavigation(
         composable("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         composable("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         composable("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
+        composable("estadisticas_salud_mental"){PantallaEstadísticasSaludMental(navController)}
+        composable("estadisticas_salud_fisica"){PantallaEstadísticasSaludFisica(navController)}
     /*Ajustar enlace de pantalla parametros salud*/
         composable("ritmo-cardiaco"){ PantallaRitmoCardiaco(navController) }
         composable("sueño-de-anoche"){PantallaSueno(navController)}
