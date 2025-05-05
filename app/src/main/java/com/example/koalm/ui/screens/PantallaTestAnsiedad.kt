@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,13 +39,11 @@ fun PantallaTestAnsiedad(navController: NavController? = null) {
             BottomNavigationBar(navController = navController)
         },
         topBar = {
-            SmallTopAppBar(
-                title = {
-                    Text("Test de ansiedad", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                },
+            TopAppBar(
+                title = { Text("Test de ansiedad", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = { navController?.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
                     }
                 }
             )
