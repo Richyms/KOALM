@@ -9,7 +9,6 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,21 +26,18 @@ import androidx.navigation.compose.rememberNavController
 import com.example.koalm.navigation.AppNavigation
 import com.example.koalm.ui.theme.KoalmTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
-import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.*
 
 class MainActivity : ComponentActivity() {
 
     /* ---------- CONSTANTES ---------- */
     private val ACTIVITY_RECOGNITION_REQ = 101
-
 
     /* ---------- ATRIBUTOS ---------- */
     private lateinit var credentialManager: CredentialManager
@@ -51,36 +47,59 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Firebase & CredentialManager
-        launchStepService()
-        requestActivityRecognitionIfNeeded()
-        firebaseAuth = FirebaseAuth.getInstance()
+        firebaseAuth      = FirebaseAuth.getInstance()
         credentialManager = CredentialManager.create(this)
 
-        /* ------ BLOQUE DE DIAGNÓSTICO (Eliminar cuando termines) ------ */
-        val sm = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        sm.getSensorList(Sensor.TYPE_ALL).forEach {
-            Log.i("SENSORS", "${it.name} – ${it.type}")
-        }
-        /* -------------------------------------------------------------- */
+        // Diagnóstico opcional: lista de sensores disponibles
+        (getSystemService(Context.SENSOR_SERVICE) as SensorManager)
+            .getSensorList(Sensor.TYPE_ALL).forEach {
+                android.util.Log.i("SENSORS", "${it.name} – ${it.type}")
+            }
 
-        if (firebaseAuth.currentUser != null) launchStepService()
-
+        // Permiso ACTIVITY_RECOGNITION y, si procede, arranque del servicio
         requestActivityRecognitionIfNeeded()
 
         val startDestination =
             if (firebaseAuth.currentUser?.isEmailVerified == true) "menu" else "iniciar"
 
-        setContent { MainApp(::handleGoogleSignIn, startDestination) }
+        /* ---------------- UI COMPOSE ---------------- */
+        setContent {
+            val navController = rememberNavController()
+
+            // Responder a intents/notificaciones externas
+            LaunchedEffect(intent?.action, intent?.getStringExtra("route")) {
+                when {
+                    intent?.action == "com.example.koalm.START_TIMER" ->
+                        navController.navigate("notas")
+                    intent?.getStringExtra("route") == "notas"   ->
+                        navController.navigate("notas")  { popUpTo("menu") { saveState = true }; launchSingleTop = true; restoreState = true }
+                    intent?.getStringExtra("route") == "libros"  ->
+                        navController.navigate("libros") { popUpTo("menu") { saveState = true }; launchSingleTop = true; restoreState = true }
+                }
+            }
+
+            MainApp(
+                navController        = navController,
+                onGoogleSignInClick  = ::handleGoogleSignIn,
+                startDestination     = startDestination
+            )
+        }
     }
 
-    /* ---------- INICIAR SERVICIO DE PASOS ---------- */
+    /* ---------- SERVICIO DE PASOS ---------- */
     private fun launchStepService() {
         val intent = Intent(this, com.example.koalm.services.MovimientoService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent)
+        else startService(intent)
+    }
+
+    private fun startStepServiceIfPermitted() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACTIVITY_RECOGNITION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            launchStepService()
         }
     }
 
@@ -91,48 +110,56 @@ class MainActivity : ComponentActivity() {
                 this, Manifest.permission.ACTIVITY_RECOGNITION
             ) == PackageManager.PERMISSION_GRANTED
 
-            if (!granted) {
+            if (granted) {
+                launchStepService()
+            } else {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
                     ACTIVITY_RECOGNITION_REQ
                 )
             }
+        } else {
+            launchStepService() // < Android 10 no requiere permiso
         }
     }
 
+    @Suppress("DEPRECATION")
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<String>,
+        permissions: Array<String>,       // firma exacta
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
         if (requestCode == ACTIVITY_RECOGNITION_REQ) {
-            val msg = if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED)
+            val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+            val msg = if (granted)
                 "Permiso de actividad física otorgado ✔️"
             else
-                "Permiso de actividad física denegado"
+                "Permiso de actividad física denegado — el podómetro estará desactivado"
             Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+
+            if (granted) launchStepService()
         }
     }
-
-    /* ---------- GOOGLE SIGN‑IN ---------- */
+    /* ---------- GOOGLE SIGN‑IN / SIGN‑UP ---------- */
     private fun handleGoogleSignIn() {
+        // 1. Intentamos con cuentas ya autorizadas
         val option = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(true)
             .setServerClientId(getString(R.string.default_web_client_id))
             .setAutoSelectEnabled(true)
             .build()
 
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(option)
-            .build()
+        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
 
         lifecycleScope.launch {
             try {
                 val response = credentialManager.getCredential(this@MainActivity, request)
                 processCredential(response)
             } catch (e: GetCredentialException) {
+                // 2. Si falla, lanzamos flujo de alta
                 handleGoogleSignUp()
             }
         }
@@ -144,9 +171,7 @@ class MainActivity : ComponentActivity() {
             .setServerClientId(getString(R.string.default_web_client_id))
             .build()
 
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(option)
-            .build()
+        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
 
         lifecycleScope.launch {
             try {
@@ -165,8 +190,7 @@ class MainActivity : ComponentActivity() {
     /* ---------- AUTH CON FIREBASE ---------- */
     private fun processCredential(response: GetCredentialResponse) {
         val idToken = GoogleIdTokenCredential
-            .createFrom(response.credential.data)
-            .idToken ?: run {
+            .createFrom(response.credential.data).idToken ?: run {
             Toast.makeText(this, "No se obtuvo token válido de Google", Toast.LENGTH_LONG).show()
             return
         }
@@ -175,9 +199,7 @@ class MainActivity : ComponentActivity() {
             GoogleAuthProvider.getCredential(idToken, null)
         ).addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
-
-
-                launchStepService()
+                startStepServiceIfPermitted()
 
                 Toast.makeText(
                     this,
@@ -185,6 +207,7 @@ class MainActivity : ComponentActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
+                // Reiniciamos para refrescar navegación según usuario logueado
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             } else {
@@ -201,29 +224,26 @@ class MainActivity : ComponentActivity() {
 /* ---------- COMPOSABLE PRINCIPAL ---------- */
 @Composable
 fun MainApp(
+    navController: androidx.navigation.NavHostController,
     onGoogleSignInClick: () -> Unit,
     startDestination: String
 ) {
     KoalmTheme {
-        val navController = rememberNavController()
         val systemUi = rememberSystemUiController()
-        val isDark = isSystemInDarkTheme()
+        val isDark   = isSystemInDarkTheme()
 
         SideEffect {
-            systemUi.setSystemBarsColor(
-                color = Color.Transparent,
-                darkIcons = !isDark
-            )
+            systemUi.setSystemBarsColor(Color.Transparent, darkIcons = !isDark)
         }
 
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            color    = MaterialTheme.colorScheme.background
         ) {
             AppNavigation(
-                navController = navController,
-                onGoogleSignInClick = onGoogleSignInClick,
-                startDestination = startDestination
+                navController        = navController,
+                onGoogleSignInClick  = onGoogleSignInClick,
+                startDestination     = startDestination
             )
         }
     }
