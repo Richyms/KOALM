@@ -219,7 +219,12 @@ fun DrawerContenido(navController: NavHostController) {
         HorizontalDivider()
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
+                when (it){
+                    "Salud mental" -> navController.navigate("estadisticas_salud_mental")
+                    "Salud física" -> navController.navigate("estadisticas_salud_fisica")
+                }
+            })
         }
         HorizontalDivider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
