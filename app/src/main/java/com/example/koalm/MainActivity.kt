@@ -37,8 +37,9 @@ import androidx.credentials.*
 class MainActivity : ComponentActivity() {
 
     /* ---------- CONSTANTES ---------- */
-    private val ACTIVITY_RECOGNITION_REQ = 101
-
+    companion object {
+        const val ACTIVITY_RECOGNITION_REQ_CODE = 101
+    }
     /* ---------- ATRIBUTOS ---------- */
     private lateinit var credentialManager: CredentialManager
     private lateinit var firebaseAuth: FirebaseAuth
@@ -116,14 +117,13 @@ class MainActivity : ComponentActivity() {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
-                    ACTIVITY_RECOGNITION_REQ
-                )
+                    ACTIVITY_RECOGNITION_REQ_CODE                )
             }
         } else {
             launchStepService() // < Android 10 no requiere permiso
         }
     }
-
+    @Deprecated("Deprecated in Android 13+; use ActivityResult API")
     @Suppress("DEPRECATION")
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -132,7 +132,7 @@ class MainActivity : ComponentActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == ACTIVITY_RECOGNITION_REQ) {
+        if (requestCode == ACTIVITY_RECOGNITION_REQ_CODE) {
             val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
             val msg = if (granted)
                 "Permiso de actividad física otorgado ✔️"
@@ -190,7 +190,7 @@ class MainActivity : ComponentActivity() {
     /* ---------- AUTH CON FIREBASE ---------- */
     private fun processCredential(response: GetCredentialResponse) {
         val idToken = GoogleIdTokenCredential
-            .createFrom(response.credential.data).idToken ?: run {
+            .createFrom(response.credential.data).idToken?: run {
             Toast.makeText(this, "No se obtuvo token válido de Google", Toast.LENGTH_LONG).show()
             return
         }
@@ -207,7 +207,10 @@ class MainActivity : ComponentActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                // Reiniciamos para refrescar navegación según usuario logueado
+                // Reiniciamos para refrescar navegación según usuario logueadotoken
+
+
+
                 startActivity(Intent(this, MainActivity::class.java))
                 finish()
             } else {
