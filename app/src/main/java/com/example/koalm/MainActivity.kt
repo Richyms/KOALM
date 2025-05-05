@@ -42,8 +42,6 @@ class MainActivity : ComponentActivity() {
     /* ---------- CONSTANTES ---------- */
     private val ACTIVITY_RECOGNITION_REQ = 101
 
-    /* ---------- INYECCIÓN ---------- */
-    private val authRepo = AuthRepository()
 
     /* ---------- ATRIBUTOS ---------- */
     private lateinit var credentialManager: CredentialManager
@@ -178,11 +176,6 @@ class MainActivity : ComponentActivity() {
         ).addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
 
-                lifecycleScope.launch {
-                    if (task.result?.additionalUserInfo?.isNewUser == true) {
-                        authRepo.createUserProfile(firebaseAuth.currentUser!!)
-                    }
-                }
 
                 launchStepService()
 
