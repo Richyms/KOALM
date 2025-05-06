@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
-import com.example.koalm.data.StepCounterRepository          // ← NUEVO
+import com.example.koalm.data.StepCounterRepository
 import com.example.koalm.ui.components.snapshotsAsState
 import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
