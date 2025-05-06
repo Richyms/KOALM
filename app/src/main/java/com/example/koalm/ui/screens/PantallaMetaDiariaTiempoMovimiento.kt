@@ -1,7 +1,11 @@
 package com.example.koalm.ui.screens
 
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,20 +28,41 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CenterAlignedTopAppBar
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMetaMovimiento(
     navController: NavHostController = rememberNavController(),
-    metaMinutos: Int = 100,
     onMinutosSeleccionados: (Int) -> Unit = {}
 ) {
     val minutosList = (30..180 step 10).toList()
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = minutosList.indexOf(metaMinutos).coerceAtLeast(0)
-    )
     val itemHeight = 56.dp
     val visibleItems = 3
+
+    val correo = FirebaseAuth.getInstance().currentUser?.email
+    var metaMinutos by remember { mutableStateOf(60) }
+
+    // 🔹 Obtener la meta desde Firestore
+    LaunchedEffect(correo) {
+        if (correo != null) {
+            val snapshot = Firebase.firestore.collection("usuarios")
+                .document(correo)
+                .collection("metasSalud")
+                .document("valores")
+                .get()
+                .await()
+
+            metaMinutos = snapshot.getLong("metaMinutos")?.toInt() ?: 60
+        }
+    }
+
+    // 🔹 Estado del scroll inicial basado en metaMinutos
+    val listState = remember(metaMinutos) {
+        LazyListState(
+            firstVisibleItemIndex = minutosList.indexOf(metaMinutos).coerceAtLeast(0)
+        )
+    }
 
     val density = LocalDensity.current
     val centeredItemIndex by remember(
@@ -74,7 +99,16 @@ fun PantallaMetaMovimiento(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onMinutosSeleccionados(centeredItemIndex) }) {
+                    IconButton(onClick = {
+                        correo?.let {
+                            Firebase.firestore.collection("usuarios")
+                                .document(it)
+                                .collection("metasSalud")
+                                .document("valores")
+                                .update("metaMinutos", centeredItemIndex)
+                        }
+                        navController.navigateUp()
+                    }) {
                         Icon(Icons.Default.Check, contentDescription = "Confirmar")
                     }
                 },
@@ -94,7 +128,6 @@ fun PantallaMetaMovimiento(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
             Text("Tiempo(min)", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-
             Spacer(modifier = Modifier.height(20.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(20.dp))

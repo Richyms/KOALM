@@ -40,25 +40,38 @@ import java.time.LocalDate
 @Composable
 fun PantallaParametrosSalud(
     navController: NavController
+
+
 ) {
+    val correo = FirebaseAuth.getInstance().currentUser?.email
+    //Obtencion de valores
+    val metas = remember(correo) {
+        Firebase.firestore.collection("usuarios")
+            .document(correo ?: "")
+            .collection("metasSalud")
+            .document("valores")
+    }
+    val metaPasos by metas.snapshotsAsState { it?.getLong("metaPasos")?.toInt() ?: 10000 }
+    val metaMinutos by metas.snapshotsAsState { it?.getLong("metaMinutos")?.toInt() ?: 100 }
+    val metaCalorias by metas.snapshotsAsState { it?.getLong("metaCalorias")?.toInt() ?: 500 }
     /* -------- Pasos y minutos en tiempo real (local) -------- */
     val pasos      by StepCounterRepository.steps.collectAsState()
     val segundos   by StepCounterRepository.activeSeconds.collectAsState()
     val minutos    = segundos / 60                               // redondeo entero
 
     /* -------- Otros datos (sólo si hay usuario logueado) ----- */
-    val uid   = FirebaseAuth.getInstance().currentUser?.uid
     val today = LocalDate.now().toString()
 
     /* calories seguirá viniendo de Firestore; si no hay usuario → 0 */
-    val calorias: Int = if (uid != null) {
-        val doc = remember(uid, today) {
+    val calorias: Int = if (correo != null) {
+        val doc = remember(correo, today) {
             Firebase.firestore.collection("usuarios")
-                .document(uid)
+                .document(correo ?: "")
                 .collection("metricasDiarias")
                 .document(today)
         }
         val c by doc.snapshotsAsState { it?.getLong("calorias")?.toInt() ?: 0 }
+
         c
     } else 0
 
@@ -109,17 +122,13 @@ fun PantallaParametrosSalud(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
             ) {
-                InfoMiniCard("Pasos", "$pasos/10 000", Icons.AutoMirrored.Filled.DirectionsWalk)
-                InfoMiniCard("Tiempo Activo", "$minutos/100 min", Icons.Default.AccessTime)
-                InfoMiniCard("Calorías", "$calorias kcal", Icons.Default.LocalFireDepartment)
+                InfoMiniCard("Pasos", "$pasos/$metaPasos", Icons.AutoMirrored.Filled.DirectionsWalk)
+                InfoMiniCard("Tiempo Activo", "$minutos/$metaMinutos min", Icons.Default.AccessTime)
+                InfoMiniCard("Calorías", "$calorias kcal/$metaCalorias kcal", Icons.Default.LocalFireDepartment)
+
+
             }
 
-            Text(
-                text = "Datos en tiempo real – $today",
-                fontSize = 11.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 5.dp, bottom = 10.dp)
-            )
 
             /* ---------- Tarjetas grandes (mock) ---------- */
             InfoCard("Sueño", "7 h 7 min", Icons.Default.Bedtime, 0.88f) {

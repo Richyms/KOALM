@@ -1,5 +1,6 @@
 package com.example.koalm
-
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -7,8 +8,6 @@ import android.content.pm.PackageManager
 import kotlinx.coroutines.launch
 import androidx.credentials.exceptions.GetCredentialException
 
-import android.hardware.Sensor
-import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -141,12 +140,35 @@ class MainActivity : ComponentActivity() {
                 val uid = user?.uid
                 val correo = user?.email
 
-                // Guardar UID y correo después de autenticación exitosa
+                // Guardar en SharedPreferences
                 getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
                     .edit()
                     .putString("uid", uid)
                     .putString("correo", correo)
                     .apply()
+
+                // 🔹 Crear metasSalud por defecto si no existen
+                if (correo != null) {
+                    val metasRef = Firebase.firestore
+                        .collection("usuarios")
+                        .document(correo)
+                        .collection("metasSalud")
+                        .document("valores")
+
+                    metasRef.get().addOnSuccessListener { doc: com.google.firebase.firestore.DocumentSnapshot ->
+                        if (!doc.exists()) {
+                            metasRef.set(
+                                mapOf(
+                                    "metaPasos" to 6000,
+                                    "metaMinutos" to 60,
+                                    "metaCalorias" to 300
+                                )
+                            )
+                        }
+                    }
+
+
+                }
 
                 launchStepService()
                 Toast.makeText(this, "Bienvenido ${user?.displayName}", Toast.LENGTH_SHORT).show()
