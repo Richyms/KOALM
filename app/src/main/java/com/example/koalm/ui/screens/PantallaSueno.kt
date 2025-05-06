@@ -20,6 +20,7 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.example.koalm.ui.components.*
 
 data class DatosSueno(
     val puntos: Int,
@@ -92,65 +93,8 @@ fun PantallaSueno(
                 fontSize = 11.sp,
                 color = Color.Gray
             )
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(containerColor = GrisCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "${datos.horas} h ${datos.minutos} m",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    val dias = listOf("L", "M", "X", "J", "V", "S", "D")
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        dias.zip(datos.historialSemanal).forEach { (dia, sueno) ->
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Bottom
-                            ) {
-                                BarraSueno(
-                                    suenoLigero = sueno.ligero,
-                                    suenoProfundo = sueno.profundo,
-                                    despierto = sueno.despierto
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(dia, fontSize = 12.sp)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(22.dp))
-
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 34.dp, vertical = 5.dp)
-                    ) {
-                        LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
-                        LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
-                        LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
-                    }
-                }
-            }
+            EstadisticasCard(datos = datos)
         }
     }
 }

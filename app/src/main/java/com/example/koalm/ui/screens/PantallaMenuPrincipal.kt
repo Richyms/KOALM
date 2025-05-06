@@ -37,6 +37,7 @@ import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
+import com.example.koalm.ui.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -179,24 +180,47 @@ fun SeccionTitulo(texto: String) {
 
 
 @Composable
-fun EstadisticasCard() {
+fun EstadisticasCard(datos: DatosSueno = datosMockSueño) {
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
-            .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp))
+            .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp)),
+        colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(VerdeContenedor),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Gráficos de estadísticas", color = GrisMedio)
+            Text("Sueño semanal: ${datos.puntos} pts", fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val dias = listOf("L", "M", "X", "J", "V", "S", "D")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                dias.zip(datos.historialSemanal).forEach { (dia, sueno) ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        BarraSueno(sueno.ligero, sueno.profundo, sueno.despierto)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(dia, fontSize = 12.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
+            LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
+            LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
         }
     }
 }
+
 
 
 
