@@ -192,14 +192,15 @@ fun EstadisticasCard(datos: DatosSueno = datosMockSueño) {
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Sueño semanal: ${datos.puntos} pts", fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
+            Text("Sueño: ${datos.puntos} pts", fontWeight = FontWeight.Bold)
+
+            Spacer(modifier = Modifier.height(2.dp))
 
             val dias = listOf("L", "M", "X", "J", "V", "S", "D")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp),
+                    .height(180.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Bottom
             ) {
@@ -214,9 +215,17 @@ fun EstadisticasCard(datos: DatosSueno = datosMockSueño) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
-            LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
-            LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
+                LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
+                LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
+            }
+
         }
     }
 }
