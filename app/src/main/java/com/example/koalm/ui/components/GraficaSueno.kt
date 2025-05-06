@@ -12,8 +12,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.koalm.ui.components.*
 import com.example.koalm.ui.theme.*
 
+val datosMockSueño = DatosSueno(
+    puntos = 87,
+    fecha = "2024-05-02",
+    horas = 7,
+    minutos = 15,
+    sueñoLigero = 3.2f,
+    sueñoProfundo = 3.8f,
+    tiempoDespierto = 0.5f,
+    historialSemanal = listOf(
+        DiaSueno(3.0f, 3.5f, 0.5f),
+        DiaSueno(3.2f, 3.6f, 0.3f),
+        DiaSueno(3.1f, 3.4f, 0.5f),
+        DiaSueno(3.4f, 3.2f, 0.4f),
+        DiaSueno(3.0f, 4.0f, 0.2f),
+        DiaSueno(2.5f, 3.0f, 0.7f),
+        DiaSueno(2.0f, 2.5f, 1.0f)
+    )
+)
 
 data class DatosSueno(
     val puntos: Int,
