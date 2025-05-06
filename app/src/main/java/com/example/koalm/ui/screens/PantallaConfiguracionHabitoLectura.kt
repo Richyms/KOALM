@@ -33,14 +33,20 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
+import com.example.koalm.model.ClaseHabito
+import com.example.koalm.model.Habito
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
+import com.google.firebase.auth.FirebaseAuth
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -48,6 +54,9 @@ import kotlin.math.roundToInt
 fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
     val context = LocalContext.current
     val TAG = "PantallaConfiguracionHabitoLectura"
+    val habitosRepository = remember { HabitoRepository() }
+    val scope = rememberCoroutineScope()
+    val auth = FirebaseAuth.getInstance()
     
     /*  Duración  */
     var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
@@ -69,9 +78,46 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            programarNotificacion(
-                context, descripcion, duracionMin, horaRecordatorio, diasSeleccionados, navController, TAG
-            )
+            scope.launch {
+                val currentUser = auth.currentUser
+                if (currentUser == null) {
+                    Log.e(TAG, "No hay usuario autenticado")
+                    Toast.makeText(
+                        context,
+                        "Debes iniciar sesión para crear un hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
+                // Crear el hábito en Firebase
+                val habito = Habito(
+                    titulo = "Lectura",
+                    descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
+                    clase = ClaseHabito.MENTAL,
+                    tipo = TipoHabito.LECTURA,
+                    diasSeleccionados = diasSeleccionados,
+                    hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    duracionMinutos = duracionMin.toInt(),
+                    notasHabilitadas = false,
+                    activo = true,
+                    userId = currentUser.uid
+                )
+
+                habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                    // Programar notificación
+                    programarNotificacion(
+                        context, descripcion, duracionMin, horaRecordatorio, diasSeleccionados, navController, TAG
+                    )
+                }.onFailure { error ->
+                    Log.e(TAG, "Error al crear el hábito: ${error.message}")
+                    Toast.makeText(
+                        context,
+                        "Error al crear el hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         } else {
             Toast.makeText(
                 context,
@@ -245,9 +291,46 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                                 context, Manifest.permission.POST_NOTIFICATIONS
                             ) == PackageManager.PERMISSION_GRANTED
                         ) {
-                            programarNotificacion(
-                                context, descripcion, duracionMin, horaRecordatorio, diasSeleccionados, navController, TAG
-                            )
+                            scope.launch {
+                                val currentUser = auth.currentUser
+                                if (currentUser == null) {
+                                    Log.e(TAG, "No hay usuario autenticado")
+                                    Toast.makeText(
+                                        context,
+                                        "Debes iniciar sesión para crear un hábito",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    return@launch
+                                }
+
+                                // Crear el hábito en Firebase
+                                val habito = Habito(
+                                    titulo = "Lectura",
+                                    descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
+                                    clase = ClaseHabito.MENTAL,
+                                    tipo = TipoHabito.LECTURA,
+                                    diasSeleccionados = diasSeleccionados,
+                                    hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                    duracionMinutos = duracionMin.toInt(),
+                                    notasHabilitadas = false,
+                                    activo = true,
+                                    userId = currentUser.uid
+                                )
+
+                                habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                                    // Programar notificación
+                                    programarNotificacion(
+                                        context, descripcion, duracionMin, horaRecordatorio, diasSeleccionados, navController, TAG
+                                    )
+                                }.onFailure { error ->
+                                    Log.e(TAG, "Error al crear el hábito: ${error.message}")
+                                    Toast.makeText(
+                                        context,
+                                        "Error al crear el hábito",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
                         } else {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
@@ -334,6 +417,7 @@ private fun programarNotificacion(
 
     notificationService.scheduleNotification(
         context = context,
+        habitoId = "", // ID vacío ya que es una nueva notificación
         diasSeleccionados = diasSeleccionados,
         hora = notificationTime,
         descripcion = descripcion.ifEmpty {

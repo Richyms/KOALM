@@ -105,7 +105,7 @@ class MovimientoService : Service(), SensorEventListener {
         NotificationCompat.Builder(this, "mov")
             .setContentTitle("KOALM")
             .setContentText("Contando pasos…")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification)
             .build()
 
     /* ---------- LIMPIEZA ---------- */

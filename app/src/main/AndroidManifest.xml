@@ -12,7 +12,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BROADCAST" />
    <!-- Permisos para podometro -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 
 

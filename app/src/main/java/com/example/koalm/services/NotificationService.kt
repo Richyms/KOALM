@@ -1,7 +1,9 @@
 package com.example.koalm.services
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -9,12 +11,19 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import com.example.koalm.R
+import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.NotificationBase
 import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class NotificationService : Service() {
     companion object {
@@ -27,6 +36,9 @@ class NotificationService : Service() {
         "lectura" to ReadingNotificationService(),
         "desconexion" to DigitalDisconnectNotificationService()
     )
+
+    private val habitosRepository = HabitoRepository()
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -60,6 +72,7 @@ class NotificationService : Service() {
 
     fun scheduleNotification(
         context: Context,
+        habitoId: String,
         diasSeleccionados: List<Boolean>,
         hora: LocalDateTime,
         descripcion: String,
@@ -69,27 +82,67 @@ class NotificationService : Service() {
         isReading: Boolean = false,
         isDigitalDisconnect: Boolean = false
     ) {
-        val service = when {
-            isMeditation -> "meditacion"
-            isReading -> "lectura"
-            isDigitalDisconnect -> "desconexion"
-            else -> "escritura"
+        val scope = CoroutineScope(Dispatchers.IO + Job())
+        scope.launch {
+            try {
+                val habitosRepository = HabitoRepository()
+                val habitoResult = habitosRepository.obtenerHabito(habitoId)
+                
+                habitoResult.onSuccess { habito ->
+                    if (!habito.activo) {
+                        Log.d(TAG, "Hábito $habitoId está inactivo, no se programarán notificaciones")
+                        return@onSuccess
+                    }
+                    
+                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    val intent = Intent(context, NotificationReceiver::class.java).apply {
+                        putExtra("habitoId", habitoId)
+                        putExtra("descripcion", descripcion)
+                        putExtra("duracionMinutos", durationMinutes)
+                        putExtra("notasHabilitadas", notasHabilitadas)
+                        putExtra("isMeditation", isMeditation)
+                        putExtra("isReading", isReading)
+                        putExtra("isDigitalDisconnect", isDigitalDisconnect)
+                    }
+                    
+                    val pendingIntent = PendingIntent.getBroadcast(
+                        context,
+                        habitoId.hashCode(),
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    
+                    val calendar = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, hora.hour)
+                        set(Calendar.MINUTE, hora.minute)
+                        set(Calendar.SECOND, 0)
+                        
+                        if (before(Calendar.getInstance())) {
+                            add(Calendar.DAY_OF_YEAR, 1)
+                        }
+                    }
+                    
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.timeInMillis,
+                            pendingIntent
+                        )
+                    } else {
+                        alarmManager.setExact(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.timeInMillis,
+                            pendingIntent
+                        )
+                    }
+                    
+                    Log.d(TAG, "Notificación programada para el hábito $habitoId a las ${hora.format(DateTimeFormatter.ofPattern("HH:mm"))}")
+                }.onFailure { e ->
+                    Log.e(TAG, "Error al obtener hábito para programar notificación: ${e.message}", e)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al programar notificación: ${e.message}", e)
+            }
         }
-        
-        val additionalData = when {
-            isMeditation -> mapOf("sonidos_habilitados" to notasHabilitadas)
-            isReading -> mapOf("notas_habilitadas" to notasHabilitadas)
-            isDigitalDisconnect -> mapOf("duration_minutes" to durationMinutes)
-            else -> mapOf("notas_habilitadas" to notasHabilitadas)
-        }
-            
-        notificationServices[service]?.scheduleNotification(
-            context = context,
-            diasSeleccionados = diasSeleccionados,
-            hora = hora,
-            descripcion = descripcion,
-            durationMinutes = durationMinutes,
-            additionalData = additionalData
-        )
     }
 } 

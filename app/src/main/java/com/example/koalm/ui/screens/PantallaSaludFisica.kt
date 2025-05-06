@@ -87,7 +87,7 @@ fun HabitoFisicoCard(habito: HabitoFisico, navController: NavHostController) {
                     navController.navigate("configurar_habito_hidratacion")
                 }
                 if(habito.titulo == "Alimentación"){
-                    navController.navigate("configurar-habito-alimentacion")
+                    navController.navigate("configurar_habito_alimentacion")
                 }
             }
         },
