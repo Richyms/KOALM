@@ -57,6 +57,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.koalm.model.ClaseHabito
+import com.example.koalm.model.Habito
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.services.notifications.MeditationNotificationService
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 /* foundation */
 // import androidx.compose.foundation.Canvas          // ←  dibujar el track
@@ -65,18 +72,22 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 //@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
+fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
     val context = LocalContext.current
     val TAG = "PantallaConfiguracionHabitoMeditacion"
-
+    val habitosRepository = remember { HabitoRepository() }
+    val scope = rememberCoroutineScope()
+    val auth = FirebaseAuth.getInstance()
+    
     //------------------------------ Estados -------------------------------------
     var descripcion         by remember { mutableStateOf("") }
     val diasSemana          = listOf("L","M","M","J","V","S","D")
     var diasSeleccionados   by remember { mutableStateOf(List(7){false})}
 
     /* Hora */
-    var hora by remember { 
+    var horaRecordatorio by remember { 
         mutableStateOf(
             LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
         ) 
@@ -96,9 +107,76 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            programarNotificacion(
-                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, sonidoshambHabilitados
-            )
+            scope.launch {
+                val currentUser = auth.currentUser
+                if (currentUser == null) {
+                    Log.e(TAG, "No hay usuario autenticado")
+                    Toast.makeText(
+                        context,
+                        "Debes iniciar sesión para crear un hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
+                // Crear el hábito en Firebase
+                val habito = Habito(
+                    titulo = "Meditación",
+                    descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
+                    clase = ClaseHabito.MENTAL,
+                    tipo = TipoHabito.MEDITACION,
+                    diasSeleccionados = diasSeleccionados,
+                    hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    duracionMinutos = duracionMin.toInt(),
+                    notasHabilitadas = false,
+                    userId = currentUser.uid
+                )
+
+                habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                    Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                    Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+                    
+                    // Programar notificación con el ID real del hábito
+                    val notificationService = MeditationNotificationService()
+                    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                    Log.d(TAG, "Iniciando servicio de notificaciones")
+                    context.startService(Intent(context, MeditationNotificationService::class.java))
+
+                    notificationService.scheduleNotification(
+                        context = context,
+                        diasSeleccionados = diasSeleccionados,
+                        hora = notificationTime,
+                        descripcion = descripcion.ifEmpty {
+                            context.getString(R.string.meditation_notification_default_text)
+                        },
+                        durationMinutes = duracionMin.toLong(),
+                        additionalData = mapOf(
+                            "habito_id" to habitoId,
+                            "is_meditation" to true,
+                            "is_reading" to false,
+                            "is_digital_disconnect" to false,
+                            "notas_habilitadas" to false,
+                            "sonidos_habilitados" to sonidoshambHabilitados,
+                            "ejercicio_respiracion" to ejerciciorespiracionHabilitados
+                        )
+                    )
+
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.success_notifications_scheduled),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navController.navigateUp()
+                }.onFailure { error ->
+                    Log.e(TAG, "Error al crear el hábito: ${error.message}")
+                    Toast.makeText(
+                        context,
+                        "Error al crear el hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         } else {
             Toast.makeText(
                 context,
@@ -182,7 +260,7 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
-                    HoraField(hora) { mostrarTimePicker = true }
+                    HoraField(horaRecordatorio) { mostrarTimePicker = true }
 
 
                     /*  Duración (Slider personalizado)  */
@@ -286,41 +364,22 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
 
             Spacer(Modifier.weight(1f))
 
-            /* ----------------------------  Guardar  --------------------------- */
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+            /* ----------------------------  Botón Guardar  --------------------------- */
+            Button(
+                onClick = {
+                    if (diasSeleccionados.any { it }) {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Selecciona al menos un día",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = {
-                        if (!diasSeleccionados.any { it }) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.error_no_days_selected),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@Button
-                        }
-
-                        if (ContextCompat.checkSelfPermission(
-                                context, Manifest.permission.POST_NOTIFICATIONS
-                            ) == PackageManager.PERMISSION_GRANTED
-                        ) {
-                            programarNotificacion(
-                                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, sonidoshambHabilitados
-                            )
-                        } else {
-                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    },
-                    modifier = Modifier
-                        .width(200.dp)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
-                }
+                Text("Guardar")
             }
         }
     }
@@ -328,9 +387,9 @@ fun PantallaConfiguracionHabitoMeditación(navController: NavHostController){
     //------------------------ Time  Picker ------------------------------
     if (mostrarTimePicker) {
         TimePickerDialog(
-            initialTime  = hora,
-            onTimePicked = { hora = it },
-            onDismiss    = { mostrarTimePicker = false }
+            initialTime = horaRecordatorio,
+            onTimePicked = { horaRecordatorio = it },
+            onDismiss = { mostrarTimePicker = false }
         )
     }
 }
@@ -341,44 +400,4 @@ private fun formatearDuracion(min: Int): String = when {
     min == 60          -> "1 hora"
     min % 60 == 0      -> "${min/60} h"
     else               -> "${min/60} h ${min%60} min"
-}
-
-/**
- * Programa la notificación y navega atrás si todo salió bien.
- */
-private fun programarNotificacion(
-    context: android.content.Context,
-    descripcion: String,
-    duracionMin: Float,
-    hora: LocalTime,
-    diasSeleccionados: List<Boolean>,
-    navController: NavHostController,
-    tag: String,
-    sonidosHabilitados: Boolean
-) {
-    val notificationService = NotificationService()
-    val notificationTime    = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
-
-    Log.d(tag, "Iniciando servicio de notificaciones")
-    context.startService(Intent(context, NotificationService::class.java))
-
-    notificationService.scheduleNotification(
-        context = context,
-        habitoId = "", // ID vacío ya que es una nueva notificación
-        diasSeleccionados = diasSeleccionados,
-        hora = notificationTime,
-        descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
-        durationMinutes = duracionMin.toLong(),
-        notasHabilitadas = false,
-        isMeditation = true,
-        isReading = false,
-        isDigitalDisconnect = false
-    )
-
-    Toast.makeText(
-        context,
-        context.getString(R.string.success_notifications_scheduled),
-        Toast.LENGTH_SHORT
-    ).show()
-    navController.navigateUp()
 }

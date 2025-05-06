@@ -43,7 +43,7 @@ fun AppNavigation(
         screenWithSlide("salud_mental") { PantallaSaludMental(navController) }
         screenWithSlide("salud_fisica") { PantallaSaludFisica(navController) }
         screenWithSlide("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
-        screenWithSlide("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditación(navController) }
+        screenWithSlide("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditacion(navController) }
         screenWithSlide("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
         screenWithSlide("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
         screenWithSlide("configurar_habito_alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController)}

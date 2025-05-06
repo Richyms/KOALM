@@ -35,6 +35,18 @@ import com.google.firebase.auth.FirebaseAuth
 
 private const val TAG = "PantallaSaludMental"
 
+private val diasSemana = listOf("L", "M", "X", "J", "V", "S", "D")
+
+private fun formatearDuracion(minutos: Int): String {
+    return if (minutos < 60) {
+        "${minutos}min"
+    } else {
+        val horas = minutos / 60
+        val mins = minutos % 60
+        if (mins == 0) "${horas}h" else "${horas}h ${mins}min"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaSaludMental(navController: NavHostController) {
@@ -49,9 +61,8 @@ fun PantallaSaludMental(navController: NavHostController) {
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    // Cargar hábitos activos al iniciar
-    LaunchedEffect(Unit) {
-        Log.d(TAG, "Iniciando carga de hábitos activos")
+    // Función para recargar los hábitos
+    fun cargarHabitos() {
         scope.launch {
             try {
                 val currentUser = auth.currentUser
@@ -70,7 +81,7 @@ fun PantallaSaludMental(navController: NavHostController) {
                     onSuccess = { habitos ->
                         Log.d(TAG, "Hábitos encontrados: ${habitos.size}")
                         habitos.forEach { habito ->
-                            Log.d(TAG, "Hábito: id=${habito.id}, titulo=${habito.titulo}, activo=${habito.activo}")
+                            Log.d(TAG, "Hábito: id=${habito.id}, titulo=${habito.titulo}")
                         }
                         habitosActivos = habitos
                         isLoading = false
@@ -89,6 +100,11 @@ fun PantallaSaludMental(navController: NavHostController) {
                 isLoading = false
             }
         }
+    }
+
+    // Cargar hábitos activos al iniciar
+    LaunchedEffect(Unit) {
+        cargarHabitos()
     }
 
     val habitosPlantilla = listOf(
@@ -174,7 +190,11 @@ fun PantallaSaludMental(navController: NavHostController) {
                     
                     habitosActivos.forEach { habito ->
                         Log.d(TAG, "Renderizando hábito activo: ${habito.titulo}")
-                        HabitoActivoCard(habito, navController)
+                        HabitoActivoCard(
+                            habito = habito,
+                            navController = navController,
+                            onHabitDeleted = { cargarHabitos() }
+                        )
                     }
                 } else {
                     Log.d(TAG, "No hay hábitos activos para mostrar")
@@ -277,12 +297,15 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
 }
 
 @Composable
-private fun HabitoActivoCard(habito: Habito, navController: NavHostController) {
+private fun HabitoActivoCard(
+    habito: Habito, 
+    navController: NavHostController,
+    onHabitDeleted: () -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val habitosRepository = remember { HabitoRepository() }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showDeactivateDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
     
@@ -323,133 +346,122 @@ private fun HabitoActivoCard(habito: Habito, navController: NavHostController) {
             containerColor = VerdeContenedor.copy(alpha = 0.3f)
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Icon(
+                imageVector = when (habito.tipo) {
+                    TipoHabito.MEDITACION -> Icons.Default.SelfImprovement
+                    TipoHabito.LECTURA -> Icons.Default.MenuBook
+                    TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
+                    TipoHabito.ESCRITURA -> Icons.Default.Edit
+                },
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = if (habito.activo) Icons.Default.CheckCircle else Icons.Default.Pause,
-                    contentDescription = if (habito.activo) "Hábito activo" else "Hábito inactivo",
-                    tint = if (habito.activo) VerdePrincipal else MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = habito.titulo,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = habito.titulo,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                Text(
+                    text = habito.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = GrisMedio,
+                    maxLines = 1
+                )
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = habito.descripcion,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = GrisMedio
-                    )
-                    Text(
-                        text = "Horario: ${habito.hora}",
+                        text = habito.hora,
                         style = MaterialTheme.typography.bodySmall,
-                        color = GrisMedio
+                        color = MaterialTheme.colorScheme.primary
                     )
-                }
-
-                // Menú de opciones
-                Box {
-                    IconButton(
-                        onClick = { showMenu = true },
-                        enabled = !isProcessing
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Más opciones",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Editar") },
-                            onClick = {
-                                showMenu = false
-                                try {
-                                    when (habito.tipo) {
-                                        TipoHabito.ESCRITURA -> navController.navigate("configurar_habito_escritura/${habito.id}") {
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                        TipoHabito.MEDITACION -> navController.navigate("configurar_habito_meditacion/${habito.id}") {
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                        TipoHabito.DESCONEXION_DIGITAL -> navController.navigate("configurar_habito_desconexion_digital/${habito.id}") {
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                        TipoHabito.LECTURA -> navController.navigate("configurar_habito_lectura/${habito.id}") {
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("PantallaSaludMental", "Error al navegar: ${e.message}", e)
-                                    Toast.makeText(
-                                        context,
-                                        "Error al abrir la configuración: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = null,
-                                    tint = VerdePrincipal
-                                )
-                            }
-                        )
-
-                        DropdownMenuItem(
-                            text = { Text(if (habito.activo) "Desactivar" else "Activar") },
-                            onClick = {
-                                showMenu = false
-                                showDeactivateDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = if (habito.activo) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = VerdePrincipal
-                                )
-                            }
-                        )
-
-                        DropdownMenuItem(
-                            text = { Text("Eliminar") },
-                            onClick = {
-                                showMenu = false
-                                showDeleteDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = habito.diasSeleccionados.mapIndexed { index, seleccionado -> 
+                            if (seleccionado) diasSemana[index] else ""
+                        }.filter { it.isNotEmpty() }.joinToString(""),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = formatearDuracion(habito.duracionMinutos),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
+
+            IconButton(
+                onClick = { showMenu = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Más opciones",
+                    tint = GrisMedio
+                )
+            }
         }
+    }
+
+    if (showMenu) {
+        AlertDialog(
+            onDismissRequest = { showMenu = false },
+            title = { Text("Opciones del hábito") },
+            text = {
+                Column {
+                    TextButton(
+                        onClick = {
+                            showMenu = false
+                            showDeleteDialog = true
+                        }
+                    ) {
+                        Text("Eliminar hábito")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showMenu = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     if (showDeleteDialog) {
@@ -464,22 +476,29 @@ private fun HabitoActivoCard(habito: Habito, navController: NavHostController) {
                         isProcessing = true
                         scope.launch {
                             try {
-                                habitosRepository.eliminarHabito(habito.id)
-                                    .onSuccess {
-                                        Toast.makeText(
-                                            context,
-                                            "Hábito eliminado exitosamente",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                    .onFailure { e ->
-                                        Log.e("PantallaSaludMental", "Error al eliminar hábito: ${e.message}", e)
-                                        Toast.makeText(
-                                            context,
-                                            "Error al eliminar hábito: ${e.message}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
+                                val result = habitosRepository.eliminarHabito(habito.id)
+                                result.onSuccess {
+                                    Toast.makeText(
+                                        context,
+                                        "Hábito eliminado exitosamente",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    onHabitDeleted()
+                                }.onFailure { e ->
+                                    Log.e("PantallaSaludMental", "Error al eliminar hábito: ${e.message}", e)
+                                    Toast.makeText(
+                                        context,
+                                        "Error al eliminar hábito: ${e.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } catch (e: Exception) {
+                                Log.e("PantallaSaludMental", "Error inesperado: ${e.message}", e)
+                                Toast.makeText(
+                                    context,
+                                    "Error inesperado: ${e.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             } finally {
                                 isProcessing = false
                             }
@@ -490,56 +509,9 @@ private fun HabitoActivoCard(habito: Habito, navController: NavHostController) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    if (showDeactivateDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeactivateDialog = false },
-            title = { Text(if (habito.activo) "Desactivar hábito" else "Activar hábito") },
-            text = { Text(if (habito.activo) "¿Estás seguro de que deseas desactivar este hábito?" else "¿Estás seguro de que deseas activar este hábito?") },
-            confirmButton = {
                 TextButton(
-                    onClick = {
-                        showDeactivateDialog = false
-                        isProcessing = true
-                        scope.launch {
-                            try {
-                                val result = if (habito.activo) {
-                                    habitosRepository.desactivarHabito(habito.id, context)
-                                } else {
-                                    habitosRepository.activarHabito(habito.id, context)
-                                }
-                                
-                                result.onSuccess {
-                                    Toast.makeText(
-                                        context,
-                                        if (habito.activo) "Hábito desactivado exitosamente" else "Hábito activado exitosamente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }.onFailure { e ->
-                                    Log.e("PantallaSaludMental", "Error al ${if (habito.activo) "desactivar" else "activar"} hábito: ${e.message}", e)
-                                    Toast.makeText(
-                                        context,
-                                        "Error al ${if (habito.activo) "desactivar" else "activar"} hábito: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            } finally {
-                                isProcessing = false
-                            }
-                        }
-                    }
+                    onClick = { showDeleteDialog = false }
                 ) {
-                    Text(if (habito.activo) "Desactivar" else "Activar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeactivateDialog = false }) {
                     Text("Cancelar")
                 }
             }

@@ -115,7 +115,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
                     duracionMinutos = duracionMin.toInt(),
                     notasHabilitadas = notasHabilitadas,
-                    activo = true,
                     userId = currentUser.uid
                 )
 
@@ -355,7 +354,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                     hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
                                     duracionMinutos = duracionMin.toInt(),
                                     notasHabilitadas = notasHabilitadas,
-                                    activo = true,
                                     userId = currentUser.uid
                                 )
 
@@ -655,7 +653,6 @@ private fun programarNotificacion(
         hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
         duracionMinutos = duracionMin.toInt(),
         notasHabilitadas = notasHabilitadas,
-        activo = true,
         userId = currentUser.uid
     )
 

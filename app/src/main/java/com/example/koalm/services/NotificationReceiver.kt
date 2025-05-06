@@ -19,48 +19,47 @@ import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
 
 class NotificationReceiver : BroadcastReceiver() {
+    companion object {
+        private const val TAG = "KOALM_NOTIFICATIONS"
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
-        val TAG = "NotificationReceiver"
-        Log.e(TAG, "onReceive: Recibida notificación")
-        
-        when (intent.action) {
-            NotificationConstants.NOTIFICATION_ACTION -> {
-                val descripcion = intent.getStringExtra("descripcion") ?: ""
-                val diaSemana = intent.getIntExtra("dia_semana", 0)
-                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
-                val isMeditation = intent.getBooleanExtra("is_meditation", false)
-                val isReading = intent.getBooleanExtra("is_reading", false)
-                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-                
-                when {
-                    isMeditation -> showMeditationNotification(context, descripcion, diaSemana)
-                    isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
-                    isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
-                    else -> {
-                        val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
-                        showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
-                    }
-                }
-            }
-            NotificationConstants.START_TIMER_ACTION -> {
-                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
-                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
-                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-                
-                if (isDigitalDisconnect) {
-                    startDigitalDisconnectTimer(context, durationMinutes)
-                } else {
-                    startWritingTimer(context, durationMinutes, notasHabilitadas)
-                }
-            }
+        Log.d(TAG, "Notificación recibida. Action: ${intent.action}")
+        Log.d(TAG, "Extras recibidos: ${intent.extras?.keySet()?.joinToString { "$it=${intent.extras?.get(it)}" }}")
+
+        val descripcion = intent.getStringExtra("descripcion") ?: ""
+        val diaSemana = intent.getIntExtra("dia_semana", 0)
+        val durationMinutes = intent.getLongExtra("duration_minutes", 0)
+        val isMeditation = intent.getBooleanExtra("is_meditation", false)
+        val isReading = intent.getBooleanExtra("is_reading", false)
+        val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
+        val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+
+        Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
+
+        val tipoNotificacion = when {
+            isMeditation -> "meditación"
+            isReading -> "lectura"
+            isDigitalDisconnect -> "desconexión digital"
+            else -> "escritura"
+        }
+        Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
+
+        when {
+            isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
+            isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
+            isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
+            else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
         }
     }
 
     private fun showMeditationNotification(
         context: Context,
         descripcion: String,
-        diaSemana: Int
+        diaSemana: Int,
+        durationMinutes: Long
     ) {
+        Log.d(TAG, "Mostrando notificación de meditación")
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -72,6 +71,7 @@ class NotificationReceiver : BroadcastReceiver() {
                 description = context.getString(MeditationNotificationService().channelDescription)
             }
             notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "Canal de notificación de meditación creado")
         }
         
         val notification = NotificationCompat.Builder(context, MeditationNotificationService().channelId)
@@ -83,6 +83,7 @@ class NotificationReceiver : BroadcastReceiver() {
             .build()
         
         notificationManager.notify(MeditationNotificationService.NOTIFICATION_ID + diaSemana, notification)
+        Log.d(TAG, "Notificación de meditación mostrada con ID: ${MeditationNotificationService.NOTIFICATION_ID + diaSemana}")
     }
 
     private fun showReadingNotification(

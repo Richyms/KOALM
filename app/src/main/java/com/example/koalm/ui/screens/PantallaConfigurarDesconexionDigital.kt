@@ -38,23 +38,33 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
-import com.example.koalm.services.NotificationService
+import com.example.koalm.model.Habito
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+
+private const val TAG = "PantallaConfiguracionDesconexion"
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
     val context = LocalContext.current
-    val TAG = "PantallaConfiguracionDesconexion"
+    val scope = rememberCoroutineScope()
+    val habitosRepository = remember { HabitoRepository() }
+    val auth = FirebaseAuth.getInstance()
 
     /* -----------------------------  State  ------------------------------ */
+    var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
 
     //  Días de la semana (L-Do). Duplicamos "M" para Martes y Miércoles.
@@ -78,9 +88,74 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            programarNotificacion(
-                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG
-            )
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                Toast.makeText(
+                    context,
+                    "Debes iniciar sesión para crear un hábito",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@rememberLauncherForActivityResult
+            }
+
+            scope.launch {
+                try {
+                    val habito = Habito(
+                        titulo = titulo.ifEmpty { "Desconexión Digital" },
+                        descripcion = descripcion.ifEmpty { "Tiempo para desconectar y reconectar contigo mismo" },
+                        tipo = TipoHabito.DESCONEXION_DIGITAL,
+                        hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        diasSeleccionados = diasSeleccionados,
+                        duracionMinutos = duracionMin.roundToInt(),
+                        notasHabilitadas = false,
+                        userId = currentUser.uid
+                    )
+
+                    habitosRepository.crearHabito(habito).fold(
+                        onSuccess = { habitoId ->
+                            Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                            
+                            // Programar notificaciones
+                            val notificationService = DigitalDisconnectNotificationService()
+                            val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
+                            
+                            notificationService.scheduleNotification(
+                                context = context,
+                                diasSeleccionados = diasSeleccionados,
+                                hora = notificationTime,
+                                descripcion = descripcion.ifEmpty { context.getString(R.string.digital_disconnect_notification_default_text) },
+                                durationMinutes = duracionMin.toLong(),
+                                additionalData = mapOf(
+                                    "habitoId" to habitoId,
+                                    "titulo" to habito.titulo
+                                )
+                            )
+
+                            Toast.makeText(
+                                context,
+                                "Hábito creado y notificaciones programadas correctamente",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            navController.navigateUp()
+                        },
+                        onFailure = { error ->
+                            Log.e(TAG, "Error al crear hábito: ${error.message}", error)
+                            Toast.makeText(
+                                context,
+                                "Error al crear hábito: ${error.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error inesperado: ${e.message}", e)
+                    Toast.makeText(
+                        context,
+                        "Error inesperado: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         } else {
             Toast.makeText(
                 context,
@@ -124,6 +199,15 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
                     Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+
+                    // Título del hábito
+                    OutlinedTextField(
+                        value = titulo,
+                        onValueChange = { titulo = it },
+                        label = { Text("Título del hábito") },
+                        placeholder = { Text("Desconexión Digital") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
                     // Descripción del hábito
                     OutlinedTextField(
@@ -198,9 +282,7 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
                                 context, Manifest.permission.POST_NOTIFICATIONS
                             ) == PackageManager.PERMISSION_GRANTED
                         ) {
-                            programarNotificacion(
-                                context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG
-                            )
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
@@ -423,43 +505,4 @@ private fun formatearDuracion(min: Int): String = when {
     min == 60 -> "1 hora"
     min % 60 == 0 -> "${min / 60} h"
     else -> "${min / 60} h ${min % 60} min"
-}
-
-/**
- * Programa la notificación y navega atrás si todo salió bien.
- */
-private fun programarNotificacion(
-    context: android.content.Context,
-    descripcion: String,
-    duracionMin: Float,
-    hora: LocalTime,
-    diasSeleccionados: List<Boolean>,
-    navController: NavHostController,
-    tag: String
-) {
-    val notificationService = NotificationService()
-    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
-
-    Log.d(tag, "Iniciando servicio de notificaciones")
-    context.startService(Intent(context, NotificationService::class.java))
-
-    notificationService.scheduleNotification(
-        context = context,
-        habitoId = "", // ID vacío ya que es una nueva notificación
-        diasSeleccionados = diasSeleccionados,
-        hora = notificationTime,
-        descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
-        durationMinutes = duracionMin.toLong(),
-        notasHabilitadas = false,
-        isMeditation = false,
-        isReading = false,
-        isDigitalDisconnect = true
-    )
-
-    Toast.makeText(
-        context,
-        "Notificaciones programadas correctamente",
-        Toast.LENGTH_SHORT
-    ).show()
-    navController.navigateUp()
 }
