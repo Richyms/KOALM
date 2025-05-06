@@ -179,10 +179,13 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                         return@BotonGuardarPerfil
                     }
 
+                    val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
                     // Validar campos requeridos
                     if (
                     // imagenBase64 Es solo si quieeere
                         username.isBlank() ||
+                        !regex.matches(username) ||
+                        username.trim().length < 3 ||
                         nombre.isBlank() ||
                         apellidos.isBlank() ||
                         fechasec.isEmpty() ||

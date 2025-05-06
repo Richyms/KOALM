@@ -117,7 +117,7 @@
     <string name="label_switch_activar_recordatorio">Activar recordatorios:</string>
     <string name="label_tipo_notificacion">  Tipo de notificación:</string>
     <string name="label_notificacion_personalizada">  Notifiación personalizada:</string>
-    <string name="label_configuracion_adicional">Configuraciones adicionaless del hábito</string>
+    <string name="label_configuracion_adicional">Configuraciones adicionales del hábito</string>
     <string name="label_vista_previa">Vista previa del hábito</string>
 
     <string name="boton_Automatico">Automático</string>
