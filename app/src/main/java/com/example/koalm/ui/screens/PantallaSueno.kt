@@ -20,7 +20,6 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import com.example.koalm.ui.components.*
 
 data class DatosSueno(
     val puntos: Int,
@@ -93,8 +92,66 @@ fun PantallaSueno(
                 fontSize = 11.sp,
                 color = Color.Gray
             )
+
             Spacer(modifier = Modifier.height(16.dp))
-            EstadisticasCard(datos = datos)
+
+            // --- Gráfica original restaurada ---
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(containerColor = GrisCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "${datos.horas} h ${datos.minutos} m",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    val dias = listOf("L", "M", "X", "J", "V", "S", "D")
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        dias.zip(datos.historialSemanal).forEach { (dia, sueno) ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+                                BarraSueno(
+                                    suenoLigero = sueno.ligero,
+                                    suenoProfundo = sueno.profundo,
+                                    despierto = sueno.despierto
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(dia, fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(22.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 34.dp, vertical = 5.dp)
+                    ) {
+                        LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
+                        LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
+                        LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
+                    }
+                }
+            }
         }
     }
 }
@@ -159,8 +216,7 @@ fun LeyendaColor(duracion: String, etiqueta: String, color: Color) {
     }
 }
 
-
-val datosMockSueño = DatosSueno( // Estos datos van a ser recuperados del back
+val datosMockSueño = DatosSueno(
     puntos = 87,
     fecha = "2024-05-02",
     horas = 7,
@@ -169,13 +225,12 @@ val datosMockSueño = DatosSueno( // Estos datos van a ser recuperados del back
     sueñoProfundo = 3.8f,
     tiempoDespierto = 0.5f,
     historialSemanal = listOf(
-        DiaSueno(3.0f, 3.5f, 0.5f), // Lunes
-        DiaSueno(3.2f, 3.6f, 0.3f), // Martes
-        DiaSueno(3.1f, 3.4f, 0.5f), // Miércoles
-        DiaSueno(3.4f, 3.2f, 0.4f), // Jueves
-        DiaSueno(3.0f, 4.0f, 0.2f), // Viernes
-        DiaSueno(2.5f, 3.0f, 0.7f), // Sábado
-        DiaSueno(2.0f, 2.5f, 1.0f)  // Domingo
+        DiaSueno(3.0f, 3.5f, 0.5f),
+        DiaSueno(3.2f, 3.6f, 0.3f),
+        DiaSueno(3.1f, 3.4f, 0.5f),
+        DiaSueno(3.4f, 3.2f, 0.4f),
+        DiaSueno(3.0f, 4.0f, 0.2f),
+        DiaSueno(2.5f, 3.0f, 0.7f),
+        DiaSueno(2.0f, 2.5f, 1.0f)
     )
 )
-
