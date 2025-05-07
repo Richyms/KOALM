@@ -1,6 +1,8 @@
 package com.example.koalm.ui.screens
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -44,6 +46,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.koalm.ui.theme.VerdePrincipal
 import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.model.ProgresoDiario
@@ -89,6 +92,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
     var modoPersonalizado by remember { mutableStateOf(true) }
 
     val colorIcono = parseColorFromFirebase(colorSeleccionado.toString(),darken = true)
+    var nombreError by remember { mutableStateOf(false)}
 
     Scaffold(
         topBar = {
@@ -128,13 +132,26 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                     OutlinedTextField(
                         value = nombreHabito,
                         onValueChange = {
-                            val regex = Regex("^[a-zA-Z0-9][a-zA-Z0-9 ]*\$")  // Debe empezar con letra o número, y puede tener espacios luego
-                            if (it.isEmpty() || regex.matches(it)) {
+                            val regex = Regex("^[a-zA-Z0-9][a-zA-Z0-9 ]*\$")
+
+                            if (it.length <= 20 && (it.isEmpty() || regex.matches(it))) {
                                 nombreHabito = it
+                                nombreError = false
+                            } else if (it.length > 20) {
+                                nombreError = true
                             }
                         },
                         label = { Text(stringResource(R.string.label_nombre_habito)) },
-                        modifier = Modifier.fillMaxWidth()
+                        isError = nombreError,
+                        modifier = Modifier.fillMaxWidth(),
+                        supportingText = {
+                            if (nombreError) {
+                                Text(
+                                    text = "Máximo 20 caracteres.",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     )
 
                     Row(
@@ -193,6 +210,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        thickness = 1.dp,
+                        color = Color.Gray
+                    )
+
                     Text(
                         text = stringResource(R.string.label_configuracion_adicional),
                         style = MaterialTheme.typography.titleMedium,
@@ -211,7 +234,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
                             checked = frecuenciaActivo,
-                            onCheckedChange = { frecuenciaActivo = it },
+                            onCheckedChange = {
+                                frecuenciaActivo = it
+                                if (!it) {
+                                    diasSeleccionados = List(7) { false } // Reinicia los días a no seleccionados
+                                    }
+                            },
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -227,7 +255,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            listOf("S", "L", "M", "M", "J", "V", "S").forEachIndexed { index, dia ->
+                            listOf("L", "M", "M", "J", "V", "S", "D").forEachIndexed { index, dia ->
                                 DiaCircle(label = dia, selected = diasSeleccionados[index]) {
                                     diasSeleccionados = diasSeleccionados.toMutableList()
                                         .also { it[index] = !it[index] }
@@ -248,7 +276,13 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
                             checked = recordatorioActivo,
-                            onCheckedChange = { recordatorioActivo = it },
+                            onCheckedChange = {
+                                recordatorioActivo = it
+                                if (!it) {
+                                    horarios.clear()
+                                    modoPersonalizado = true
+                                    }
+                            },
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -366,7 +400,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
                             checked = finalizarActivo,
-                            onCheckedChange = { finalizarActivo = it },
+                            onCheckedChange = {
+                                finalizarActivo = it
+                                if (!it) {
+                                    fechaSeleccionada = null
+                                    diasDuracion = ""
+                                    modoFecha = true
+                                    }
+                            },
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -491,6 +532,8 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         // Validación del campo de nombre
                         if (nombreHabito.isBlank()) {
                             Toast.makeText(context, "El nombre del hábito es obligatorio", Toast.LENGTH_SHORT).show()
+                        } else  if (nombreHabito.length >= 20) {
+                            Toast.makeText(context, "El nombre del hábito no debe tener más de 20 caracteres.", Toast.LENGTH_SHORT).show()
                         } else {
                             // Obtener la referencia al usuario actual en Firebase Authentication
                             val userEmail = FirebaseAuth.getInstance().currentUser?.email
@@ -523,14 +566,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                     ),
                                     modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
                                     unaVezPorHabito = if (!recordatorioActivo) 1 else 0,
-                                    /*
-                                    progresoDiario = ProgresoDiario(
-                                        realizados = 0,  // Inicialmente 0, pero se actualizará más tarde
-                                        completado = false,
-                                        totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3  // Definimos el número total de veces
-                                    ),
-
-                                     */
                                     rachaActual = 0,  // Inicialmente 0, la racha se actualizará después
                                     rachaMaxima = 0,  // Inicialmente 0, la racha máxima se actualizará después
                                     ultimoDiaCompletado = null,  // Inicialmente no hay último día completado

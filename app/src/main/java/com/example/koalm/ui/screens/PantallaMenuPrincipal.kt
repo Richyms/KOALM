@@ -1,6 +1,7 @@
 package com.example.koalm.ui.screens
 import android.content.Context
-import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.core.content.edit
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,13 +44,15 @@ import com.example.koalm.ui.viewmodels.DashboardViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.core.graphics.toColorInt
-import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.ui.components.obtenerIconoPorNombre
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +69,26 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
         Triple("Meditación koalística", "Meditar como un koala: profundo y reparador.", R.drawable.koala_meditando)
     )
 
+    // Obtener el nombre de nuestro usuaio KOOL
+    val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
+    val db = FirebaseFirestore.getInstance()
+    var username by remember { mutableStateOf("") }
+
+    LaunchedEffect(usuarioEmail) {
+        if (usuarioEmail != null) {
+            if (usuarioEmail.isNotEmpty()) {
+                db.collection("usuarios")
+                    .document(usuarioEmail)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        username = doc.getString("username").orEmpty()
+                    }
+                    .addOnFailureListener {
+                        username = "Kool"
+                    }
+            }
+        }
+    }
 
 
     ModalNavigationDrawer(
@@ -75,7 +98,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("¡Hola, Kool! 🐨✨") },
+                    title = { Text("¡Hola, $username! 🐨✨") },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
@@ -115,7 +138,6 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 }
 
                 SeccionTitulo("Mis hábitos")
-                val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
                 if (usuarioEmail != null) {
                     DashboardScreen(usuarioEmail = usuarioEmail)
                 }
@@ -327,21 +349,21 @@ fun DashboardScreen(
     val cargando = viewModel.cargando
 
     var tipoSeleccionado by remember { mutableStateOf("todos") }
-    val tipos = listOf("todos", "personalizado", "fisico", "mental")
+    val tipos = listOf("todos", "personalizado", "físico", "mental")
 
-    // Cargar los hábitos cuando cambia el correo electrónico
+    // Cargar los hábitos
     LaunchedEffect(usuarioEmail) {
         viewModel.cargarHabitos(usuarioEmail)
     }
 
         // Filtros de tipo
-        Row(
+        LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            tipos.forEach { tipo ->
+            items(tipos) { tipo ->
                 val isSelected = tipo == tipoSeleccionado
 
                 TextButton(
@@ -362,26 +384,28 @@ fun DashboardScreen(
             CircularProgressIndicator()
         } else {
             // Filtrar los hábitos según el tipo seleccionado
-            val habitosFiltrados = if (tipoSeleccionado == "todos") {
-                habitos
-            } else {
-                habitos.filter { it.tipo.equals(tipoSeleccionado, ignoreCase = true) }
+            val diaActual = (LocalDate.now().dayOfWeek.value + 6) % 7
+
+            val habitosFiltrados = habitos.filter { habito ->
+                val tipoCoincide = tipoSeleccionado == "todos" || habito.tipo.equals(tipoSeleccionado, ignoreCase = true)
+
+                val frecuencia = habito.frecuencia
+
+                val frecuenciaEsDiaria = frecuencia == null || frecuencia.all { it == false }
+
+                val diaActivo = frecuenciaEsDiaria || (frecuencia?.getOrNull(diaActual) == true)
+
+                tipoCoincide && diaActivo
             }
 
             // Mostrar los hábitos filtrados
-            val coroutineScope = rememberCoroutineScope()
-
             if (habitosFiltrados.isNotEmpty()) {
                 habitosFiltrados.forEach { habito ->
-                    HabitoCard(
+                    HabitoCardPersonalizado (
                         habito = habito,
+                        progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
                         onIncrementar = {
-                            coroutineScope.launch {
-                                HabitosRepository.incrementarProgresoHabito(
-                                    email = usuarioEmail,
-                                    habito = habito
-                                )
-                            }
+                            viewModel.incrementarProgreso(usuarioEmail,habito)
                         }
                     )
                 }
@@ -397,70 +421,51 @@ fun DashboardScreen(
 }
 
 @Composable
-fun HabitoCard(
+fun HabitoCardPersonalizado(
     habito: HabitoPersonalizado,
+    progreso: ProgresoDiario?,
     onIncrementar: () -> Unit
 ) {
-    // Obtenemos el progreso de este hábito
-    val habitoId = habito.nombre.replace(" ", "_")
-    val progreso = obtenerProgresoDelDia(habitoId)
 
-    // Si no existe progreso (por ejemplo, es el primer día), asignamos valores predeterminados
     val realizados = progreso?.realizados ?: 0
     val completado = progreso?.completado ?: false
 
-    // Calculamos el porcentaje de progreso para la barra
+    // Progreso del hábito visualmente
     val progresoPorcentaje = if (habito.unaVezPorHabito == 1) {
-        if (completado) 1f else 0f // Si es una vez por día y está completado, el progreso es 100%
+        if (completado) 1f else 0f
     } else {
-        realizados.toFloat() / (habito.recordatorios?.horas?.size ?: 1) // Si tiene más recordatorios, calculamos el porcentaje
+        realizados.toFloat() / (habito.recordatorios?.horas?.size ?: 1)
     }
 
-    // Obtenemos el color de fondo
+    var progresoAnimado by remember { mutableFloatStateOf(progresoPorcentaje) }
+
+    LaunchedEffect(progresoPorcentaje) {
+        progresoAnimado = progresoPorcentaje
+    }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progresoAnimado,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+
+    // Obtener colores
     val colorFondo = parseColorFromFirebase(habito.colorEtiqueta)
-
-    // Extensión para oscurecer el color
-    fun Color.darken(factor: Float): Color {
-        return Color(
-            red = (red * (1 - factor)).coerceIn(0f, 1f),
-            green = (green * (1 - factor)).coerceIn(0f, 1f),
-            blue = (blue * (1 - factor)).coerceIn(0f, 1f),
-            alpha = alpha
-        )
-    }
-
-    // Función para hacer el parseo de color desde FB
-    fun parseColorFromFirebase(colorString: String, darken: Boolean = false, darkenFactor: Float = 0.15f): Color {
-        val regex = Regex("""Color\(([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+),.*\)""")
-        val match = regex.find(colorString)
-        return if (match != null) {
-            val (r, g, b, a) = match.destructured
-            val baseColor = Color(r.toFloat(), g.toFloat(), b.toFloat(), a.toFloat())
-            if (darken) baseColor.darken(darkenFactor) else baseColor
-        } else {
-            Log.e("ColorParse", "No se pudo parsear el color: $colorString")
-            Color.Gray
-        }
-    }
-
-    //Obtener el ícono y color
     val icono = obtenerIconoPorNombre(habito.iconoEtiqueta)
     val colorIcono = parseColorFromFirebase(habito.colorEtiqueta, darken = true)
 
-    // Texto que muestra los "Realizados / Total"
+    // Visualizar recordatorios
+    val total = habito.recordatorios?.horas?.size ?: 0
     val progresoText = if (habito.unaVezPorHabito == 1) {
-        // Caso cuando es una vez por día
-        if (completado) {
-            "Realizado: 1/1"
-        } else {
-            "Realizado: 0/1"
-        }
+        if (completado) "Completado: 1/1" else "Realizado: 0/1"
     } else {
-        // Caso cuando tiene varios recordatorios
-        "$realizados/${habito.recordatorios?.horas?.size ?: 0}"
+        if (realizados >= total && total > 0) {
+            "Completado: $realizados/$total"
+        } else {
+            "Realizado: $realizados/$total"
+        }
     }
 
-    // Column conteniendo toda la card
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -468,7 +473,6 @@ fun HabitoCard(
             .background(colorFondo.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp))
             .padding(16.dp)
     ) {
-        // Primera fila: Icono y nombre del hábito
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -480,13 +484,13 @@ fun HabitoCard(
                     contentDescription = "Icono del Hábito",
                     tint = colorIcono,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(33.dp)
                         .padding(end = 12.dp)
                 )
                 Column {
                     Text(
                         text = habito.nombre,
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -496,66 +500,69 @@ fun HabitoCard(
                 }
             }
 
-            // Si ya está completado, mostramos una palomita
             if (completado) {
                 Icon(
                     imageVector = Icons.Default.Check,
+                    modifier = Modifier
+                        .size(40.dp),
                     contentDescription = "Completado",
-                    tint = Color.Green
+                    tint = colorIcono
                 )
             } else {
-                // Si no está completado, mostramos el icono de suma
-                IconButton(
-                    onClick = onIncrementar,
+                Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .border(3.dp, colorIcono, shape = CircleShape)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Sumar", tint = Color.Black)
-                }
+                        .size(48.dp)
+                        .background(Color.Transparent, shape = CircleShape)
+                        .drawBehind {
+                            val strokeWidth = 4.dp.toPx()
+                            val radius = size.minDimension / 2 - strokeWidth / 2
+
+                            // Fondo base gris
+                            drawCircle(
+                                color = Color.LightGray,
+                                radius = radius,
+                                center = center,
+                                style = Stroke(width = strokeWidth)
+                            )
+
+                            // Fondo animado sobrepuesto
+                            drawArc(
+                                color = colorIcono,
+                                startAngle = -90f,
+                                sweepAngle = 360 * animatedProgress,
+                                useCenter = false,
+                                style = Stroke(width = strokeWidth),
+                                topLeft = Offset(
+                                    (size.width - radius * 2) / 2,
+                                    (size.height - radius * 2) / 2
+                                ),
+                                size = Size(radius * 2, radius * 2)
+                            )
+                        }
+                )  {
+                    IconButton(
+                            onClick = onIncrementar,
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Sumar", tint = Color.Black)
+                        }
+                    }
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Barra de progreso visual
         LinearProgressIndicator(
-            progress = { progresoPorcentaje },
+            progress = { animatedProgress },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = colorFondo,
-            trackColor = Color.LightGray,
+                .height(10.dp)
+                .clip(RoundedCornerShape(50)),
+            color = colorIcono,
+            trackColor = Color(0xFFE0E0E0),
         )
     }
 }
 
-@Composable
-fun obtenerProgresoDelDia(habitoId: String): ProgresoDiario? {
-    val db = FirebaseFirestore.getInstance()
-    val progresoRef = db.collection("usuarios")
-        .document("usuario@example.com") // Cambiar al email del usuario real
-        .collection("personalizados")
-        .document(habitoId)
-        .collection("progreso")
-        .document("progresoDelDia") // Documento donde se guarda el progreso diario
 
-    // Utilizamos un estado composable para obtener el progreso
-    val progresoState = remember { mutableStateOf<ProgresoDiario?>(null) }
-
-    // Usamos un coroutineScope para obtener los datos de Firestore
-    LaunchedEffect(habitoId) {
-        try {
-            val docSnapshot = progresoRef.get().await()
-            progresoState.value = docSnapshot.toObject(ProgresoDiario::class.java)
-        } catch (e: Exception) {
-            // Manejo de errores en caso de que la solicitud falle
-            e.printStackTrace()
-            progresoState.value = ProgresoDiario(realizados = 0, completado = false, totalRecordatoriosPorDia = 1)
-        }
-    }
-
-    // Devolvemos el estado
-    return progresoState.value
-}

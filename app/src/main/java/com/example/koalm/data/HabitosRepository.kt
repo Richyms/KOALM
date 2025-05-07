@@ -7,13 +7,15 @@ import com.example.koalm.model.ProgresoDiario
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 object HabitosRepository {
 
     @SuppressLint("StaticFieldLeak")
     private val db = FirebaseFirestore.getInstance()
 
-    // Obtener hábitos personalizados
+    // Obtener hábitos personalizados del usuario
     suspend fun obtenerHabitosPersonalizados(usuarioEmail: String): List<HabitoPersonalizado> {
         val habitosList = mutableListOf<HabitoPersonalizado>()
         try {
@@ -35,70 +37,67 @@ object HabitosRepository {
         return habitosList
     }
 
-    // Obtener progreso del hábito
-    suspend fun obtenerProgresoDelHabito(usuarioEmail: String, nombreHabito: String): ProgresoDiario? {
-        val progresoRef = db.collection("usuarios")
-            .document(usuarioEmail)
-            .collection("personalizados")
-            .document(nombreHabito)
-            .collection("progreso")
-            .document("progresoDelDia")
-
-        val doc = progresoRef.get().await()
-        return doc.toObject(ProgresoDiario::class.java)
-    }
-
-    // Actualizar progreso del hábito
+    // Incrementar el progreso de un hábito
     suspend fun incrementarProgresoHabito(email: String, habito: HabitoPersonalizado) {
         val idDocumento = habito.nombre.replace(" ", "_")
-        val docRef = db.collection("usuarios")
+        val progresoRef = db.collection("habitos")
             .document(email)
             .collection("personalizados")
-            .document(idDocumento) // Suponiendo que el nombre es único
+            .document(idDocumento)
+            .collection("progreso")
+            .document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
 
-        // Obtener el progreso actual
-        val progreso = obtenerProgresoDelHabito(email, idDocumento)
+        val snapshot = progresoRef.get().await()
+        val progresoActual = snapshot.toObject(ProgresoDiario::class.java)
+        val total = habito.recordatorios?.horas?.size ?: 1
 
-        // Si el progreso no existe, lo inicializamos
-        val progresoActualizado = progreso ?: ProgresoDiario(realizados = 0, completado = false, totalRecordatoriosPorDia = habito.recordatorios?.horas?.size ?: 0)
+        // Inicializamos si no existía
+        val nuevoProgreso = progresoActual ?: ProgresoDiario(
+            realizados = 0,
+            completado = false,
+            totalRecordatoriosPorDia = total
+        )
 
-        // Si el progreso no está completado y aún hay espacio, incrementamos
-        if (progresoActualizado.realizados < progresoActualizado.totalRecordatoriosPorDia) {
-            progresoActualizado.realizados += 1
-            progresoActualizado.completado = progresoActualizado.realizados >= progresoActualizado.totalRecordatoriosPorDia
+        // No hacer nada si ya estaba completo
+        if (nuevoProgreso.completado) return
+
+        nuevoProgreso.realizados += 1
+        nuevoProgreso.completado = nuevoProgreso.realizados >= total
+
+        // Actualizamos la racha si se completó hoy
+        if (nuevoProgreso.completado) {
+            actualizarRacha(habito, nuevoProgreso)
         }
 
-        // Actualizar racha
-        actualizarRacha(habito, progresoActualizado)
+        // Guardamos progreso
+        progresoRef.set(nuevoProgreso, SetOptions.merge()).await()
 
-        // Subir datos actualizados
-        docRef.collection("progreso").document("progresoDelDia")
-            .set(progresoActualizado, SetOptions.merge())
+        // Guardamos cambios del hábito (racha y último día)
+        db.collection("habitos")
+            .document(email)
+            .collection("personalizados")
+            .document(idDocumento)
+            .set(habito, SetOptions.merge())
             .await()
 
-        Log.d("Firestore", "Progreso actualizado para el hábito: ${idDocumento}")
+        Log.d("Firestore", "Progreso actualizado para el hábito: $idDocumento")
     }
 
+    // Actualizar racha del hábito
     private fun actualizarRacha(habito: HabitoPersonalizado, progreso: ProgresoDiario) {
-        val fechaHoy = java.time.LocalDate.now()
-        val ultimoDia = habito.ultimoDiaCompletado?.let { java.time.LocalDate.parse(it) }
+        val hoy = LocalDate.now()
+        val ultimoDia = habito.ultimoDiaCompletado?.let { LocalDate.parse(it) }
 
-        // Si el progreso fue completado hoy
-        if (progreso.completado) {
-            if (ultimoDia == null || !ultimoDia.plusDays(1).isEqual(fechaHoy)) {
-                habito.rachaActual = 1
-            } else {
-                habito.rachaActual += 1
-            }
-
-            // Actualizar la racha máxima
-            if (habito.rachaActual > habito.rachaMaxima) {
-                habito.rachaMaxima = habito.rachaActual
-            }
-
-            habito.ultimoDiaCompletado = fechaHoy.toString()
+        if (ultimoDia == null || !ultimoDia.plusDays(1).isEqual(hoy)) {
+            habito.rachaActual = 1
         } else {
-            habito.rachaActual = 0
+            habito.rachaActual += 1
         }
+
+        if (habito.rachaActual > habito.rachaMaxima) {
+            habito.rachaMaxima = habito.rachaActual
+        }
+
+        habito.ultimoDiaCompletado = hoy.toString()
     }
 }

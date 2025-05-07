@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import com.example.koalm.data.HabitosRepository.obtenerHabitosPersonalizados
 import com.example.koalm.ui.components.obtenerIconoPorNombre
 import kotlinx.coroutines.launch
@@ -240,7 +241,7 @@ fun HabitoCardExpandible(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(24.dp)
                         .shadow(4.dp, shape = RoundedCornerShape(8.dp), clip = false)
                         .background(Color.White, shape = RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
@@ -249,7 +250,7 @@ fun HabitoCardExpandible(
                         imageVector = icono,
                         contentDescription = "Icono del Hábito",
                         tint = colorIcono,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(18.dp)
                         )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
@@ -257,17 +258,17 @@ fun HabitoCardExpandible(
                 Column(modifier = Modifier.weight(1f)) {
                     if(habito.descripcion.isNotEmpty() && !expanded)
                     {
-                        Text(text = habito.nombre, style = MaterialTheme.typography.bodyLarge)
+                        Text(text = habito.nombre, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = habito.descripcion.take(50) + if (habito.descripcion.length > 50) "..." else "",
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else if (habito.descripcion.isEmpty()){
-                        Text(text = habito.nombre, style = MaterialTheme.typography.bodyLarge)
+                        Text(text = habito.nombre, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
                         Spacer(modifier = Modifier.height(4.dp))
                     } else if (expanded && habito.descripcion.isNotEmpty()) {
-                        Text(text = habito.nombre, style = MaterialTheme.typography.bodyLarge)
+                        Text(text = habito.nombre, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = habito.descripcion,
@@ -292,7 +293,7 @@ fun HabitoCardExpandible(
                             text = { Text("Editar") },
                             onClick = {
                                 expandedMenu = false
-                                navController.navigate("editar_habito/${habito.nombre}")
+                                navController.navigate("editahabito/${habito.nombre}")
                             }
                         )
                         DropdownMenuItem(
@@ -358,7 +359,7 @@ fun HabitoCardExpandible(
         AlertDialog(
             onDismissRequest = { mostrarDialogoConfirmacion = false },
             title = { Text("¿Eliminar hábito?") },
-            text = { Text("¿Estás seguro de que deseas eliminar \"${habito.nombre}\"? Esta acción no se puede deshacer.") },
+            text = { Text("¿Estás seguro de que deseas eliminar el hábito\"${habito.nombre}\"? Esta acción no se puede deshacer.") },
             confirmButton = {
                 TextButton(onClick = {
                     mostrarDialogoConfirmacion = false

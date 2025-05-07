@@ -1,5 +1,7 @@
 package com.example.koalm.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -10,6 +12,7 @@ import androidx.navigation.compose.composable
 import com.example.koalm.ui.screens.*
 import com.example.koalm.ui.screens.PantallaConfigurarDesconexionDigital
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun AppNavigation(
     navController: NavHostController,
