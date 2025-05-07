@@ -52,6 +52,8 @@ fun AppNavigation(
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
+        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
+        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("temporizador_meditacion") { PantallaTemporizadorMeditacion(navController) }
