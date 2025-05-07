@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.*
+    import com.example.koalm.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
