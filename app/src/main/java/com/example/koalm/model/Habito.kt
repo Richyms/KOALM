@@ -10,7 +10,6 @@ data class Habito(
     val hora: String = "", // Formato "HH:mm"
     val duracionMinutos: Int = 15,
     val notasHabilitadas: Boolean = false,
-    val activo: Boolean = true,
     val userId: String? = null,
     val fechaCreacion: String? = null,
     val fechaModificacion: String? = null
@@ -25,7 +24,6 @@ data class Habito(
         "hora" to hora,
         "duracionMinutos" to duracionMinutos,
         "notasHabilitadas" to notasHabilitadas,
-        "activo" to activo,
         "userId" to userId,
         "fechaCreacion" to fechaCreacion,
         "fechaModificacion" to fechaModificacion

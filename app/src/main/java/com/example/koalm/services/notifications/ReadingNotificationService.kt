@@ -14,6 +14,11 @@ import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
 class ReadingNotificationService : NotificationBase {
+    companion object {
+        private const val TAG = "KOALM_NOTIFICATIONS"
+        const val NOTIFICATION_ID = 2
+    }
+
     override val channelId = "lectura_habito"
     override val channelName = R.string.reading_notification_channel_name
     override val channelDescription = R.string.reading_notification_channel_description
@@ -28,25 +33,31 @@ class ReadingNotificationService : NotificationBase {
         durationMinutes: Long,
         additionalData: Map<String, Any>
     ) {
-        val TAG = "ReadingNotificationService"
-        Log.e(TAG, "scheduleNotification: Programando notificaciones para los días seleccionados")
+        Log.d(TAG, "ReadingNotificationService: Iniciando programación de notificación")
+        Log.d(TAG, "ReadingNotificationService: Días seleccionados: ${diasSeleccionados.joinToString()}")
+        Log.d(TAG, "ReadingNotificationService: Hora programada: ${hora.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}")
+        Log.d(TAG, "ReadingNotificationService: Duración: $durationMinutes minutos")
         
         // Cancelar notificaciones existentes antes de programar nuevas
+        Log.d(TAG, "ReadingNotificationService: Cancelando notificaciones existentes")
         cancelNotifications(context)
         
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         var notificationCount = 0
         
         val now = LocalDateTime.now()
+        Log.d(TAG, "ReadingNotificationService: Hora actual: ${now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}")
         
         // Programar para cada día seleccionado
         diasSeleccionados.forEachIndexed { index, seleccionado ->
             if (seleccionado) {
+                Log.d(TAG, "ReadingNotificationService: Programando notificación para día $index")
                 val dayOfWeek = DayOfWeek.of(index + 1)
                 var nextNotificationTime = now.with(hora.toLocalTime())
                     .with(TemporalAdjusters.nextOrSame(dayOfWeek))
                 
                 if (nextNotificationTime.isBefore(now)) {
+                    Log.d(TAG, "ReadingNotificationService: La hora ya pasó hoy, programando para mañana")
                     nextNotificationTime = nextNotificationTime.plusDays(1)
                 }
                 
@@ -55,6 +66,8 @@ class ReadingNotificationService : NotificationBase {
                     .toInstant()
                     .toEpochMilli()
                 
+                Log.d(TAG, "ReadingNotificationService: Tiempo de notificación: ${nextNotificationTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))}")
+                
                 val intent = Intent(context, NotificationReceiver::class.java).apply {
                     action = NotificationConstants.NOTIFICATION_ACTION
                     putExtra("descripcion", descripcion.ifEmpty { context.getString(defaultText) })
@@ -62,6 +75,8 @@ class ReadingNotificationService : NotificationBase {
                     putExtra("duration_minutes", durationMinutes)
                     putExtra("is_meditation", false)
                     putExtra("is_reading", true)
+                    putExtra("is_digital_disconnect", false)
+                    putExtra("notas_habilitadas", false)
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -71,57 +86,98 @@ class ReadingNotificationService : NotificationBase {
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
                 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (alarmManager.canScheduleExactAlarms()) {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (alarmManager.canScheduleExactAlarms()) {
+                            Log.d(TAG, "ReadingNotificationService: Programando alarma exacta (Android 12+)")
+                            alarmManager.setExactAndAllowWhileIdle(
+                                AlarmManager.RTC_WAKEUP,
+                                notificationTimeMillis,
+                                pendingIntent
+                            )
+                        } else {
+                            Log.e(TAG, "ReadingNotificationService: No se pueden programar alarmas exactas en Android 12+")
+                        }
+                    } else {
+                        Log.d(TAG, "ReadingNotificationService: Programando alarma exacta (Android < 12)")
                         alarmManager.setExactAndAllowWhileIdle(
                             AlarmManager.RTC_WAKEUP,
                             notificationTimeMillis,
                             pendingIntent
                         )
                     }
-                } else {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        notificationTimeMillis,
-                        pendingIntent
-                    )
+                    notificationCount++
+                    Log.d(TAG, "ReadingNotificationService: Notificación programada exitosamente para día $index")
+                } catch (e: Exception) {
+                    Log.e(TAG, "ReadingNotificationService: Error al programar notificación para día $index: ${e.message}", e)
                 }
-                
-                notificationCount++
             }
         }
         
-        Log.e(TAG, "scheduleNotification: Se programaron $notificationCount notificaciones")
+        Log.d(TAG, "ReadingNotificationService: Se programaron $notificationCount notificaciones en total")
     }
 
     override fun cancelNotifications(context: Context) {
-        val TAG = "ReadingNotificationService"
-        Log.e(TAG, "cancelNotifications: Cancelando notificaciones existentes")
+        Log.d(TAG, "ReadingNotificationService: Iniciando cancelación de notificaciones")
         
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-        for (i in 0..6) {
-            notificationManager.cancel(NOTIFICATION_ID + i)
-        }
-        
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        for (i in 0..6) {
-            val intent = Intent(context, NotificationReceiver::class.java).apply {
-                action = NotificationConstants.NOTIFICATION_ACTION
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                NOTIFICATION_ID + i,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
-            )
+        try {
+            // Cancelar notificaciones del NotificationManager
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.cancelAll() // Cancelar TODAS las notificaciones
+            Log.d(TAG, "ReadingNotificationService: Todas las notificaciones canceladas")
             
-            if (pendingIntent != null) {
-                alarmManager.cancel(pendingIntent)
+            // Cancelar alarmas del AlarmManager
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            
+            // Cancelar alarmas para cada día de la semana
+            for (i in 0..6) {
+                val intent = Intent(context, NotificationReceiver::class.java).apply {
+                    action = NotificationConstants.NOTIFICATION_ACTION
+                    putExtra("is_reading", true)
+                }
+                
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    NOTIFICATION_ID + i,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                
+                try {
+                    alarmManager.cancel(pendingIntent)
+                    pendingIntent.cancel()
+                    Log.d(TAG, "ReadingNotificationService: Alarma cancelada con ID ${NOTIFICATION_ID + i}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "ReadingNotificationService: Error al cancelar alarma ${NOTIFICATION_ID + i}: ${e.message}")
+                }
             }
+            
+            // Cancelar también las alarmas con IDs adicionales (para los botones de acción)
+            for (i in 0..6) {
+                val intent = Intent(context, NotificationReceiver::class.java).apply {
+                    action = NotificationConstants.START_TIMER_ACTION
+                    putExtra("is_reading", true)
+                }
+                
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    NOTIFICATION_ID + i + 100,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                
+                try {
+                    alarmManager.cancel(pendingIntent)
+                    pendingIntent.cancel()
+                    Log.d(TAG, "ReadingNotificationService: Alarma de acción cancelada con ID ${NOTIFICATION_ID + i + 100}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "ReadingNotificationService: Error al cancelar alarma de acción ${NOTIFICATION_ID + i + 100}: ${e.message}")
+                }
+            }
+            
+            Log.d(TAG, "ReadingNotificationService: Cancelación de notificaciones completada exitosamente")
+        } catch (e: Exception) {
+            Log.e(TAG, "ReadingNotificationService: Error al cancelar notificaciones: ${e.message}", e)
         }
-    }
-
-    companion object {
-        const val NOTIFICATION_ID = 2
     }
 } 

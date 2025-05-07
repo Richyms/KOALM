@@ -46,7 +46,7 @@ fun AppNavigation(
         screenWithSlide("salud_mental") { PantallaSaludMental(navController) }
         screenWithSlide("salud_fisica") { PantallaSaludFisica(navController) }
         screenWithSlide("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
-        screenWithSlide("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditación(navController) }
+        screenWithSlide("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditacion(navController) }
         screenWithSlide("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
         screenWithSlide("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
         screenWithSlide("configurar_habito_alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController)}
@@ -55,6 +55,8 @@ fun AppNavigation(
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
+        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
+        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("temporizador_meditacion") { PantallaTemporizadorMeditacion(navController) }

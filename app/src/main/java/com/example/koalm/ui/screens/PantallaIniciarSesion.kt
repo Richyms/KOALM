@@ -154,6 +154,9 @@ fun PantallaIniciarSesion(
                                                         .document(correoReal)
                                                         .set(uLogin.toMap(), SetOptions.merge())
                                                         .addOnSuccessListener {
+
+
+
                                                             // Verificamos si el perfil está completo o no
                                                             val completo = listOf(
                                                                 nombre.isNotBlank(),
@@ -177,6 +180,24 @@ fun PantallaIniciarSesion(
                                                             navController.navigate(destino) {
                                                                 popUpTo("iniciar") { inclusive = true }
                                                                 launchSingleTop = true
+                                                            }
+
+                                                            //Parametros para poder asignar metricas de salud
+                                                            val metasRef = db.collection("usuarios")
+                                                                .document(correoReal)
+                                                                .collection("metasSalud")
+                                                                .document("valores")
+
+                                                            metasRef.get().addOnSuccessListener { metasDoc ->
+                                                                if (!metasDoc.exists()) {
+                                                                    metasRef.set(
+                                                                        mapOf(
+                                                                            "metaPasos" to 6000,
+                                                                            "metaMinutos" to 60,
+                                                                            "metaCalorias" to 300
+                                                                        )
+                                                                    )
+                                                                }
                                                             }
                                                         }
                                                 } else {

@@ -42,18 +42,20 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import com.google.firebase.auth.FirebaseAuth
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
+private const val TAG = "PantallaConfiguracionHabitoLectura"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
     val context = LocalContext.current
-    val TAG = "PantallaConfiguracionHabitoLectura"
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
@@ -72,6 +74,28 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
         ) 
     }
     var mostrarTimePicker by remember { mutableStateOf(false) }
+
+    fun scheduleNotification(habito: Habito) {
+        Log.d(TAG, "Programando notificación para hábito de lectura")
+        Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+        
+        val horaLocalDateTime = LocalDateTime.parse(
+            LocalDate.now().toString() + "T" + habito.hora,
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        )
+        
+        val notificationService = NotificationService()
+        notificationService.scheduleNotification(
+            context = context,
+            habitoId = habito.id,
+            diasSeleccionados = habito.diasSeleccionados,
+            hora = horaLocalDateTime,
+            descripcion = habito.descripcion,
+            durationMinutes = habito.duracionMinutos.toLong(),
+            isReading = true
+        )
+        Log.d(TAG, "Notificación programada exitosamente")
+    }
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -93,22 +117,48 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                 // Crear el hábito en Firebase
                 val habito = Habito(
                     titulo = "Lectura",
-                    descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
+                    descripcion = descripcion.ifEmpty { context.getString(R.string.reading_notification_default_text) },
                     clase = ClaseHabito.MENTAL,
                     tipo = TipoHabito.LECTURA,
                     diasSeleccionados = diasSeleccionados,
                     hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
                     duracionMinutos = duracionMin.toInt(),
                     notasHabilitadas = false,
-                    activo = true,
                     userId = currentUser.uid
                 )
 
                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-                    // Programar notificación
-                    programarNotificacion(
-                        context, descripcion, duracionMin, horaRecordatorio, diasSeleccionados, navController, TAG
+                    Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                    Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+                    
+                    // Programar notificación con el ID real del hábito
+                    val notificationService = NotificationService()
+                    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                    Log.d(TAG, "Iniciando servicio de notificaciones")
+                    context.startService(Intent(context, NotificationService::class.java))
+
+                    notificationService.scheduleNotification(
+                        context = context,
+                        habitoId = habitoId,
+                        diasSeleccionados = diasSeleccionados,
+                        hora = notificationTime,
+                        descripcion = descripcion.ifEmpty {
+                            context.getString(R.string.reading_notification_default_text)
+                        },
+                        durationMinutes = duracionMin.toLong(),
+                        notasHabilitadas = false,
+                        isMeditation = false,
+                        isReading = true,
+                        isDigitalDisconnect = false
                     )
+
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.success_notifications_scheduled),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navController.navigateUp()
                 }.onFailure { error ->
                     Log.e(TAG, "Error al crear el hábito: ${error.message}")
                     Toast.makeText(
@@ -306,22 +356,48 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                                 // Crear el hábito en Firebase
                                 val habito = Habito(
                                     titulo = "Lectura",
-                                    descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
+                                    descripcion = descripcion.ifEmpty { context.getString(R.string.reading_notification_default_text) },
                                     clase = ClaseHabito.MENTAL,
                                     tipo = TipoHabito.LECTURA,
                                     diasSeleccionados = diasSeleccionados,
                                     hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
                                     duracionMinutos = duracionMin.toInt(),
                                     notasHabilitadas = false,
-                                    activo = true,
                                     userId = currentUser.uid
                                 )
 
                                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-                                    // Programar notificación
-                                    programarNotificacion(
-                                        context, descripcion, duracionMin, horaRecordatorio, diasSeleccionados, navController, TAG
+                                    Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                                    Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+                                    
+                                    // Programar notificación con el ID real del hábito
+                                    val notificationService = NotificationService()
+                                    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                                    Log.d(TAG, "Iniciando servicio de notificaciones")
+                                    context.startService(Intent(context, NotificationService::class.java))
+
+                                    notificationService.scheduleNotification(
+                                        context = context,
+                                        habitoId = habitoId,
+                                        diasSeleccionados = diasSeleccionados,
+                                        hora = notificationTime,
+                                        descripcion = descripcion.ifEmpty {
+                                            context.getString(R.string.reading_notification_default_text)
+                                        },
+                                        durationMinutes = duracionMin.toLong(),
+                                        notasHabilitadas = false,
+                                        isMeditation = false,
+                                        isReading = true,
+                                        isDigitalDisconnect = false
                                     )
+
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.success_notifications_scheduled),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigateUp()
                                 }.onFailure { error ->
                                     Log.e(TAG, "Error al crear el hábito: ${error.message}")
                                     Toast.makeText(
@@ -395,46 +471,6 @@ private fun formatearDuracion(min: Int): String = when {
     min == 60          -> "1 hora"
     min % 60 == 0      -> "${min/60} horas"
     else               -> "${min/60} horas ${min%60} min"
-}
-
-/**
- * Programa la notificación y navega atrás si todo salió bien.
- */
-private fun programarNotificacion(
-    context: android.content.Context,
-    descripcion: String,
-    duracionMin: Float,
-    hora: LocalTime,
-    diasSeleccionados: List<Boolean>,
-    navController: NavHostController,
-    tag: String
-) {
-    val notificationService = NotificationService()
-    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
-
-    Log.d(tag, "Iniciando servicio de notificaciones")
-    context.startService(Intent(context, NotificationService::class.java))
-
-    notificationService.scheduleNotification(
-        context = context,
-        habitoId = "", // ID vacío ya que es una nueva notificación
-        diasSeleccionados = diasSeleccionados,
-        hora = notificationTime,
-        descripcion = descripcion.ifEmpty {
-            context.getString(R.string.notification_default_text)
-        },
-        durationMinutes = duracionMin.toLong(),
-        notasHabilitadas = false,
-        isMeditation = false,
-        isReading = true
-    )
-
-    Toast.makeText(
-        context,
-        context.getString(R.string.success_notifications_scheduled),
-        Toast.LENGTH_SHORT
-    ).show()
-    navController.navigateUp()
 }
 
 

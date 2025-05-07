@@ -12,6 +12,7 @@ val VerdeBorde = Color(0xFFC1C8BD)          // Color para bordes de contenedores
 val GrisClaro = Color(0xFFE0E0E0)           // Fondos secundarios
 val GrisMedio = Color(0xFF9E9E9E)           // Texto o bordes inactivos
 val GrisCard = Color(0xFFF3F3F3)            // Fondo de cards
+val GrisOscuro = Color(0xFF868686)
 
 // Complementarios
 val Blanco = Color(0xFFFFFFFF)              // Fondo principal
