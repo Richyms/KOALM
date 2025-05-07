@@ -445,13 +445,14 @@ private fun programarNotificacion(
 
     notificationService.scheduleNotification(
         context = context,
+        habitoId = "", // ID vacío ya que es una nueva notificación
         diasSeleccionados = diasSeleccionados,
         hora = notificationTime,
-        descripcion = descripcion.ifEmpty {
-            "Desconectar para reconectar... contigo mismo."
-        },
+        descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
         durationMinutes = duracionMin.toLong(),
         notasHabilitadas = false,
+        isMeditation = false,
+        isReading = false,
         isDigitalDisconnect = true
     )
 

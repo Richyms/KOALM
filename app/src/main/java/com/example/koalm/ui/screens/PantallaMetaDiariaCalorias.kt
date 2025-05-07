@@ -2,7 +2,7 @@ package com.example.koalm.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -24,22 +24,46 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CenterAlignedTopAppBar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMetaCalorias(
     navController: NavHostController = rememberNavController(),
-    metaCalorias: Int = 500,
     onCaloriasSeleccionadas: (Int) -> Unit = {}
 ) {
     val caloriasList = (400..1000 step 10).toList()
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = caloriasList.indexOf(metaCalorias).coerceAtLeast(0)
-    )
     val itemHeight = 56.dp
     val visibleItems = 3
-
     val density = LocalDensity.current
+
+    val correo = FirebaseAuth.getInstance().currentUser?.email
+    var metaCalorias by remember { mutableStateOf(500) }
+
+    // 🔹 Leer valor desde Firestore
+    LaunchedEffect(correo) {
+        if (correo != null) {
+            val snapshot = Firebase.firestore.collection("usuarios")
+                .document(correo)
+                .collection("metasSalud")
+                .document("valores")
+                .get()
+                .await()
+
+            metaCalorias = snapshot.getLong("metaCalorias")?.toInt() ?: 500
+        }
+    }
+
+    // 🔹 Scroll basado en la meta leída
+    val listState = remember(metaCalorias) {
+        LazyListState(
+            firstVisibleItemIndex = caloriasList.indexOf(metaCalorias).coerceAtLeast(0)
+        )
+    }
+
     val centeredItemIndex by remember(
         listState.firstVisibleItemIndex,
         listState.firstVisibleItemScrollOffset
@@ -74,7 +98,16 @@ fun PantallaMetaCalorias(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onCaloriasSeleccionadas(centeredItemIndex) }) {
+                    IconButton(onClick = {
+                        correo?.let {
+                            Firebase.firestore.collection("usuarios")
+                                .document(it)
+                                .collection("metasSalud")
+                                .document("valores")
+                                .update("metaCalorias", centeredItemIndex)
+                        }
+                        navController.navigateUp()
+                    }) {
                         Icon(Icons.Default.Check, contentDescription = "Confirmar")
                     }
                 },

@@ -2,7 +2,7 @@ package com.example.koalm.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -21,25 +21,45 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdePrincipal
 import kotlin.math.roundToInt
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.CenterAlignedTopAppBar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMetaPasos(
     navController: NavHostController = rememberNavController(),
-    metaPasos: Int = 10000,
     onPasosSeleccionados: (Int) -> Unit = {}
 ) {
     val pasosList = (5000..15000 step 500).toList()
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = pasosList.indexOf(metaPasos).coerceAtLeast(0)
-    )
     val itemHeight = 56.dp
     val visibleItems = 3
-
     val density = LocalDensity.current
+
+    val correo = FirebaseAuth.getInstance().currentUser?.email
+    var metaPasos by remember { mutableStateOf(10000) }
+
+    // 🔹 Obtener valor inicial desde Firebase
+    LaunchedEffect(correo) {
+        if (correo != null) {
+            val snapshot = Firebase.firestore.collection("usuarios")
+                .document(correo)
+                .collection("metasSalud")
+                .document("valores")
+                .get()
+                .await()
+
+            metaPasos = snapshot.getLong("metaPasos")?.toInt() ?: 10000
+        }
+    }
+
+    val listState = remember(metaPasos) {
+        LazyListState(
+            firstVisibleItemIndex = pasosList.indexOf(metaPasos).coerceAtLeast(0)
+        )
+    }
+
     val centeredItemIndex by remember(
         listState.firstVisibleItemIndex,
         listState.firstVisibleItemScrollOffset
@@ -52,7 +72,6 @@ fun PantallaMetaPasos(
         }
     }
 
-    // Scroll automático al ítem centrado
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
             listState.animateScrollToItem(pasosList.indexOf(centeredItemIndex))
@@ -69,7 +88,16 @@ fun PantallaMetaPasos(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onPasosSeleccionados(centeredItemIndex) }) {
+                    IconButton(onClick = {
+                        correo?.let {
+                            Firebase.firestore.collection("usuarios")
+                                .document(it)
+                                .collection("metasSalud")
+                                .document("valores")
+                                .update("metaPasos", centeredItemIndex)
+                        }
+                        navController.navigateUp()
+                    }) {
                         Icon(Icons.Default.Check, contentDescription = "Confirmar")
                     }
                 },
@@ -125,7 +153,7 @@ fun PantallaMetaPasos(
 
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "La meta de pasos configurada por defecto es de 10000 pasos, la cual puede ser alcanzada en 1 hora  caminata rápida o 1:30 hr de caminata lenta.",
+                text = "La meta de pasos configurada por defecto es de 10,000 pasos, la cual puede ser alcanzada en 1 hora caminata rápida o 1:30 hr de caminata lenta.",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Justify

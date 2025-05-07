@@ -363,15 +363,16 @@ private fun programarNotificacion(
     context.startService(Intent(context, NotificationService::class.java))
 
     notificationService.scheduleNotification(
-        context           = context,
+        context = context,
+        habitoId = "", // ID vacío ya que es una nueva notificación
         diasSeleccionados = diasSeleccionados,
-        hora              = notificationTime,
-        descripcion       = descripcion.ifEmpty {
-            context.getString(R.string.meditation_notification_default_text)
-        },
-        durationMinutes   = duracionMin.toLong(),
-        notasHabilitadas  = sonidosHabilitados,
-        isMeditation      = true
+        hora = notificationTime,
+        descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
+        durationMinutes = duracionMin.toLong(),
+        notasHabilitadas = false,
+        isMeditation = true,
+        isReading = false,
+        isDigitalDisconnect = false
     )
 
     Toast.makeText(
