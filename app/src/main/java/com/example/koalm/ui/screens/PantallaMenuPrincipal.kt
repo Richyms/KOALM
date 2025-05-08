@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.ui.components.obtenerIconoPorNombre
+import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 
