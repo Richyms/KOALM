@@ -24,11 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.data.StepCounterRepository
 import com.example.koalm.ui.components.snapshotsAsState
+import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
@@ -39,39 +40,33 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaParametrosSalud(
-    navController: NavController
-
-
+    navController: NavHostController
 ) {
     val correo = FirebaseAuth.getInstance().currentUser?.email
-    //Obtencion de valores
     val metas = remember(correo) {
         Firebase.firestore.collection("usuarios")
             .document(correo ?: "")
             .collection("metasSalud")
             .document("valores")
     }
+
     val metaPasos by metas.snapshotsAsState { it?.getLong("metaPasos")?.toInt() ?: 10000 }
     val metaMinutos by metas.snapshotsAsState { it?.getLong("metaMinutos")?.toInt() ?: 100 }
     val metaCalorias by metas.snapshotsAsState { it?.getLong("metaCalorias")?.toInt() ?: 500 }
-    /* -------- Pasos y minutos en tiempo real (local) -------- */
-    val pasos      by StepCounterRepository.steps.collectAsState()
-    val segundos   by StepCounterRepository.activeSeconds.collectAsState()
-    val minutos    = segundos / 60                               // redondeo entero
 
-    /* -------- Otros datos (sólo si hay usuario logueado) ----- */
+    val pasos by StepCounterRepository.steps.collectAsState()
+    val segundos by StepCounterRepository.activeSeconds.collectAsState()
+    val minutos = segundos / 60
+
     val today = LocalDate.now().toString()
-
-    /* calories seguirá viniendo de Firestore; si no hay usuario → 0 */
     val calorias: Int = if (correo != null) {
         val doc = remember(correo, today) {
             Firebase.firestore.collection("usuarios")
-                .document(correo ?: "")
+                .document(correo)
                 .collection("metricasDiarias")
                 .document(today)
         }
         val c by doc.snapshotsAsState { it?.getLong("calorias")?.toInt() ?: 0 }
-
         c
     } else 0
 
@@ -87,14 +82,7 @@ fun PantallaParametrosSalud(
             )
         },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(icon = { Icon(Icons.Default.Home,  contentDescription = "Inicio") },
-                    label = { Text("Inicio")  }, selected = false, onClick = {})
-                NavigationBarItem(icon = { Icon(Icons.Default.Star,  contentDescription = "Hábitos") },
-                    label = { Text("Hábitos") }, selected = false, onClick = {})
-                NavigationBarItem(icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-                    label = { Text("Perfil")  }, selected = true,  onClick = {})
-            }
+            BarraNavegacionInferior(navController = navController, rutaActual = "perfil")
         }
     ) { innerPadding ->
         Column(
@@ -125,10 +113,7 @@ fun PantallaParametrosSalud(
                 InfoMiniCard("Pasos", "$pasos/$metaPasos", Icons.AutoMirrored.Filled.DirectionsWalk)
                 InfoMiniCard("Tiempo Activo", "$minutos/$metaMinutos min", Icons.Default.AccessTime)
                 InfoMiniCard("Calorías", "$calorias kcal/$metaCalorias kcal", Icons.Default.LocalFireDepartment)
-
-
             }
-
 
             /* ---------- Tarjetas grandes (mock) ---------- */
             InfoCard("Sueño", "7 h 7 min", Icons.Default.Bedtime, 0.88f) {
@@ -147,7 +132,7 @@ fun PantallaParametrosSalud(
                 navController.navigate("actividad-diaria")
             }
 
-            Spacer(Modifier.height(70.dp)) // espacio para la bottomBar
+            Spacer(Modifier.height(70.dp))
         }
     }
 }
@@ -204,8 +189,12 @@ fun InfoCard(
                     if (titulo == "Sueño") {
                         Text("/8 h", fontSize = 10.sp, color = Negro, fontWeight = FontWeight.SemiBold)
                     } else if (titulo == "Estrés") {
-                        Icon(Icons.Default.SentimentNeutral, contentDescription = null,
-                            tint = Negro, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.SentimentNeutral,
+                            contentDescription = null,
+                            tint = Negro,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
@@ -213,7 +202,7 @@ fun InfoCard(
     }
 }
 
-/* ----------  PREVIEW (mock) ---------- */
+/* ----------  PREVIEW  ---------- */
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun VistaPreviaPantallaParametrosSalud() {
