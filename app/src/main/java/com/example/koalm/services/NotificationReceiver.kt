@@ -27,29 +27,48 @@ class NotificationReceiver : BroadcastReceiver() {
         Log.d(TAG, "Notificación recibida. Action: ${intent.action}")
         Log.d(TAG, "Extras recibidos: ${intent.extras?.keySet()?.joinToString { "$it=${intent.extras?.get(it)}" }}")
 
-        val descripcion = intent.getStringExtra("descripcion") ?: ""
-        val diaSemana = intent.getIntExtra("dia_semana", 0)
-        val durationMinutes = intent.getLongExtra("duration_minutes", 0)
-        val isMeditation = intent.getBooleanExtra("is_meditation", false)
-        val isReading = intent.getBooleanExtra("is_reading", false)
-        val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-        val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+        when (intent.action) {
+            NotificationConstants.START_TIMER_ACTION -> {
+                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
+                val isMeditation = intent.getBooleanExtra("is_meditation", false)
+                val isReading = intent.getBooleanExtra("is_reading", false)
+                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
+                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
 
-        Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
+                when {
+                    isMeditation -> startMeditationTimer(context, durationMinutes)
+                    isReading -> startReadingTimer(context, durationMinutes)
+                    isDigitalDisconnect -> startDigitalDisconnectTimer(context, durationMinutes)
+                    else -> startWritingTimer(context, durationMinutes, notasHabilitadas)
+                }
+                return
+            }
+            NotificationConstants.NOTIFICATION_ACTION -> {
+                val descripcion = intent.getStringExtra("descripcion") ?: ""
+                val diaSemana = intent.getIntExtra("dia_semana", 0)
+                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
+                val isMeditation = intent.getBooleanExtra("is_meditation", false)
+                val isReading = intent.getBooleanExtra("is_reading", false)
+                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
+                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
 
-        val tipoNotificacion = when {
-            isMeditation -> "meditación"
-            isReading -> "lectura"
-            isDigitalDisconnect -> "desconexión digital"
-            else -> "escritura"
-        }
-        Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
+                Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
 
-        when {
-            isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
-            isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
-            isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
-            else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
+                val tipoNotificacion = when {
+                    isMeditation -> "meditación"
+                    isReading -> "lectura"
+                    isDigitalDisconnect -> "desconexión digital"
+                    else -> "escritura"
+                }
+                Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
+
+                when {
+                    isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
+                    isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
+                    isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
+                    else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
+                }
+            }
         }
     }
 
@@ -302,6 +321,22 @@ class NotificationReceiver : BroadcastReceiver() {
         val intent = Intent(context, WritingTimerService::class.java).apply {
             putExtra("duration_minutes", durationMinutes)
             putExtra("notas_habilitadas", notasHabilitadas)
+            putExtra("is_reading", true)
+        }
+        ContextCompat.startForegroundService(context, intent)
+    }
+
+    private fun startMeditationTimer(context: Context, durationMinutes: Long) {
+        val intent = Intent(context, WritingTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_meditation", true)
+        }
+        ContextCompat.startForegroundService(context, intent)
+    }
+
+    private fun startReadingTimer(context: Context, durationMinutes: Long) {
+        val intent = Intent(context, WritingTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
             putExtra("is_reading", true)
         }
         ContextCompat.startForegroundService(context, intent)
