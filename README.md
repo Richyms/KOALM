@@ -7,10 +7,12 @@ KOALM es una aplicación móvil desarrollada en Kotlin para Android que ayuda a 
 Antes de comenzar, necesitarás:
 
 1. **Android Studio** (versión recomendada: 2023.1.1 o superior)
+
    - Descarga desde: [Android Studio](https://developer.android.com/studio)
-   - Instalación mínima: 8GB RAM, 8GB espacio en disco
+   - Instalación mínima: 8GB RAM, 8GB espacio en disc
 
 2. **Java Development Kit (JDK)** 11 o superior
+
    - Descarga desde: [JDK](https://www.oracle.com/java/technologies/downloads/)
 
 3. **Dispositivo Android** o emulador
@@ -22,11 +24,13 @@ Antes de comenzar, necesitarás:
 ### Para usuarios sin experiencia en Android Studio:
 
 1. **Instalar Android Studio**
+
    - Descarga el instalador desde el enlace proporcionado
    - Ejecuta el instalador y sigue las instrucciones
    - Durante la instalación, selecciona "Standard" cuando se te pregunte
 
 2. **Configurar el proyecto**
+
    - Abre Android Studio
    - Selecciona "Open an existing project"
    - Navega hasta la carpeta del proyecto y selecciónala
@@ -54,6 +58,7 @@ git clone https://github.com/Richyms/KOALM.git
 ## 🔧 Compilación y Ejecución
 
 1. **Compilar el proyecto**
+
    - En Android Studio, haz clic en el botón "Make Project" (martillo)
    - O usa el comando: `./gradlew assembleDebug`
 
@@ -87,24 +92,3 @@ app/
 ├── build.gradle.kts
 └── ...
 ```
-
-<<<<<<< HEAD
-=======
-## 🤝 Contribución
-
-1. Crea un fork del proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📝 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## 📞 Soporte
-
-Si encuentras algún problema o tienes preguntas:
-- Abre un issue en el repositorio
-- Contacta al equipo de desarrollo 
->>>>>>> 1f14321 (Validacioens de campos y Dashboard de prueba)
