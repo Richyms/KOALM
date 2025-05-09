@@ -190,17 +190,39 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
 
                     // Slider editable
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DurationSlider(
+                        val (activeColor, inactiveColor) = when {
+                            duracionHoras >= 8f -> Color(0xFF376A3E) to Color(0xFF376A3E).copy(alpha = 0.3f)
+                            duracionHoras >= 6f -> Color(0xFF795A0C) to Color(0xFFF2DDB8)
+                            else -> Color(0xFF914B43) to Color(0xFFFFD3CD)
+                        }
+                        
+                        val mensajeSueño = when {
+                            duracionHoras >= 8f -> "Sueño excelente"
+                            duracionHoras >= 6f -> "Sueño regular"
+                            else -> "No te hagas tanto daño"
+                        }
+
+                        val haptics = LocalHapticFeedback.current
+
+                        Slider(
                             value = duracionHoras,
-                            onValueChange = { duracionHoras = it },
+                            onValueChange = { 
+                                duracionHoras = it
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            },
                             valueRange = rangoHoras,
-                            tickEvery = 1,
-                            modifier = Modifier.fillMaxWidth()
+                            steps = 11,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = SliderDefaults.colors(
+                                thumbColor = activeColor,
+                                activeTrackColor = activeColor,
+                                inactiveTrackColor = inactiveColor
+                            )
                         )
                         Text(
-                            text = "Sueño excelente\n${duracionHoras.roundToInt()} horas",
+                            text = "$mensajeSueño\n${duracionHoras.roundToInt()} horas",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = activeColor,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                     }
@@ -232,16 +254,32 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.weight(1f))
 
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Configuración de sueño guardada", Toast.LENGTH_SHORT).show()
-                    navController.navigateUp()
-                },
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Guardar")
+                Button(
+                    onClick = {
+                        Toast.makeText(
+                            context,
+                            "Configuración de sueño guardada",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        navController.navigateUp()
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(
+                        stringResource(R.string.boton_guardar),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     }

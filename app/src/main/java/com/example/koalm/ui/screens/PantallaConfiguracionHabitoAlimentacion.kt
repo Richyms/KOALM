@@ -1,7 +1,5 @@
 package com.example.koalm.ui.screens
 
-import android.content.Context
-import android.widget.TimePicker
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -30,7 +28,6 @@ import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,17 +146,33 @@ fun PantallaConfiguracionHabitoAlimentacion(navController: NavHostController) {
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.weight(1f))
 
             // 🟢 Botón Guardar
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Configuración de alimentación guardada", Toast.LENGTH_SHORT).show()
-                    navController.navigateUp()
-                },
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Guardar")
+                Button(
+                    onClick = {
+                        Toast.makeText(
+                            context,
+                            "Configuración de alimentación guardada",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        navController.navigateUp()
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(
+                        stringResource(R.string.boton_guardar),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     }
@@ -195,7 +208,8 @@ fun HorarioComidaItem(hora: String, onEditar: () -> Unit) {
     Surface(
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, Color(0xFF4CAF50)),
+        border = BorderStroke(1.dp, Color(0xFF9E9E9E)),
+
         color = Color.White,
         modifier = Modifier
             .widthIn(max = 180.dp)
@@ -210,9 +224,9 @@ fun HorarioComidaItem(hora: String, onEditar: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Editar",
-                tint = Color(0xFF4CAF50),
+                tint = Color(0xFF478D4F),
                 modifier = Modifier
-                    .size(18.dp)
+                    .size(20.dp)
                     .clickable(onClick = onEditar)
             )
 
@@ -227,8 +241,8 @@ fun HorarioComidaItem(hora: String, onEditar: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.AccessTime,
                 contentDescription = "Hora",
-                tint = Color(0xFF4CAF50),
-                modifier = Modifier.size(18.dp)
+                tint = Color(0xFF000000),
+                modifier = Modifier.size(20.dp)
             )
         }
     }

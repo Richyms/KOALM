@@ -33,22 +33,22 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
-    kotlinOptions { 
+
+    kotlinOptions {
         jvmTarget = "17"
     }
-    
-    buildFeatures { 
-        compose = true 
+
+    buildFeatures {
+        compose = true
     }
-    
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
     }
-    
+
     packaging {
-        resources { 
-            excludes += "/META-INF/{AL2.0,LGPL2.1}" 
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
 
@@ -69,6 +69,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
 
     // — Google Sign‑In
     implementation(libs.play.services.auth)
@@ -111,8 +113,11 @@ dependencies {
     //colores
     implementation("com.github.skydoves:colorpicker-compose:1.1.2")
 
+    //Podometro
+    implementation ("androidx.compose.runtime:runtime-livedata")
+
+
 
 }
 
 apply(plugin = "com.google.gms.google-services")
-

@@ -27,6 +27,7 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.Usuario
 import com.example.koalm.ui.theme.*
+import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -127,23 +128,10 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             )
         },
         bottomBar = {
-            NavigationBar(tonalElevation = 8.dp) {
-                listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
-                    val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
-                    NavigationBarItem(
-                        selected = index == 0,
-                        onClick = {
-                            when (index) {
-                                0 -> navController.navigate( "menu" )
-                                1 -> navController.navigate("tipos_habitos")
-                                2 -> navController.navigate( "personalizar" )
-                            }
-                        },
-                        icon = { Icon(icon, contentDescription = label) },
-                        label = { Text(label) }
-                    )
-                }
-            }
+            BarraNavegacionInferior(
+                navController = navController,
+                rutaActual = "personalizar"
+            )
         }
     ) { innerPadding ->
         Column(
@@ -191,10 +179,13 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                         return@BotonGuardarPerfil
                     }
 
+                    val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
                     // Validar campos requeridos
                     if (
                     // imagenBase64 Es solo si quieeere
                         username.isBlank() ||
+                        !regex.matches(username) ||
+                        username.trim().length < 3 ||
                         nombre.isBlank() ||
                         apellidos.isBlank() ||
                         fechasec.isEmpty() ||

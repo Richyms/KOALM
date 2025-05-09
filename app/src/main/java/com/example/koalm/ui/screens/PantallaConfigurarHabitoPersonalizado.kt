@@ -1,10 +1,13 @@
 package com.example.koalm.ui.screens
 
-import android.app.DatePickerDialog
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,10 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.Water
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,55 +38,23 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.automirrored.filled.DirectionsRun
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.AccessibilityNew
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Bedtime
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.EmojiEmotions
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Kitchen
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.MonitorHeart
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.Spa
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Task
-import androidx.compose.material.icons.filled.Work
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Mood
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Pets
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Smartphone
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.TravelExplore
-import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.model.HabitoPersonalizado
+import com.example.koalm.model.ProgresoDiario
+import com.example.koalm.model.Recordatorios
+import com.example.koalm.ui.components.SelectorDeIconoDialog
+import com.example.koalm.ui.components.obtenerIconoPorNombre
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,22 +76,24 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
     val mensajeExito = stringResource(R.string.mensaje_guardado)
 
     var mostrarSelectorIconos by remember { mutableStateOf(false) }
-    var iconoSeleccionado by remember { mutableStateOf(Icons.Default.Favorite) }
-    val iconos = listOf(Icons.Default.Favorite, Icons.Default.Book, Icons.Default.FitnessCenter, Icons.Default.Water)
+    var iconoSeleccionado by remember { mutableStateOf("") }
 
     var mostrarSelectorColor by remember { mutableStateOf(false) }
-    var colorSeleccionado by remember { mutableStateOf(Color(0xFF388E3C)) }
+    var colorSeleccionado by remember { mutableStateOf(Color(0xFFF6FBF2)) }
     var recordatorioActivo by remember { mutableStateOf(false) }
     var frecuenciaActivo by remember { mutableStateOf(false) }
     var finalizarActivo by remember { mutableStateOf(false) }
-    val horarios = remember { mutableStateListOf(LocalTime.of(7, 0)) }
+    val horarios = remember { mutableStateListOf<LocalTime>()}
     var horaAEditarIndex by remember { mutableStateOf<Int?>(null) }
-
-
+    var unaVezPorHabito by remember { mutableStateOf("") }
 
 
     var modoAutomatico by remember { mutableStateOf(true) }
     var modoPersonalizado by remember { mutableStateOf(true) }
+
+    val colorIcono = parseColorFromFirebase(colorSeleccionado.toString(),darken = true)
+    var nombreError by remember { mutableStateOf(false)}
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -154,27 +123,35 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
             ) {
 
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
                     Text(
                         text = stringResource(R.string.label_vista_previa),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
                     OutlinedTextField(
                         value = nombreHabito,
-                        onValueChange = { nombreHabito = it },
+                        onValueChange = {
+                            val regex = Regex("^[a-zA-Z0-9][a-zA-Z0-9 ]*\$")
+
+                            if (it.length <= 20 && (it.isEmpty() || regex.matches(it))) {
+                                nombreHabito = it
+                                nombreError = false
+                            } else if (it.length > 20) {
+                                nombreError = true
+                            }
+                        },
                         label = { Text(stringResource(R.string.label_nombre_habito)) },
-                        modifier = Modifier.fillMaxWidth()
+                        isError = nombreError,
+                        modifier = Modifier.fillMaxWidth(),
+                        supportingText = {
+                            if (nombreError) {
+                                Text(
+                                    text = "Máximo 20 caracteres.",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     )
 
                     Row(
@@ -197,6 +174,11 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                 Modifier
                                     .size(20.dp)
                                     .background(colorSeleccionado, CircleShape)
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color.Gray,
+                                        shape = CircleShape
+                                )
                             )
                         }
 
@@ -213,9 +195,9 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             Text("Icono")
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
-                                imageVector = iconoSeleccionado,
+                                imageVector = obtenerIconoPorNombre(iconoSeleccionado),
                                 contentDescription = null,
-                                tint = colorSeleccionado
+                                tint = colorIcono
                             )
                         }
 
@@ -228,32 +210,21 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
-
-                    Divider(
-                        color = Color.Gray,
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
                         thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        color = Color.Gray
                     )
 
                     Text(
-                    text = stringResource(R.string.label_configuracion_adicional),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                        text = stringResource(R.string.label_configuracion_adicional),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-
-
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        //horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             text = stringResource(R.string.label_frecuencia_P),
@@ -263,7 +234,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
                             checked = frecuenciaActivo,
-                            onCheckedChange = { frecuenciaActivo = it },
+                            onCheckedChange = {
+                                frecuenciaActivo = it
+                                if (!it) {
+                                    diasSeleccionados = List(7) { false } // Reinicia los días a no seleccionados
+                                    }
+                            },
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -274,47 +250,23 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         )
                     }
 
-
                     if (frecuenciaActivo) {
-                    /*Text(
-                        text = stringResource(R.string.label_frecuencia_P),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )*/
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        listOf("S", "L", "M", "M", "J", "V", "S").forEachIndexed { index, dia ->
-                            DiaCircle(label = dia, selected = diasSeleccionados[index]) {
-                                diasSeleccionados = diasSeleccionados.toMutableList()
-                                    .also { it[index] = !it[index] }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            listOf("L", "M", "M", "J", "V", "S", "D").forEachIndexed { index, dia ->
+                                DiaCircle(label = dia, selected = diasSeleccionados[index]) {
+                                    diasSeleccionados = diasSeleccionados.toMutableList()
+                                        .also { it[index] = !it[index] }
+                                }
                             }
                         }
                     }
-                }
-                    Divider(
-                        color = Color.Gray,
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-                    /*Text(
-                        text = stringResource(R.string.label_hora_recordatorio),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        HoraField(hora = horaRecordatorio) { mostrarTimePicker = true }
-                    }*/
-
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        //horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             text = stringResource(R.string.label_switch_activar_recordatorio),
@@ -324,7 +276,13 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
                             checked = recordatorioActivo,
-                            onCheckedChange = { recordatorioActivo = it },
+                            onCheckedChange = {
+                                recordatorioActivo = it
+                                if (!it) {
+                                    horarios.clear()
+                                    modoPersonalizado = true
+                                    }
+                            },
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -334,8 +292,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             )
                         )
                     }
-
-
 
                     if (recordatorioActivo) {
                         Text(
@@ -383,10 +339,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Medium
                             )
-                            /* Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                HoraField(hora = horaRecordatorio) { mostrarTimePicker = true }*/
 
-                            // 🟢 Lista de horarios
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 horarios.forEachIndexed { index, hora ->
                                     Row(
@@ -394,7 +347,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        // Campo de hora
                                         Box(modifier = Modifier.width(200.dp)) {
                                             HoraField(hora = hora) {
                                                 mostrarTimePicker = true
@@ -402,7 +354,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                             }
                                         }
 
-                                        // Botón eliminar alineado a la derecha
                                         IconButton(onClick = {
                                             horarios.removeAt(index)
                                         }) {
@@ -414,52 +365,32 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                         }
                                     }
                                 }
-
-
                             }
 
-
-
-                                // 🟢 Botón + Agregar
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clickable {
-
-                                                horarios.add(LocalTime.now())
-
-                                        }
-                                        .padding(top = 8.dp)
-                                ) {
-                                    Icon(Icons.Default.AddCircle, contentDescription = "Agregar")
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(text = "Agregar.", fontSize = 14.sp)
-                                }
-
-                                }
-
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clickable {
+                                        horarios.add(LocalTime.now())
+                                    }
+                                    .padding(top = 8.dp)
+                            ) {
+                                Icon(Icons.Default.AddCircle, contentDescription = "Agregar")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Agregar hora.", fontSize = 14.sp)
+                            }
                         }
+                    }
 
-
-
-
-
-
-
-
-
-
-
-                    Divider(
-                        color = Color.Gray,
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
                         thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        color = Color.Gray
                     )
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        //horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
                             text = stringResource(R.string.label_finaliza_el),
@@ -469,7 +400,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
                             checked = finalizarActivo,
-                            onCheckedChange = { finalizarActivo = it },
+                            onCheckedChange = {
+                                finalizarActivo = it
+                                if (!it) {
+                                    fechaSeleccionada = null
+                                    diasDuracion = ""
+                                    modoFecha = true
+                                    }
+                            },
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -480,133 +418,238 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         )
                     }
 
-                    /*Text(
-                        text = stringResource(R.string.label_finaliza_el),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )*/
-
                     if (finalizarActivo) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { modoFecha = true },
-                            border = BorderStroke(1.dp, VerdeBorde),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (modoFecha) Color.White else Color.Black
-                            ),
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = stringResource(R.string.boton_fecha))
-                        }
-
-                        OutlinedButton(
-                            onClick = { modoFecha = false },
-                            border = BorderStroke(1.dp, VerdeBorde),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (!modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                contentColor = if (!modoFecha) Color.White else Color.Black
-                            ),
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = stringResource(R.string.boton_dias))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (modoFecha) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.label_ultimo_dia),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
+                            OutlinedButton(
+                                onClick = { modoFecha = true },
+                                border = BorderStroke(1.dp, VerdeBorde),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (modoFecha) Color.White else Color.Black
+                                ),
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(text = stringResource(R.string.boton_fecha))
+                            }
 
                             OutlinedButton(
-                                onClick = { mostrarDatePicker = true },
+                                onClick = { modoFecha = false },
                                 border = BorderStroke(1.dp, VerdeBorde),
-                                shape = RoundedCornerShape(50),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                )
+                                    containerColor = if (!modoFecha) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    contentColor = if (!modoFecha) Color.White else Color.Black
+                                ),
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Icon(Icons.Default.CalendarToday, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = stringResource(R.string.boton_dias))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if (modoFecha) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    fechaSeleccionada?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                                        ?: stringResource(R.string.boton_seleccionar_fecha),
-                                    color = Color.Black
+                                    text = stringResource(R.string.label_ultimo_dia),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                OutlinedButton(
+                                    onClick = { mostrarDatePicker = true },
+                                    border = BorderStroke(1.dp, VerdeBorde),
+                                    shape = RoundedCornerShape(50),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Icon(Icons.Default.CalendarToday, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        fechaSeleccionada?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                            ?: stringResource(R.string.boton_seleccionar_fecha),
+                                        color = Color.Black
+                                    )
+                                }
+                            }
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.label_despues_dias),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                OutlinedTextField(
+                                    value = diasDuracion,
+                                    onValueChange = { diasDuracion = it },
+                                    modifier = Modifier
+                                        .width(70.dp)
+                                        .height(48.dp),
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(50),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text(
+                                    text = stringResource(R.string.label_dias),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = stringResource(R.string.label_despues_dias),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
-
-                            OutlinedTextField(
-                                value = diasDuracion,
-                                onValueChange = { diasDuracion = it },
-                                modifier = Modifier
-                                    .width(70.dp)
-                                    .height(48.dp),
-                                singleLine = true,
-                                shape = RoundedCornerShape(50),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp)) // pequeño espacio
-
-                            Text(
-                                text = stringResource(R.string.label_dias),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
                     }
                 }
             }
 
             Spacer(Modifier.weight(1f))
 
-            Button(
-                onClick = {
-                    if (nombreHabito.isBlank()) {
-                        Toast.makeText(context, errorNombre, Toast.LENGTH_SHORT).show()
-                    } else if (horaRecordatorio == null) {
-                        Toast.makeText(context, errorHora, Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, mensajeExito, Toast.LENGTH_SHORT).show()
-                        navController.navigateUp()
-                    }
-                },
-                modifier = Modifier
-                    .width(150.dp)
-                    .align(Alignment.CenterHorizontally)
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(text = stringResource(R.string.boton_guardar))
+                Button(
+                    onClick = {
+                        // Validación del campo de nombre
+                        if (nombreHabito.isBlank()) {
+                            Toast.makeText(context, "El nombre del hábito es obligatorio", Toast.LENGTH_SHORT).show()
+                        } else  if (nombreHabito.length >= 20) {
+                            Toast.makeText(context, "El nombre del hábito no debe tener más de 20 caracteres.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // Obtener la referencia al usuario actual en Firebase Authentication
+                            val userEmail = FirebaseAuth.getInstance().currentUser?.email
+                            val db = FirebaseFirestore.getInstance()
+
+                            // Asegurarnos de que el correo del usuario no sea nulo
+                            if (userEmail != null) {
+                                // Referencia a la colección de hábitos del usuario
+                                val userHabitsRef = db.collection("habitos").document(userEmail)
+                                    .collection("personalizados")
+
+                                // Crear el objeto HabitoPersonalizado
+                                val habitoPersonalizado = HabitoPersonalizado(
+                                    nombre = nombreHabito,
+                                    colorEtiqueta = colorSeleccionado.toString(),
+                                    iconoEtiqueta = iconoSeleccionado.toString(),
+                                    descripcion = descripcion,
+                                    frecuencia = diasSeleccionados, // Ejemplo: ["lunes", "miércoles"]
+                                    recordatorios = Recordatorios(
+                                        tipo = if (modoPersonalizado) "personalizado" else "automatico",
+                                        horas = if (modoPersonalizado)
+                                            horarios.map { it.format(DateTimeFormatter.ofPattern("HH:mm")) }
+                                        else
+                                            HabitoPersonalizado.generarHorasAutomaticas()
+                                    ),
+                                    fechaInicio = HabitoPersonalizado.calcularFechaInicio(),
+                                    fechaFin = HabitoPersonalizado.calcularFechaFin(
+                                        modoFecha,
+                                        fechaSeleccionada.toString(), diasDuracion
+                                    ),
+                                    modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
+                                    unaVezPorHabito = if (!recordatorioActivo) 1 else 0,
+                                    rachaActual = 0,  // Inicialmente 0, la racha se actualizará después
+                                    rachaMaxima = 0,  // Inicialmente 0, la racha máxima se actualizará después
+                                    ultimoDiaCompletado = null,  // Inicialmente no hay último día completado
+                                    tipo = "personalizado"
+                                )
+
+                                // Convertir el objeto a un mapa
+                                val habitoMap = habitoPersonalizado.toMap()
+
+                                // Usar el nombre del hábito como ID, reemplazando espacios por guiones bajos
+                                val habitoId = nombreHabito.replace(" ", "_")
+
+                                // Guardar el hábito en Firestore bajo la subcolección "personalizados" del usuario
+                                userHabitsRef.document(habitoId)  // Usando el nombre del hábito como ID
+                                    .set(habitoMap)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(
+                                            context,
+                                            "Hábito guardado con éxito",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigateUp()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(
+                                            context,
+                                            "Error al guardar el hábito: ${e.message}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigateUp()
+                                    }
+
+                                // Crear el objeto de progreso
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3
+                                )
+
+                                // Referenciar al documento de progreso usando la fecha actual como ID
+                                val progresoRef = userHabitsRef.document(habitoId)
+                                    .collection("progreso")
+                                    .document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                // Guardar en Firestore usando el .toMap()
+                                progresoRef.set(progreso.toMap())
+                                    .addOnSuccessListener {
+                                        Toast.makeText(
+                                            context,
+                                            "Progreso diario guardado",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigateUp()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(
+                                            context,
+                                            "Error al guardar el progreso: ${e.message}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigateUp()
+                                    }
+
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Usuario no autenticado",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                navController.navigateUp()
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(
+                        stringResource(R.string.boton_guardar),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
     }
@@ -644,7 +687,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                             fechaSeleccionada = LocalDate.of(
                                 cal.get(Calendar.YEAR),
                                 cal.get(Calendar.MONTH) + 1,
-                                cal.get(Calendar.DAY_OF_MONTH)
+                                cal.get(Calendar.DAY_OF_MONTH) + 1
                             )
                             mostrarDatePicker = false
                         } else {
@@ -665,111 +708,44 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                 state = datePickerState,
                 showModeToggle = false,
                 colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = VerdeContenedor, // fondo del día seleccionado
-                    selectedDayContentColor = Color.Black,        // texto del día seleccionado
-                    todayDateBorderColor = VerdeBorde             // borde para hoy
+                    selectedDayContainerColor = VerdeContenedor,
+                    selectedDayContentColor = Color.Black,
+                    todayDateBorderColor = VerdeBorde
                 )
             )
         }
     }
 
-
-
-
     if (mostrarSelectorIconos) {
-        val iconos = listOf(
-            // Salud y Bienestar
-            Icons.Default.Favorite,
-            Icons.Default.FitnessCenter,
-            Icons.Default.SelfImprovement,
-            Icons.Default.Spa,
-            Icons.Default.AccessibilityNew,
-            Icons.Default.MonitorHeart,
-
-            // Educación y Lectura
-            Icons.Default.Book,
-            Icons.Default.MenuBook,
-            Icons.Default.School,
-            Icons.Default.Lightbulb,
-
-            // Trabajo y Productividad
-            Icons.Default.Work,
-            Icons.Default.Check,
-            Icons.Default.Task,
-            Icons.Default.Event,
-            Icons.Default.Schedule,
-            Icons.Default.List,
-
-            // Tecnología y Comunicación
-            Icons.Default.Phone,
-            Icons.Default.Email,
-            Icons.Default.Notifications,
-            Icons.Default.Smartphone,
-            Icons.Default.Devices,
-
-            // Hogar y Vida diaria
-            Icons.Default.Home,
-            Icons.Default.Bedtime,
-            Icons.Default.Kitchen,
-            Icons.Default.WbSunny,
-            Icons.Default.ShoppingCart,
-
-            // Emociones y Sociales
-            Icons.Default.Face,
-            Icons.Default.Mood,
-            Icons.Default.EmojiEmotions,
-            Icons.Default.ThumbUp,
-            Icons.Default.People,
-
-            // Varios
-            Icons.Default.Star,
-            Icons.Default.MusicNote,
-            Icons.Default.Pets,
-            Icons.Default.Explore,
-            Icons.Default.TravelExplore,
-            Icons.Default.DirectionsRun
+        SelectorDeIconoDialog(
+            iconoSeleccionadoNombre= iconoSeleccionado,
+            onSeleccionar = { iconoSeleccionado = it },
+            onCerrar = { mostrarSelectorIconos = false }
         )
-
-
-        AlertDialog(
-            onDismissRequest = { mostrarSelectorIconos = false },
-            title = { Text("Selecciona un icono") },
-            text = {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4), // 4 columnas
-                    modifier = Modifier
-                        .height(200.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    userScrollEnabled = true
-                ) {
-                    items(iconos) { icono ->
-                        IconButton(
-                            onClick = {
-                                iconoSeleccionado = icono
-                                mostrarSelectorIconos = false
-
-                            },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(imageVector = icono, contentDescription = null,  tint = if (icono == iconoSeleccionado) colorSeleccionado else Color.Gray)
-                        }
-                    }
-                }
-            },
-            confirmButton = {}
-        )
-
     }
 
     if (mostrarSelectorColor) {
         val colores = listOf(
-            Color(0xFF388E3C), Color(0xFF1976D2), Color(0xFFF57C00), Color(0xFFD32F2F), Color(0xFF7B1FA2),
-            Color(0xFF009688), Color(0xFFFFC107), Color(0xFF9C27B0), Color(0xFF00BCD4), Color(0xFFFF5722),
-            Color(0xFF4CAF50), Color(0xFF3F51B5), Color(0xFFCDDC39), Color(0xFF795548), Color(0xFF607D8B),
-            Color(0xFFE91E63), Color(0xFF8BC34A), Color(0xFF673AB7), Color(0xFFB71C1C), Color(0xFF1E88E5)
-
+            Color(0xFFA5D6A7), // Verde suave
+            Color(0xFF90CAF9), // Azul claro
+            Color(0xFFFFCC80), // Naranja pastel
+            Color(0xFFEF9A9A), // Rojo rosado
+            Color(0xCEB39DDB), // Púrpura pastel
+            Color(0xFF80CBC4), // Verde azulado claro
+            Color(0xFFFFF59D), // Amarillo claro
+            Color(0xFFD1C4E9), // Lavanda suave
+            Color(0xFFB2EBF2), // Azul verdoso muy claro
+            Color(0xFFFFAB91), // Coral claro
+            Color(0xFFC5E1A5), // Verde lima pálido
+            Color(0xFF9FA8DA), // Azul lavanda
+            Color(0xFFF0F4C3), // Verde amarillento tenue
+            Color(0xFFD7CCC8), // Marrón claro grisáceo
+            Color(0xFFCFD8DC), // Azul gris claro
+            Color(0xFFF8BBD0), // Rosa bebé
+            Color(0xFFDCEDC8), // Verde muy suave
+            Color(0xFFE1BEE7), // Violeta claro
+            Color(0xFFEF5350), // Rojo coral más fuerte
+            Color(0xFF64B5F6)  //Azul cielo
         )
 
         AlertDialog(
@@ -802,6 +778,31 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
     }
 
 }
+
+// Extensión para oscurecer el color
+fun Color.darken(factor: Float): Color {
+    return Color(
+        red = (red * (1 - factor)).coerceIn(0f, 1f),
+        green = (green * (1 - factor)).coerceIn(0f, 1f),
+        blue = (blue * (1 - factor)).coerceIn(0f, 1f),
+        alpha = alpha
+    )
+}
+
+// Función para hacer el parseo de color desde FB
+fun parseColorFromFirebase(colorString: String, darken: Boolean = false, darkenFactor: Float = 0.15f): Color {
+    val regex = Regex("""Color\(([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+),.*\)""")
+    val match = regex.find(colorString)
+    return if (match != null) {
+        val (r, g, b, a) = match.destructured
+        val baseColor = Color(r.toFloat(), g.toFloat(), b.toFloat(), a.toFloat())
+        if (darken) baseColor.darken(darkenFactor) else baseColor
+    } else {
+        Log.e("ColorParse", "No se pudo parsear el color: $colorString")
+        Color.Gray
+    }
+}
+
 fun Context.withLocale(locale: Locale): Context {
     val config = resources.configuration
     config.setLocale(locale)
@@ -851,3 +852,4 @@ fun HorarioItem(hora: String, onEditar: () -> Unit) {
         }
     }
 }
+

@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BROADCAST" />
+    <!-- Permisos para podometro -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+
+
 
     <application
         android:allowBackup="true"
@@ -21,20 +26,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Koalm"
         tools:targetApi="31">
-        
+
+
+        <!-- Servicio del podómetro -->
+        <service
+            android:name=".services.MovimientoService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="health" />
+
         <!-- Servicio para manejar las notificaciones -->
         <service
             android:name=".services.NotificationService"
             android:enabled="true"
             android:exported="false" />
-            
+
         <!-- Servicio para manejar el temporizador -->
         <service
             android:name=".services.WritingTimerService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
-            
+
         <!-- Receptor para las notificaciones programadas -->
         <receiver
             android:name=".services.NotificationReceiver"
@@ -54,6 +67,22 @@
                 <action android:name="com.example.koalm.TIMER_UPDATE_ACTION" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".services.DigitalDisconnectTimerUpdateReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.koalm.DIGITAL_DISCONNECT_TIMER_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Servicio para manejar el temporizador de desconexión digital -->
+        <service
+            android:name=".services.DigitalDisconnectTimerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
         <activity
             android:name=".PersonalizarPerfil"

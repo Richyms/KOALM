@@ -17,6 +17,11 @@ import androidx.navigation.NavHostController
 import com.example.koalm.ui.theme.*
 import com.example.koalm.ui.components.BarraNavegacionInferior
 
+data class HabitoMental(
+    val nombre: String,
+    val descripcion: String
+)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +90,7 @@ fun PantallaEstadísticasSaludMental(navController: NavHostController) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (habito.titulo == "Lectura") Icons.Default.Book else if (habito.titulo == "Meditación") Icons.Default.SelfImprovement else if (habito.titulo == "Desconexión digital") Icons.Default.NoCell else Icons.Default.Create,
+                imageVector = if (habito.nombre == "Lectura") Icons.Default.Book else if (habito.nombre == "Meditación") Icons.Default.SelfImprovement else if (habito.nombre == "Desconexión digital") Icons.Default.NoCell else Icons.Default.Create,
                 contentDescription = null,
                 tint = Negro,
                 modifier = Modifier.size(24.dp)
@@ -95,7 +100,7 @@ fun PantallaEstadísticasSaludMental(navController: NavHostController) {
 
             Column {
                 Text(
-                    text = habito.titulo,
+                    text = habito.nombre,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

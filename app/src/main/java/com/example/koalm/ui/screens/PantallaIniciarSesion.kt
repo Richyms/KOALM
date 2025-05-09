@@ -10,6 +10,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -68,6 +70,7 @@ fun PantallaIniciarSesion(
         Column(
             modifier = Modifier
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,6 +154,9 @@ fun PantallaIniciarSesion(
                                                         .document(correoReal)
                                                         .set(uLogin.toMap(), SetOptions.merge())
                                                         .addOnSuccessListener {
+
+
+
                                                             // Verificamos si el perfil está completo o no
                                                             val completo = listOf(
                                                                 nombre.isNotBlank(),
@@ -174,6 +180,24 @@ fun PantallaIniciarSesion(
                                                             navController.navigate(destino) {
                                                                 popUpTo("iniciar") { inclusive = true }
                                                                 launchSingleTop = true
+                                                            }
+
+                                                            //Parametros para poder asignar metricas de salud
+                                                            val metasRef = db.collection("usuarios")
+                                                                .document(correoReal)
+                                                                .collection("metasSalud")
+                                                                .document("valores")
+
+                                                            metasRef.get().addOnSuccessListener { metasDoc ->
+                                                                if (!metasDoc.exists()) {
+                                                                    metasRef.set(
+                                                                        mapOf(
+                                                                            "metaPasos" to 6000,
+                                                                            "metaMinutos" to 60,
+                                                                            "metaCalorias" to 300
+                                                                        )
+                                                                    )
+                                                                }
                                                             }
                                                         }
                                                 } else {
@@ -304,81 +328,6 @@ fun PasswordField(
 }
 
 
-/*@Composable
-fun LoginButtons(
-    isValidInput: Boolean,
-    isValidPassword: Boolean,
-    emailOrUsername: String,
-    password: String,
-    context: Context,
-    navController: NavHostController,
-    onGoogleSignInClick: () -> Unit,
-    auth: FirebaseAuth,
-    db: FirebaseFirestore
-) {
-    val buttonModifier = Modifier.width(200.dp)
-
-    Button(
-        onClick = {
-            when {
-                !isValidInput -> Toast.makeText(context, "Correo inválido", Toast.LENGTH_SHORT).show()
-                !isValidPassword -> Toast.makeText(context, "Contraseña muy corta", Toast.LENGTH_SHORT).show()
-                else -> {
-                    auth.signInWithEmailAndPassword(emailOrUsername, password)
-                        .addOnCompleteListener { authTask ->
-                            if (authTask.isSuccessful) {
-                                val user = auth.currentUser!!
-                                val uid = user.uid
-                                val usuarioLogin = Usuario(
-                                    userId = uid,
-                                    email = emailOrUsername,
-                                    username = emailOrUsername.substringBefore("@")
-                                )
-                                db.collection("usuarios")
-                                    .document(emailOrUsername)
-                                    .set(usuarioLogin.toMap(), SetOptions.merge())
-
-                                db.collection("usuarios")
-                                    .document(emailOrUsername)
-                                    .get()
-                                    .addOnSuccessListener { snap ->
-                                        val nickname = snap.getString("nickName") ?: ""
-                                        Toast.makeText(context, "Bienvenid@ $nickname", Toast.LENGTH_SHORT).show()
-                                        navController.navigate("menu") {
-                                            popUpTo("iniciar") { inclusive = true }
-                                            launchSingleTop = true
-                                        }
-                                    }
-                            } else {
-                                val error = authTask.exception
-                                val msg = when {
-                                    error is FirebaseAuthInvalidCredentialsException -> "Credenciales incorrectas"
-                                    else -> "Error: ${error?.localizedMessage}"
-                                }
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                }
-            }
-        },
-        modifier = buttonModifier,
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-    ) {
-        Text("Iniciar sesión", color = MaterialTheme.colorScheme.onPrimary)
-    }
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    OutlinedButton(
-        onClick = { onGoogleSignInClick() },
-        modifier = buttonModifier,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-    ) {
-        Text("Iniciar con Google", color = MaterialTheme.colorScheme.onSurface)
-    }
-}
-*/
-
 @Composable
 fun LoginFooterText(navController: NavHostController) {
     Text(
@@ -406,6 +355,8 @@ fun LoginFooterText(navController: NavHostController) {
             }
         },
         fontSize = 14.sp,
-        modifier = Modifier.clickable { navController.navigate("registro") }
+        modifier = Modifier
+            .clickable { navController.navigate("registro") }
+            .padding(bottom = 32.dp) // 👈 PADDING INFERIOR agregado aquí
     )
 }

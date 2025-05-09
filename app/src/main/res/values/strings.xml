@@ -28,11 +28,20 @@
     <string name="label_duracion_escritura">Duración de escritura</string>
 
     <!-- Notificaciones -->
-    <string name="notification_channel_name">Recordatorio de escritura</string>
-    <string name="notification_channel_description">Canal para recordatorios de escritura diaria</string>
-    <string name="notification_title">¡Es hora de escribir!</string>
-    <string name="notification_default_text">Es hora de escribir</string>
-    <string name="notification_notes_button">Abrir notas</string>
+    <string name="notification_channel_name">Notificaciones de escritura</string>
+    <string name="notification_channel_description">Canal para notificaciones del hábito de escritura</string>
+    <string name="meditation_notification_channel_name">Notificaciones de meditación</string>
+    <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación</string>
+    <string name="reading_notification_channel_name">Notificaciones de lectura</string>
+    <string name="reading_notification_channel_description">Canal para notificaciones del hábito de lectura</string>
+    <string name="notification_title">¡Hora de escribir!</string>
+    <string name="meditation_notification_title">¡Hora de meditar!</string>
+    <string name="reading_notification_title">¡Hora de leer!</string>
+    <string name="notification_default_text">Es hora de practicar tu hábito de escritura</string>
+    <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación</string>
+    <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura</string>
+    <string name="notification_notes_button">Abrir Notas</string>
+    <string name="notification_books_button">Mis Libros</string>
     <string name="error_no_days_selected">Selecciona al menos un día</string>
     <string name="error_notification_permission">Se requieren permisos de notificación</string>
     <string name="success_notifications_scheduled">Notificaciones programadas</string>
@@ -40,13 +49,14 @@
     <!-- Temporizador -->
     <string name="timer_channel_name">Temporizador de escritura</string>
     <string name="timer_channel_description">Canal para el temporizador de escritura</string>
-    <string name="timer_notification_title">Tiempo de escritura</string>
+    <string name="timer_notification_title">Temporizador de Escritura</string>
     <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
     <string name="timer_remaining_text">Tiempo restante: %s</string>
     <string name="timer_completion_title">¡Tiempo completado!</string>
     <string name="timer_completion_text">Has completado tu sesión de escritura</string>
     <string name="start_writing_action">Comenzar %d min</string>
     <string name="open_notes_action">Abrir notas</string>
+    <string name="start_timer">Iniciar temporizador</string>
     
     <!-- Notas -->
     <string name="titulo_notas">Mis notas</string>
@@ -107,7 +117,7 @@
     <string name="label_switch_activar_recordatorio">Activar recordatorios:</string>
     <string name="label_tipo_notificacion">  Tipo de notificación:</string>
     <string name="label_notificacion_personalizada">  Notifiación personalizada:</string>
-    <string name="label_configuracion_adicional">Configuraciones adicionaless del hábito</string>
+    <string name="label_configuracion_adicional">Configuraciones adicionales:</string>
     <string name="label_vista_previa">Vista previa del hábito</string>
 
     <string name="boton_Automatico">Automático</string>
@@ -133,5 +143,14 @@
     <string name="error_hora">¡Establece hora de recordatorio!</string>
     <string name="mensaje_guardado">¡Hábito guardado exitosamente!</string>
 
+    <!-- Desconexion Digital Notification -->
+    <string name="digital_disconnect_notification_channel_name">Desconexión Digital</string>
+    <string name="digital_disconnect_notification_channel_description">Notificaciones para recordar tu tiempo de desconexión digital</string>
+    <string name="digital_disconnect_notification_title">¡Hora de desconectar!</string>
+    <string name="digital_disconnect_notification_default_text">Es hora de tomar un descanso digital</string>
+    <string name="digital_disconnect_timer_title">Desconexión Digital en progreso</string>
+    <string name="notification_disconnect_button">Ir a Desconexión</string>
+    <string name="digital_disconnect_completion_title">¡Desconexión completada!</string>
+    <string name="digital_disconnect_completion_text">Has completado tu tiempo de desconexión digital</string>
 
 </resources>

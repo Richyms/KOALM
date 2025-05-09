@@ -9,110 +9,336 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.koalm.MainActivity
 import com.example.koalm.R
-import java.time.LocalDateTime
+import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
+import com.example.koalm.services.notifications.NotificationConstants
+import com.example.koalm.services.notifications.MeditationNotificationService
+import com.example.koalm.services.notifications.ReadingNotificationService
+import com.example.koalm.services.notifications.WritingNotificationService
 
 class NotificationReceiver : BroadcastReceiver() {
     companion object {
-        private const val CHANNEL_ID = "escritura_habito"
-        private const val NOTIFICATION_ID = 100
         private const val TAG = "KOALM_NOTIFICATIONS"
-        const val START_TIMER_ACTION = "com.example.koalm.START_TIMER_ACTION"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.e(TAG, "onReceive: Recibido broadcast para mostrar notificación")
-        
-        val descripcion = intent.getStringExtra("descripcion") ?: context.getString(R.string.notification_default_text)
-        val diaSemana = intent.getIntExtra("dia_semana", -1)
-        val durationMinutes = intent.getLongExtra("duration_minutes", 15)
-        val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
-        
-        Log.e(TAG, "onReceive: Descripción: $descripcion, Día: $diaSemana, Duración: $durationMinutes minutos, Notas habilitadas: $notasHabilitadas")
-        
-        // Verificar si el temporizador ya está activo
-        val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
-            action = WritingTimerService.CHECK_TIMER_ACTION
-        }
-        
-        // Iniciar el servicio para verificar el estado
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(checkTimerIntent)
-        } else {
-            context.startService(checkTimerIntent)
-        }
-        
-        // Crear intent para abrir la app
-        val activityIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, activityIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        Log.d(TAG, "Notificación recibida. Action: ${intent.action}")
+        Log.d(TAG, "Extras recibidos: ${intent.extras?.keySet()?.joinToString { "$it=${intent.extras?.get(it)}" }}")
 
-        // Crear intent para iniciar el temporizador
-        val startTimerIntent = Intent(context, WritingTimerService::class.java).apply {
-            action = WritingTimerService.START_TIMER_ACTION
-            putExtra("duration_minutes", durationMinutes)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        when (intent.action) {
+            NotificationConstants.START_TIMER_ACTION -> {
+                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
+                val isMeditation = intent.getBooleanExtra("is_meditation", false)
+                val isReading = intent.getBooleanExtra("is_reading", false)
+                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
+                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+
+                when {
+                    isMeditation -> startMeditationTimer(context, durationMinutes)
+                    isReading -> startReadingTimer(context, durationMinutes)
+                    isDigitalDisconnect -> startDigitalDisconnectTimer(context, durationMinutes)
+                    else -> startWritingTimer(context, durationMinutes, notasHabilitadas)
+                }
+                return
+            }
+            NotificationConstants.NOTIFICATION_ACTION -> {
+                val descripcion = intent.getStringExtra("descripcion") ?: ""
+                val diaSemana = intent.getIntExtra("dia_semana", 0)
+                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
+                val isMeditation = intent.getBooleanExtra("is_meditation", false)
+                val isReading = intent.getBooleanExtra("is_reading", false)
+                val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
+                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+
+                Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
+
+                val tipoNotificacion = when {
+                    isMeditation -> "meditación"
+                    isReading -> "lectura"
+                    isDigitalDisconnect -> "desconexión digital"
+                    else -> "escritura"
+                }
+                Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
+
+                when {
+                    isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
+                    isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
+                    isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
+                    else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
+                }
+            }
         }
-        Log.e(TAG, "onReceive: Creando intent para temporizador con duración: $durationMinutes minutos")
+    }
+
+    private fun showMeditationNotification(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long
+    ) {
+        Log.d(TAG, "Mostrando notificación de meditación")
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
-        // Crear PendingIntent para la notificación
-        val startTimerPendingIntent = PendingIntent.getService(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                MeditationNotificationService().channelId,
+                context.getString(MeditationNotificationService().channelName),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(MeditationNotificationService().channelDescription)
+            }
+            notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "Canal de notificación de meditación creado")
+        }
+        
+        val notification = NotificationCompat.Builder(context, MeditationNotificationService().channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(MeditationNotificationService().defaultTitle))
+            .setContentText(descripcion)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+        
+        notificationManager.notify(MeditationNotificationService.NOTIFICATION_ID + diaSemana, notification)
+        Log.d(TAG, "Notificación de meditación mostrada con ID: ${MeditationNotificationService.NOTIFICATION_ID + diaSemana}")
+    }
+
+    private fun showReadingNotification(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long
+    ) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                ReadingNotificationService().channelId,
+                context.getString(ReadingNotificationService().channelName),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(ReadingNotificationService().channelDescription)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = NotificationConstants.START_TIMER_ACTION
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_reading", true)
+        }
+        
+        val startTimerPendingIntent = PendingIntent.getBroadcast(
             context,
-            NOTIFICATION_ID + diaSemana,
+            ReadingNotificationService.NOTIFICATION_ID + diaSemana,
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        // Crear la notificación
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+        val openBooksIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "libros")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+        
+        val openBooksPendingIntent = PendingIntent.getActivity(
+            context,
+            ReadingNotificationService.NOTIFICATION_ID + diaSemana + 100,
+            openBooksIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val notification = NotificationCompat.Builder(context, ReadingNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(context.getString(R.string.notification_title))
+            .setContentTitle(context.getString(ReadingNotificationService().defaultTitle))
             .setContentText(descripcion)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
             .addAction(
-                R.drawable.ic_notification,
-                context.getString(R.string.start_writing_action, durationMinutes),
+                R.drawable.ic_timer,
+                context.getString(R.string.start_timer),
                 startTimerPendingIntent
             )
-            .setVibrate(longArrayOf(0, 500)) // Vibra una sola vez por 500ms
-
-        // Agregar botón de notas si está habilitado
-        if (notasHabilitadas) {
-            val notesIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                action = "com.example.koalm.START_TIMER"
-                putExtra("duration_minutes", durationMinutes)
-                addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-            }
-            Log.d(TAG, "Creando intent para notas con duración: $durationMinutes minutos")
-            
-            val notesPendingIntent = PendingIntent.getActivity(
-                context,
-                NOTIFICATION_ID + diaSemana + 1,
-                notesIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            
-            builder.addAction(
+            .addAction(
                 R.drawable.ic_notification,
-                context.getString(R.string.open_notes_action),
-                notesPendingIntent
+                context.getString(R.string.notification_books_button),
+                openBooksPendingIntent
             )
-        }
-
-        // Mostrar la notificación
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID + diaSemana, builder.build())
+            .build()
         
-        Log.e(TAG, "onReceive: Notificación mostrada con ID ${NOTIFICATION_ID + diaSemana}")
+        notificationManager.notify(ReadingNotificationService.NOTIFICATION_ID + diaSemana, notification)
+    }
+
+    private fun showWritingNotification(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long,
+        notasHabilitadas: Boolean
+    ) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                WritingNotificationService().channelId,
+                context.getString(WritingNotificationService().channelName),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(WritingNotificationService().channelDescription)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = NotificationConstants.START_TIMER_ACTION
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("notas_habilitadas", notasHabilitadas)
+        }
+        
+        val startTimerPendingIntent = PendingIntent.getBroadcast(
+            context,
+            WritingNotificationService.NOTIFICATION_ID + diaSemana,
+            startTimerIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val openNotesIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "notas")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+        
+        val openNotesPendingIntent = PendingIntent.getActivity(
+            context,
+            WritingNotificationService.NOTIFICATION_ID + diaSemana + 100,
+            openNotesIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val notification = NotificationCompat.Builder(context, WritingNotificationService().channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(WritingNotificationService().defaultTitle))
+            .setContentText(descripcion)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_timer,
+                context.getString(R.string.start_timer),
+                startTimerPendingIntent
+            )
+            .addAction(
+                R.drawable.ic_notification,
+                context.getString(R.string.notification_notes_button),
+                openNotesPendingIntent
+            )
+            .build()
+        
+        notificationManager.notify(WritingNotificationService.NOTIFICATION_ID + diaSemana, notification)
+    }
+
+    private fun showDigitalDisconnectNotification(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long
+    ) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                DigitalDisconnectNotificationService().channelId,
+                context.getString(DigitalDisconnectNotificationService().channelName),
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(DigitalDisconnectNotificationService().channelDescription)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = NotificationConstants.START_TIMER_ACTION
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_digital_disconnect", true)
+        }
+        
+        val startTimerPendingIntent = PendingIntent.getBroadcast(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana,
+            startTimerIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val openDisconnectIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "desconexion")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+        
+        val openDisconnectPendingIntent = PendingIntent.getActivity(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 100,
+            openDisconnectIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val notification = NotificationCompat.Builder(context, DigitalDisconnectNotificationService().channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(DigitalDisconnectNotificationService().defaultTitle))
+            .setContentText(descripcion)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_timer,
+                context.getString(R.string.start_timer),
+                startTimerPendingIntent
+            )
+            .addAction(
+                R.drawable.ic_notification,
+                context.getString(R.string.notification_disconnect_button),
+                openDisconnectPendingIntent
+            )
+            .build()
+        
+        notificationManager.notify(DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana, notification)
+    }
+
+    private fun startDigitalDisconnectTimer(context: Context, durationMinutes: Long) {
+        val intent = Intent(context, DigitalDisconnectTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
+        }
+        ContextCompat.startForegroundService(context, intent)
+    }
+
+    private fun startWritingTimer(context: Context, durationMinutes: Long, notasHabilitadas: Boolean) {
+        val intent = Intent(context, WritingTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("notas_habilitadas", notasHabilitadas)
+            putExtra("is_reading", true)
+        }
+        ContextCompat.startForegroundService(context, intent)
+    }
+
+    private fun startMeditationTimer(context: Context, durationMinutes: Long) {
+        val intent = Intent(context, WritingTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_meditation", true)
+        }
+        ContextCompat.startForegroundService(context, intent)
+    }
+
+    private fun startReadingTimer(context: Context, durationMinutes: Long) {
+        val intent = Intent(context, WritingTimerService::class.java).apply {
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_reading", true)
+        }
+        ContextCompat.startForegroundService(context, intent)
     }
 } 

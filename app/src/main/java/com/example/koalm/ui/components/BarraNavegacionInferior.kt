@@ -23,7 +23,7 @@ fun BarraNavegacionInferior(
         listOf(
             Triple("Inicio", Icons.Default.Home, "menu"),
             Triple("Hábitos", Icons.AutoMirrored.Filled.List, "tipos_habitos"),
-            Triple("Perfil", Icons.Default.Person, "perfil")
+            Triple("Perfil", Icons.Default.Person, "personalizar")
         ).forEach { (label, icon, route) ->
             NavigationBarItem(
                 selected = rutaActual == route,

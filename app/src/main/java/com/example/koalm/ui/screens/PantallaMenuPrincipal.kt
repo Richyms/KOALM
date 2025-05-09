@@ -1,5 +1,7 @@
 package com.example.koalm.ui.screens
 import android.content.Context
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.core.content.edit
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,14 +11,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,10 +35,25 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
+import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.google.android.gms.auth.api.identity.Identity
-import com.example.koalm.ui.components.*
+import com.example.koalm.model.HabitoPersonalizado
+import com.example.koalm.ui.viewmodels.DashboardViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.koalm.model.ProgresoDiario
+import com.example.koalm.ui.components.obtenerIconoPorNombre
+import com.google.firebase.firestore.FirebaseFirestore
+import java.time.LocalDate
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +69,26 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
         Triple("Meditación koalística", "Meditar como un koala: profundo y reparador.", R.drawable.koala_meditando)
     )
 
+    // Obtener el nombre de nuestro usuaio KOOL
+    val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
+    val db = FirebaseFirestore.getInstance()
+    var username by remember { mutableStateOf("") }
+
+    LaunchedEffect(usuarioEmail) {
+        if (usuarioEmail != null) {
+            if (usuarioEmail.isNotEmpty()) {
+                db.collection("usuarios")
+                    .document(usuarioEmail)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        username = doc.getString("username").orEmpty()
+                    }
+                    .addOnFailureListener {
+                        username = "Kool"
+                    }
+            }
+        }
+    }
 
 
     ModalNavigationDrawer(
@@ -62,7 +98,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("¡Hola, Kool! 🐨✨") },
+                    title = { Text("¡Hola, $username! 🐨✨") },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
@@ -77,23 +113,10 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 )
             },
             bottomBar = {
-                NavigationBar(tonalElevation = 8.dp) {
-                    listOf("Inicio", "Hábitos", "Perfil").forEachIndexed { index, label ->
-                        val icon = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Person)[index]
-                        NavigationBarItem(
-                            selected = index == 0,
-                            onClick = { 
-                                when (index) {
-                                    0 -> navController.navigate( "menu" )
-                                    1 -> navController.navigate("tipos_habitos")
-                                    2 -> navController.navigate( "personalizar" )
-                                }
-                            },
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label) }
-                        )
-                    }
-                }
+                BarraNavegacionInferior(
+                    navController = navController,
+                    rutaActual = "menu"
+                )
             }
         ) { innerPadding ->
             Column(
@@ -115,14 +138,8 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 }
 
                 SeccionTitulo("Mis hábitos")
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    repeat(3) { index ->
-                        HabitoItem(
-                            titulo = "Hábito ${index + 1}",
-                            descripcion = "Descripción del hábito ${index + 1}",
-                            imagenId = R.drawable.koala_durmiendo
-                        )
-                    }
+                if (usuarioEmail != null) {
+                    DashboardScreen(usuarioEmail = usuarioEmail)
                 }
 
                 SeccionTitulo("Estadísticas")
@@ -180,56 +197,24 @@ fun SeccionTitulo(texto: String) {
 
 
 @Composable
-fun EstadisticasCard(datos: DatosSueno = datosMockSueño) {
+fun EstadisticasCard() {
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+            .height(150.dp)
+            .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp))
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(VerdeContenedor),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Sueño: ${datos.puntos} pts", fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            val dias = listOf("L", "M", "X", "J", "V", "S", "D")
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                dias.zip(datos.historialSemanal).forEach { (dia, sueno) ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        BarraSueno(sueno.ligero, sueno.profundo, sueno.despierto)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(dia, fontSize = 12.sp)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Column(
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                LeyendaColor("${datos.sueñoLigero} h", "Sueño ligero", GrisMedio)
-                LeyendaColor("${datos.sueñoProfundo} h", "Sueño profundo", VerdePrincipal)
-                LeyendaColor("${datos.tiempoDespierto} h", "Tiempo despierto", MarronKoala)
-            }
-
+            Text("Gráficos de estadísticas", color = GrisMedio)
         }
     }
 }
-
 
 
 
@@ -239,12 +224,12 @@ fun DrawerContenido(navController: NavHostController) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider()
-        listOf("Inicio", "Racha", "Estadísticas", "Test de emociones").forEach {
+        listOf("Inicio", "Racha", "Parametros de salud", "Test de emociones").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
                     //"Inicio" -> navController.navigate("inicio")
                     "Racha" -> navController.navigate("racha_habitos")
-                    "Estadísticas" -> navController.navigate("estadisticas")
+                    "Parametros de salud" -> navController.navigate("estadisticas")
                     //"Test de emociones" -> navController.navigate("test_emociones")
                 }
             })
@@ -252,12 +237,7 @@ fun DrawerContenido(navController: NavHostController) {
         HorizontalDivider()
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
-                when (it){
-                    "Salud mental" -> navController.navigate("estadisticas_salud_mental")
-                    "Salud física" -> navController.navigate("estadisticas_salud_fisica")
-                }
-            })
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
         }
         HorizontalDivider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
@@ -343,14 +323,14 @@ fun HabitoCarruselItem(titulo: String, descripcion: String, imagenId: Int) {
         ) {
             Column {
                 Text(
-                    titulo, 
-                    color = Blanco, 
+                    titulo,
+                    color = Blanco,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
                 Text(
-                    descripcion, 
-                    color = Blanco, 
+                    descripcion,
+                    color = Blanco,
                     fontSize = 10.sp,
                     maxLines = 2
                 )
@@ -359,34 +339,230 @@ fun HabitoCarruselItem(titulo: String, descripcion: String, imagenId: Int) {
     }
 }
 
+
 @Composable
-fun HabitoItem(titulo: String, descripcion: String, imagenId: Int) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
+fun DashboardScreen(
+    usuarioEmail: String,
+    viewModel: DashboardViewModel = viewModel()
+) {
+    val habitos = viewModel.habitos
+    val cargando = viewModel.cargando
+
+    var tipoSeleccionado by remember { mutableStateOf("todos") }
+    val tipos = listOf("todos", "personalizado", "físico", "mental")
+
+    // Cargar los hábitos
+    LaunchedEffect(usuarioEmail) {
+        viewModel.cargarHabitos(usuarioEmail)
+    }
+
+        // Filtros de tipo
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(tipos) { tipo ->
+                val isSelected = tipo == tipoSeleccionado
+
+                TextButton(
+                    onClick = { tipoSeleccionado = tipo },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isSelected) Color(0xFFF6FBF2) else Color.Transparent,
+                        contentColor = if (isSelected) Color.Black else Color.Gray
+                    ),
+                    modifier = Modifier.padding(4.dp)
+                ) {
+                    Text(tipo.replaceFirstChar { it.uppercaseChar() })
+                }
+            }
+        }
+
+        if (cargando) {
+            // Mostrar un indicador de carga mientras se están obteniendo los datos
+            CircularProgressIndicator()
+        } else {
+            // Filtrar los hábitos según el tipo seleccionado
+            val diaActual = (LocalDate.now().dayOfWeek.value + 6) % 7
+
+            val habitosFiltrados = habitos.filter { habito ->
+                val tipoCoincide = tipoSeleccionado == "todos" || habito.tipo.equals(tipoSeleccionado, ignoreCase = true)
+
+                val frecuencia = habito.frecuencia
+
+                val frecuenciaEsDiaria = frecuencia == null || frecuencia.all { it == false }
+
+                val diaActivo = frecuenciaEsDiaria || (frecuencia?.getOrNull(diaActual) == true)
+
+                tipoCoincide && diaActivo
+            }
+
+            // Mostrar los hábitos filtrados
+            if (habitosFiltrados.isNotEmpty()) {
+                habitosFiltrados.forEach { habito ->
+                    HabitoCardPersonalizado (
+                        habito = habito,
+                        progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
+                        onIncrementar = {
+                            viewModel.incrementarProgreso(usuarioEmail,habito)
+                        }
+                    )
+                }
+            } else {
+                // Mensaje si no hay hábitos para mostrar
+                Text(
+                    text = "No tienes hábitos de tipo ${tipoSeleccionado.lowercase()}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+            }
+        }
+}
+
+@Composable
+fun HabitoCardPersonalizado(
+    habito: HabitoPersonalizado,
+    progreso: ProgresoDiario?,
+    onIncrementar: () -> Unit
+) {
+
+    val realizados = progreso?.realizados ?: 0
+    val completado = progreso?.completado ?: false
+
+    // Progreso del hábito visualmente
+    val progresoPorcentaje = if (habito.unaVezPorHabito == 1) {
+        if (completado) 1f else 0f
+    } else {
+        realizados.toFloat() / (habito.recordatorios?.horas?.size ?: 1)
+    }
+
+    var progresoAnimado by remember { mutableFloatStateOf(progresoPorcentaje) }
+
+    LaunchedEffect(progresoPorcentaje) {
+        progresoAnimado = progresoPorcentaje
+    }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progresoAnimado,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+
+    // Obtener colores
+    val colorFondo = parseColorFromFirebase(habito.colorEtiqueta)
+    val icono = obtenerIconoPorNombre(habito.iconoEtiqueta)
+    val colorIcono = parseColorFromFirebase(habito.colorEtiqueta, darken = true)
+
+    // Visualizar recordatorios
+    val total = habito.recordatorios?.horas?.size ?: 0
+    val progresoText = if (habito.unaVezPorHabito == 1) {
+        if (completado) "Completado: 1/1" else "Realizado: 0/1"
+    } else {
+        if (realizados >= total && total > 0) {
+            "Completado: $realizados/$total"
+        } else {
+            "Realizado: $realizados/$total"
+        }
+    }
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(
-            containerColor = VerdeContenedor
-        )
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .background(colorFondo.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp))
+            .padding(16.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(id = imagenId),
-                contentDescription = titulo,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(titulo, fontWeight = FontWeight.Bold)
-                Text(descripcion, fontSize = 12.sp, color = GrisMedio)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icono,
+                    contentDescription = "Icono del Hábito",
+                    tint = colorIcono,
+                    modifier = Modifier
+                        .size(33.dp)
+                        .padding(end = 12.dp)
+                )
+                Column {
+                    Text(
+                        text = habito.nombre,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = progresoText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            if (completado) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    modifier = Modifier
+                        .size(40.dp),
+                    contentDescription = "Completado",
+                    tint = colorIcono
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.Transparent, shape = CircleShape)
+                        .drawBehind {
+                            val strokeWidth = 4.dp.toPx()
+                            val radius = size.minDimension / 2 - strokeWidth / 2
+
+                            // Fondo base gris
+                            drawCircle(
+                                color = Color.LightGray,
+                                radius = radius,
+                                center = center,
+                                style = Stroke(width = strokeWidth)
+                            )
+
+                            // Fondo animado sobrepuesto
+                            drawArc(
+                                color = colorIcono,
+                                startAngle = -90f,
+                                sweepAngle = 360 * animatedProgress,
+                                useCenter = false,
+                                style = Stroke(width = strokeWidth),
+                                topLeft = Offset(
+                                    (size.width - radius * 2) / 2,
+                                    (size.height - radius * 2) / 2
+                                ),
+                                size = Size(radius * 2, radius * 2)
+                            )
+                        }
+                )  {
+                    IconButton(
+                            onClick = onIncrementar,
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Sumar", tint = Color.Black)
+                        }
+                    }
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LinearProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(50)),
+            color = colorIcono,
+            trackColor = Color(0xFFE0E0E0),
+        )
     }
 }
+
 

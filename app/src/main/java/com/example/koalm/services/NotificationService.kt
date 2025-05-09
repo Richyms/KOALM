@@ -10,161 +10,177 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import com.example.koalm.MainActivity
 import com.example.koalm.R
-import java.time.DayOfWeek
+import com.example.koalm.model.Habito
+import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
+import com.example.koalm.services.notifications.MeditationNotificationService
+import com.example.koalm.services.notifications.NotificationBase
+import com.example.koalm.services.notifications.ReadingNotificationService
+import com.example.koalm.services.notifications.WritingNotificationService
+import com.example.koalm.services.notifications.NotificationConstants
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.temporal.TemporalAdjusters
-import java.util.Calendar
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class NotificationService : Service() {
     companion object {
-        private const val CHANNEL_ID = "escritura_habito"
-        private const val NOTIFICATION_ID = 1
         private const val TAG = "KOALM_NOTIFICATIONS"
-        const val NOTIFICATION_ACTION = "com.example.koalm.NOTIFICATION_ACTION"
     }
+
+    private val notificationServices: Map<String, NotificationBase> = mapOf(
+        "escritura" to WritingNotificationService(),
+        "meditacion" to MeditationNotificationService(),
+        "lectura" to ReadingNotificationService(),
+        "desconexion" to DigitalDisconnectNotificationService()
+    )
+
+    private val habitosRepository = HabitoRepository()
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
-        Log.e(TAG, "onCreate: Servicio de notificaciones creado")
-        createNotificationChannel()
+        Log.d(TAG, "onCreate: Servicio de notificaciones creado")
+        createNotificationChannels()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun createNotificationChannel() {
-        Log.e(TAG, "createNotificationChannel: Creando canal de notificaciones")
+    private fun createNotificationChannels() {
+        Log.d(TAG, "createNotificationChannels: Creando canales de notificaciones")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = getString(R.string.notification_channel_name)
-            val descriptionText = getString(R.string.notification_channel_description)
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-                enableVibration(true)
-                enableLights(true)
-            }
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-            Log.e(TAG, "createNotificationChannel: Canal creado con importancia $importance")
+            
+            notificationServices.values.forEach { service ->
+                val channel = NotificationChannel(
+                    service.channelId,
+                    getString(service.channelName),
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = getString(service.channelDescription)
+                    enableVibration(true)
+                    enableLights(true)
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+            
+            Log.d(TAG, "createNotificationChannels: Canales creados exitosamente")
         }
     }
 
     fun scheduleNotification(
         context: Context,
+        habitoId: String,
         diasSeleccionados: List<Boolean>,
         hora: LocalDateTime,
         descripcion: String,
         durationMinutes: Long,
-        notasHabilitadas: Boolean
+        notasHabilitadas: Boolean = false,
+        isMeditation: Boolean = false,
+        isReading: Boolean = false,
+        isDigitalDisconnect: Boolean = false
     ) {
-        Log.e(TAG, "scheduleNotification: Programando notificaciones para los días seleccionados")
-        Log.e(TAG, "scheduleNotification: Días seleccionados: $diasSeleccionados")
-        Log.e(TAG, "scheduleNotification: Hora: $hora")
-        Log.e(TAG, "scheduleNotification: Duración: $durationMinutes minutos")
-        Log.e(TAG, "scheduleNotification: Notas habilitadas: $notasHabilitadas")
+        Log.d(TAG, "Iniciando programación de notificación para hábito: $habitoId")
+        Log.d(TAG, "Hora programada: ${hora.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}")
+        Log.d(TAG, "Duración: $durationMinutes minutos")
+        Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
         
-        // Cancelar notificaciones existentes antes de programar nuevas
-        cancelExistingNotifications(context)
-        
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        var notificationCount = 0
-        
-        val now = LocalDateTime.now()
-        
-        // Programar para cada día seleccionado
-        diasSeleccionados.forEachIndexed { index, seleccionado ->
-            if (seleccionado) {
-                val dayOfWeek = DayOfWeek.of(index + 1)
-
-                // Calcular el próximo día de la semana
-                var nextNotificationTime = now.with(hora.toLocalTime())
-                    .with(TemporalAdjusters.nextOrSame(dayOfWeek))
-                
-                // Si la hora ya pasó hoy, programar para el próximo día
-                if (nextNotificationTime.isBefore(now)) {
-                    nextNotificationTime = nextNotificationTime.plusDays(1)
-                }
-                
-                val notificationTimeMillis = nextNotificationTime
-                    .atZone(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli()
-                
-                Log.e(TAG, "scheduleNotification: Programando notificación para día $dayOfWeek a las $nextNotificationTime")
-                
-                // Crear intent para el BroadcastReceiver
-                val intent = Intent(context, NotificationReceiver::class.java).apply {
-                    action = NOTIFICATION_ACTION
-                    putExtra("descripcion", descripcion.ifEmpty { context.getString(R.string.notification_default_text) })
-                    putExtra("dia_semana", index)
-                    putExtra("duration_minutes", durationMinutes)
-                    putExtra("notas_habilitadas", notasHabilitadas)
-                }
-                
-                val pendingIntent = PendingIntent.getBroadcast(
-                    context,
-                    NOTIFICATION_ID + index,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
-                
-                // Programar la alarma
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (alarmManager.canScheduleExactAlarms()) {
-                        alarmManager.setExactAndAllowWhileIdle(
-                            AlarmManager.RTC_WAKEUP,
-                            notificationTimeMillis,
-                            pendingIntent
+        // Obtener el hábito de Firebase
+        val db = FirebaseFirestore.getInstance()
+        db.collection("habitos").document(habitoId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val habito = document.toObject(Habito::class.java)
+                    if (habito != null) {
+                        Log.d(TAG, "Hábito encontrado. Tipo: ${habito.tipo}")
+                        
+                        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                        val intent = Intent(context, NotificationReceiver::class.java).apply {
+                            action = NotificationConstants.NOTIFICATION_ACTION
+                            putExtra("habito_id", habitoId)
+                            putExtra("descripcion", descripcion)
+                            putExtra("duration_minutes", durationMinutes)
+                            putExtra("is_meditation", isMeditation)
+                            putExtra("is_reading", isReading)
+                            putExtra("is_digital_disconnect", isDigitalDisconnect)
+                            putExtra("notas_habilitadas", notasHabilitadas)
+                        }
+                        
+                        // Generar un ID único para la alarma basado en el ID del hábito
+                        val alarmId = habitoId.hashCode()
+                        
+                        // Configurar el tiempo de la alarma
+                        val calendar = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, hora.hour)
+                            set(Calendar.MINUTE, hora.minute)
+                            set(Calendar.SECOND, 0)
+                            
+                            // Si la hora ya pasó hoy, programar para mañana
+                            if (timeInMillis <= System.currentTimeMillis()) {
+                                add(Calendar.DAY_OF_YEAR, 1)
+                            }
+                        }
+                        
+                        // Cancelar cualquier alarma existente para este hábito
+                        val existingIntent = Intent(context, NotificationReceiver::class.java).apply {
+                            action = NotificationConstants.NOTIFICATION_ACTION
+                            putExtra("habito_id", habitoId)
+                        }
+                        val existingPendingIntent = PendingIntent.getBroadcast(
+                            context,
+                            alarmId,
+                            existingIntent,
+                            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                         )
-                        Log.e(TAG, "scheduleNotification: Alarma programada con setExactAndAllowWhileIdle")
+                        alarmManager.cancel(existingPendingIntent)
+                        Log.d(TAG, "Alarmas existentes canceladas para hábito: $habitoId")
+                        
+                        // Programar la nueva alarma
+                        val pendingIntent = PendingIntent.getBroadcast(
+                            context,
+                            alarmId,
+                            intent,
+                            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                        )
+                        
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            if (alarmManager.canScheduleExactAlarms()) {
+                                alarmManager.setAlarmClock(
+                                    AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+                                    pendingIntent
+                                )
+                            } else {
+                                alarmManager.setExactAndAllowWhileIdle(
+                                    AlarmManager.RTC_WAKEUP,
+                                    calendar.timeInMillis,
+                                    pendingIntent
+                                )
+                            }
+                        } else {
+                            alarmManager.setExactAndAllowWhileIdle(
+                                AlarmManager.RTC_WAKEUP,
+                                calendar.timeInMillis,
+                                pendingIntent
+                            )
+                        }
+                        
+                        Log.d(TAG, "Notificación programada exitosamente para hábito: $habitoId")
                     } else {
-                        Log.e(TAG, "scheduleNotification: No se pueden programar alarmas exactas")
+                        Log.e(TAG, "El hábito no existe o no está activo: $habitoId")
                     }
                 } else {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        notificationTimeMillis,
-                        pendingIntent
-                    )
-                    Log.e(TAG, "scheduleNotification: Alarma programada con setExactAndAllowWhileIdle")
+                    Log.e(TAG, "No se encontró el hábito: $habitoId")
                 }
-                
-                notificationCount++
             }
-        }
-        
-        Log.e(TAG, "scheduleNotification: Se programaron $notificationCount notificaciones")
-    }
-    
-    private fun cancelExistingNotifications(context: Context) {
-        Log.e(TAG, "cancelExistingNotifications: Cancelando notificaciones existentes")
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
-        // Cancelar todas las notificaciones existentes
-        for (i in 0..6) {
-            notificationManager.cancel(NOTIFICATION_ID + i)
-        }
-        
-        // Cancelar alarmas existentes
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        for (i in 0..6) {
-            val intent = Intent(context, NotificationReceiver::class.java).apply {
-                action = NOTIFICATION_ACTION
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al obtener el hábito: ${e.message}", e)
             }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                NOTIFICATION_ID + i,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
-            )
-            
-            if (pendingIntent != null) {
-                alarmManager.cancel(pendingIntent)
-                Log.e(TAG, "cancelExistingNotifications: Alarma cancelada para día $i")
-            }
-        }
     }
 } 
