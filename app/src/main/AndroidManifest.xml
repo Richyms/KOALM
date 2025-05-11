@@ -43,7 +43,21 @@
 
         <!-- Servicio para manejar el temporizador -->
         <service
-            android:name=".services.WritingTimerService"
+            android:name=".services.timers.WritingTimerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Servicio para manejar el temporizador de lectura -->
+        <service
+            android:name=".services.timers.ReadingTimerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Servicio para manejar el temporizador de meditación -->
+        <service
+            android:name=".services.timers.MeditationTimerService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
@@ -55,6 +69,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.example.koalm.NOTIFICATION_ACTION" />
+                <action android:name="com.example.koalm.START_TIMER_ACTION" />
             </intent-filter>
         </receiver>
 
@@ -79,7 +94,7 @@
 
         <!-- Servicio para manejar el temporizador de desconexión digital -->
         <service
-            android:name=".services.DigitalDisconnectTimerService"
+            android:name=".services.timers.DigitalDisconnectTimerService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />

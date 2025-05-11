@@ -1,102 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- ========================================================================= -->
+    <!-- GENERAL -->
+    <!-- ========================================================================= -->
     <string name="app_name">Koalm</string>
     <string name="title_activity_personalizar_perfil">PersonalizarPerfil</string>
     <string name="prefs_file">KOALM_PREFS</string>
     <string name="default_web_client_id">564465083756-rf2pr2310d2f7m6t7bfb31gbgqplgl9t.apps.googleusercontent.com</string>
 
+    <!-- ========================================================================= -->
+    <!-- HÁBITOS – CONFIGURACIÓN INDIVIDUAL -->
+    <!-- ========================================================================= -->
 
     <!-- Escritura -->
-
     <string name="titulo_config_escritura">Configurar hábito de escritura</string>
     <string name="label_descripcion">Añadir descripción</string>
     <string name="placeholder_descripcion">No sabes lo que piensas hasta que lo escribes.</string>
-    
     <string name="label_frecuencia">Frecuencia: *</string>
     <string name="label_hora">Hora del recordatorio: *</string>
-    <string name="texto_ayuda_hora">
-        Cuando te recordemos tu escritura, seleccionarás el tiempo que quieres escribir.
-    </string>
-
-    <string name="hint_duracion">
-    Selecciona el tiempo que quieres que dure tu escritura
-    </string>
-
-
+    <string name="texto_ayuda_hora">Cuando te recordemos tu escritura, seleccionarás el tiempo que quieres escribir.</string>
+    <string name="hint_duracion">Selecciona el tiempo que quieres que dure tu escritura</string>
+    <string name="label_duracion_escritura">Duración de escritura</string>
     <string name="label_notas">Habilitar notas en la app</string>
     <string name="boton_guardar">Guardar</string>
 
-    <string name="label_duracion_escritura">Duración de escritura</string>
-
-    <!-- Notificaciones -->
-    <string name="notification_channel_name">Notificaciones de escritura</string>
-    <string name="notification_channel_description">Canal para notificaciones del hábito de escritura</string>
-    <string name="meditation_notification_channel_name">Notificaciones de meditación</string>
-    <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación</string>
-    <string name="reading_notification_channel_name">Notificaciones de lectura</string>
-    <string name="reading_notification_channel_description">Canal para notificaciones del hábito de lectura</string>
-    <string name="notification_title">¡Hora de escribir!</string>
-    <string name="meditation_notification_title">¡Hora de meditar!</string>
-    <string name="reading_notification_title">¡Hora de leer!</string>
-    <string name="notification_default_text">Es hora de practicar tu hábito de escritura</string>
-    <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación</string>
-    <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura</string>
-    <string name="notification_notes_button">Abrir Notas</string>
-    <string name="notification_books_button">Mis Libros</string>
-    <string name="error_no_days_selected">Selecciona al menos un día</string>
-    <string name="error_notification_permission">Se requieren permisos de notificación</string>
-    <string name="success_notifications_scheduled">Notificaciones programadas</string>
-
-    <!-- Temporizador -->
-    <string name="timer_channel_name">Temporizador de escritura</string>
-    <string name="timer_channel_description">Canal para el temporizador de escritura</string>
-    <string name="timer_notification_title">Temporizador de Escritura</string>
-    <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
-    <string name="timer_remaining_text">Tiempo restante: %s</string>
-    <string name="timer_completion_title">¡Tiempo completado!</string>
-    <string name="timer_completion_text">Has completado tu sesión de escritura</string>
-    <string name="start_writing_action">Comenzar %d min</string>
-    <string name="open_notes_action">Abrir notas</string>
-    <string name="start_timer">Iniciar temporizador</string>
-    
-    <!-- Notas -->
-    <string name="titulo_notas">Mis notas</string>
-    <string name="nueva_nota">Nueva nota</string>
-    <string name="agregar_nota">Agregar nota</string>
-    <string name="volver">Volver</string>
-    <string name="titulo_nota">Título</string>
-    <string name="contenido_nota">Contenido</string>
-    
     <!-- Sueño -->
-    <string name="titulo_config_sueño">Configurar hábito de sueño</string>
-    <string name="placeholder_descripcion_sueño">Dormir bien transforma tu energía, tu salud y tu bienestar mental.</string>
+    <string name="titulo_config_sueno">Configurar hábito de sueño</string>
+    <string name="placeholder_descripcion_sueno">Dormir bien transforma tu energía, tu salud y tu bienestar mental.</string>
 
     <!-- Alimentación -->
-    <string name="titulo_config_alimentacion">Configurar hábito de sueño</string>
-    <string name="placeholder_descripcion_alimentacion">"Kool estará observando... así que come bien, o podrías descubrir de lo que es capaz.</string>
+    <string name="titulo_config_alimentacion">Configurar hábito de alimentación</string>
+    <string name="placeholder_descripcion_alimentacion">Kool estará observando... así que come bien, o podrías descubrir de lo que es capaz.</string>
 
     <!-- Hidratación -->
     <string name="titulo_config_hidratacion">Configurar hábito de hidratación</string>
     <string name="placeholder_descripcion_hidratacion">Los koalas toman agua de las hojas, ¡pero tú no eres un koala! ¡Hidrátate!</string>
     <string name="label_cantidad_litros">Objetivo de hidratación diario: *</string>
     <string name="label_hora_hidratacion">Horario de recordatorios:</string>
-    <string name="label_recordatorio_hidratación">Número de recordatorios (opcional)</string>
+    <string name="label_recordatorio_hidratacion">Número de recordatorios (opcional)</string>
     <string name="label_recordatorios_agua">recordatorios de 1 L</string>
-    <string name="label_recordatorio_hidratación_f">Frecuencia de recordatorios (opcional)</string>
-    <string name="label_recordatorio_hidratación_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
+    <string name="label_recordatorio_hidratacion_f">Frecuencia de recordatorios (opcional)</string>
+    <string name="label_recordatorio_hidratacion_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
+
     <!-- Meditación -->
     <string name="titulo_config_meditacion">Configurar hábito de meditación</string>
-    <string name="placeholder_descripcion_meditacion"> Es sano darte un tiempo para ti y para tu mente.</string>
-    <string name="label_duracion_meditacion">Duración de la Meditación</string>
+    <string name="placeholder_descripcion_meditacion">Es sano darte un tiempo para ti y para tu mente.</string>
+    <string name="label_duracion_meditacion">Duración de la meditación</string>
     <string name="label_sonidos">Sonidos ambientales durante la meditación.</string>
     <string name="label_respiracion">Recordatorio de ejercicios de respiración previos.</string>
+    <string name="historial_meditacion">Historial de meditación</string>
 
     <!-- Lectura -->
     <string name="titulo_config_lectura">Configurar hábito de lectura</string>
     <string name="placeholder_descripcion_lectura">Leer es como viajar... pero sin hacer fila en el aeropuerto.</string>
-    <string name="label_duracion_lectura">Duración de Lectura</string>
+    <string name="label_duracion_lectura">Duración de lectura</string>
 
-
-    <!-- Pantalla Gestión de hábitos personalizados -->
+    <!-- ========================================================================= -->
+    <!-- GESTIÓN Y PERSONALIZACIÓN DE HÁBITOS -->
+    <!-- ========================================================================= -->
     <string name="titulo_gestion_habitos_personalizados">Gestión de hábitos personalizados</string>
     <string name="mensaje_no_habitos">No tienes hábitos personalizados</string>
     <string name="mensaje_no_habitos_subtexto">No busques perfección, solo empieza.\nCada paso cuenta</string>
@@ -105,52 +67,145 @@
     <!-- Hábito personalizado -->
     <string name="titulo_config_habito_personalizado">Configurar hábito personalizado</string>
     <string name="label_nombre_habito">Nombre del hábito *</string>
-    <string name="label_frecuencia_P">Frecuencia: </string>
+    <string name="label_frecuencia_p">Frecuencia: </string>
     <string name="label_hora_recordatorio">Hora del recordatorio: </string>
     <string name="label_finaliza_el">Finaliza el:</string>
     <string name="boton_fecha">Fecha</string>
     <string name="boton_dias">Días</string>
     <string name="label_ultimo_dia">El último día es</string>
-    <string name="boton_seleccionar_fecha">Seleccionar Fecha</string>
+    <string name="boton_seleccionar_fecha">Seleccionar fecha</string>
     <string name="label_despues_dias">Después de </string>
     <string name="label_dias">días</string>
     <string name="label_switch_activar_recordatorio">Activar recordatorios:</string>
-    <string name="label_tipo_notificacion">  Tipo de notificación:</string>
-    <string name="label_notificacion_personalizada">  Notifiación personalizada:</string>
+    <string name="label_tipo_notificacion">Tipo de notificación:</string>
+    <string name="label_notificacion_personalizada">Notificación personalizada:</string>
     <string name="label_configuracion_adicional">Configuraciones adicionales:</string>
     <string name="label_vista_previa">Vista previa del hábito</string>
+    <string name="boton_automatico">Automático</string>
+    <string name="boton_personalizado">Personalizado</string>
 
-    <string name="boton_Automatico">Automático</string>
-    <string name="boton_Personalizado">Personalizado</string>
-
-    <!-- Racha de Habitos -->
-    <string name="titulo_racha_habitos">Racha de Hábitos</string>
+    <!-- ========================================================================= -->
+    <!-- RACHAS -->
+    <!-- ========================================================================= -->
+    <string name="titulo_racha_habitos">Racha de hábitos</string>
     <string name="label_sin_racha">Aún no tienes una racha activa</string>
-    <string name="mensaje_sin_racha">
-        No busques perfección, solo empieza. Cada paso cuenta
-    </string>
+    <string name="mensaje_sin_racha">No busques perfección, solo empieza. Cada paso cuenta</string>
     <string name="titulo_racha_en_progreso">¡Tu racha está en progreso!</string>
-    <string name="mensaje_racha_en_progreso">
-        Seguir con tus hábitos es recordarte cada día lo mucho que te valoras
-    </string>
+    <string name="mensaje_racha_en_progreso">Seguir con tus hábitos es recordarte cada día lo mucho que te valoras</string>
     <string name="titulo_racha_finalizada">¡Enhorabuena!</string>
-    <string name="mensaje_racha_finzalizada">
-        Una semana de hábitos cumplidos demuestra que la constancia crea cambios
-    </string>
+    <string name="mensaje_racha_finalizada">Una semana de hábitos cumplidos demuestra que la constancia crea cambios</string>
 
-    <!-- Validaciones -->
+    <!-- ========================================================================= -->
+    <!-- NOTAS -->
+    <!-- ========================================================================= -->
+    <string name="titulo_notas">Mis notas</string>
+    <string name="nueva_nota">Nueva nota</string>
+    <string name="agregar_nota">Agregar nota</string>
+    <string name="volver">Volver</string>
+    <string name="titulo_nota">Título</string>
+    <string name="contenido_nota">Contenido</string>
+
+    <!-- ========================================================================= -->
+    <!-- NOTIFICACIONES – CANALES Y TITULOS -->
+    <!-- ========================================================================= -->
+    <string name="notification_channel_name">Notificaciones de escritura</string>
+    <string name="notification_channel_description">Canal para notificaciones del hábito de escritura</string>
+    <string name="meditation_notification_channel_name">Notificaciones de meditación</string>
+    <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación</string>
+    <string name="reading_notification_channel_name">Notificaciones de lectura</string>
+    <string name="reading_notification_channel_description">Canal para notificaciones del hábito de lectura</string>
+    <string name="digital_disconnect_notification_channel_name">Notificaciones de desconexión digital</string>
+    <string name="digital_disconnect_notification_channel_description">Canal para notificaciones de desconexión digital</string>
+
+    <!-- Títulos de notificación -->
+    <string name="notification_title">¡Hora de escribir!</string>
+    <string name="meditation_notification_title">¡Hora de meditar!</string>
+    <string name="reading_notification_title">¡Hora de leer!</string>
+    <string name="digital_disconnect_notification_title">¡Hora de desconectar!</string>
+
+    <!-- Textos por defecto -->
+    <string name="notification_default_text">Es hora de practicar tu hábito de escritura</string>
+    <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación</string>
+    <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura</string>
+    <string name="digital_disconnect_notification_default_text">Es hora de tomar un descanso digital</string>
+
+    <!-- Botones de acción -->
+    <string name="notification_notes_button">Abrir notas</string>
+    <string name="notification_books_button">Mis libros</string>
+    <string name="notification_disconnect_button">Ir a desconexión</string>
+    <string name="notification_start_timer">Iniciar temporizador</string>
+
+    <!-- ========================================================================= -->
+    <!-- TEMPORIZADORES -->
+    <!-- ========================================================================= -->
+
+    <!-- Escritura -->
+    <string name="timer_channel_name">Temporizador de escritura</string>
+    <string name="timer_channel_description">Canal para el temporizador de escritura</string>
+    <string name="timer_notification_title">Temporizador de escritura</string>
+    <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
+    <string name="timer_remaining_text">Tiempo restante: %s</string>
+    <string name="timer_completion_title">¡Tiempo completado!</string>
+    <string name="timer_completion_text">Has completado tu sesión de escritura</string>
+    <string name="start_writing_action">Comenzar %d min</string>
+    <string name="open_notes_action">Abrir notas</string>
+    <string name="start_timer">Iniciar temporizador</string>
+    <string name="timer_start_button">Iniciar</string>
+    <string name="timer_pause_button">Pausar</string>
+    <string name="timer_resume_button">Reanudar</string>
+    <string name="timer_stop_button">Detener</string>
+    <string name="timer_complete_button">Completar</string>
+
+    <!-- Lectura -->
+    <string name="reading_timer_channel_name">Temporizador de lectura</string>
+    <string name="reading_timer_channel_description">Canal para el temporizador de lectura</string>
+    <string name="reading_timer_notification_title">Temporizador de lectura</string>
+    <string name="reading_timer_notification_text">Comenzar sesión de %d minutos</string>
+    <string name="reading_timer_remaining_text">Tiempo restante: %s</string>
+    <string name="reading_timer_completion_title">¡Tiempo completado!</string>
+    <string name="reading_timer_completion_text">Has completado tu sesión de lectura</string>
+    <string name="start_reading_action">Comenzar %d min</string>
+
+    <!-- Meditación -->
+    <string name="meditation_timer_channel_name">Temporizador de meditación</string>
+    <string name="meditation_timer_channel_description">Canal para el temporizador de meditación</string>
+    <string name="meditation_timer_notification_title">Temporizador de meditación</string>
+    <string name="meditation_timer_notification_text">Comenzar sesión de %d minutos</string>
+    <string name="meditation_timer_remaining_text">Tiempo restante: %s</string>
+    <string name="meditation_timer_completion_title">¡Tiempo completado!</string>
+    <string name="meditation_timer_completion_text">Has completado tu sesión de meditación</string>
+    <string name="start_meditation_action">Comenzar %d min</string>
+
+    <!-- Desconexión digital -->
+    <string name="digital_disconnect_timer_channel_name">Temporizador de desconexión digital</string>
+    <string name="digital_disconnect_timer_channel_description">Canal para el temporizador de desconexión digital</string>
+    <string name="digital_disconnect_timer_title">Desconexión digital en progreso</string>
+    <string name="digital_disconnect_timer_text">Comenzar sesión de %d minutos</string>
+    <string name="digital_disconnect_timer_remaining_text">Tiempo restante: %s</string>
+    <string name="digital_disconnect_timer_completion_title">¡Tiempo completado!</string>
+    <string name="digital_disconnect_timer_completion_text">Has completado tu sesión de desconexión digital</string>
+    <string name="start_digital_disconnect_action">Comenzar %d min</string>
+
+    <!-- Mensaje finalización desconexión DIGITAL -->
+    <string name="digital_disconnect_completion_title">¡Desconexión completada!</string>
+    <string name="digital_disconnect_completion_text">Has completado tu tiempo de desconexión digital</string>
+
+    <!-- ========================================================================= -->
+    <!-- VALIDACIONES Y MENSAJES DE ESTADO -->
+    <!-- ========================================================================= -->
+    <string name="error_no_days_selected">Selecciona al menos un día</string>
+    <string name="error_notification_permission">Se requieren permisos de notificación</string>
+    <string name="success_notifications_scheduled">Notificaciones programadas</string>
     <string name="error_nombre">¡Campo de nombre vacío!</string>
     <string name="error_hora">¡Establece hora de recordatorio!</string>
     <string name="mensaje_guardado">¡Hábito guardado exitosamente!</string>
-
-    <!-- Desconexion Digital Notification -->
-    <string name="digital_disconnect_notification_channel_name">Desconexión Digital</string>
-    <string name="digital_disconnect_notification_channel_description">Notificaciones para recordar tu tiempo de desconexión digital</string>
-    <string name="digital_disconnect_notification_title">¡Hora de desconectar!</string>
-    <string name="digital_disconnect_notification_default_text">Es hora de tomar un descanso digital</string>
-    <string name="digital_disconnect_timer_title">Desconexión Digital en progreso</string>
-    <string name="notification_disconnect_button">Ir a Desconexión</string>
-    <string name="digital_disconnect_completion_title">¡Desconexión completada!</string>
-    <string name="digital_disconnect_completion_text">Has completado tu tiempo de desconexión digital</string>
+    <string name="label_frecuencia_P">Frecuencia: </string>
+    <string name="boton_Personalizado">Personalizado</string>
+    <string name="boton_Automatico">Automático</string>
+    <string name="mensaje_racha_finzalizada">Una semana de hábitos cumplidos demuestra que la constancia crea cambios</string>
+    <string name="label_recordatorio_hidratación">Número de recordatorios (opcional)</string>
+    <string name="label_recordatorio_hidratación_f">Frecuencia de recordatorios (opcional)</string>
+    <string name="label_recordatorio_hidratación_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
+    <string name="placeholder_descripcion_sueño">Dormir bien transforma tu energía, tu salud y tu bienestar mental.</string>
 
 </resources>

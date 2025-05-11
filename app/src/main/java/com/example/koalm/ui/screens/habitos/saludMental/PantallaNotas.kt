@@ -30,15 +30,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.Nota
-import com.example.koalm.services.WritingTimerService
+import com.example.koalm.services.timers.WritingTimerService
+import com.example.koalm.services.notifications.NotificationConstants
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import com.example.koalm.ui.theme.VerdePrincipal
 import com.example.koalm.ui.viewmodels.TimerViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import java.text.SimpleDateFormat
+
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,9 +98,9 @@ fun PantallaNotas(navController: NavHostController) {
         Log.d("PantallaNotas", "Configurando receptor de actualizaciones del temporizador")
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == WritingTimerService.TIMER_UPDATE_ACTION) {
-                    val isActive = intent.getBooleanExtra(WritingTimerService.EXTRA_IS_ACTIVE, false)
-                    val remaining = intent.getLongExtra(WritingTimerService.EXTRA_REMAINING_TIME, 0)
+                if (intent?.action == NotificationConstants.TIMER_UPDATE_ACTION) {
+                    val isActive = intent.getBooleanExtra(NotificationConstants.EXTRA_IS_ACTIVE, false)
+                    val remaining = intent.getLongExtra(NotificationConstants.EXTRA_REMAINING_TIME, 0)
                     Log.d("PantallaNotas", "Actualización de temporizador recibida: isActive=$isActive, remaining=$remaining ms")
                     
                     // Actualizar el ViewModel
@@ -107,7 +110,7 @@ fun PantallaNotas(navController: NavHostController) {
             }
         }
 
-        val filter = IntentFilter(WritingTimerService.TIMER_UPDATE_ACTION)
+        val filter = IntentFilter(NotificationConstants.TIMER_UPDATE_ACTION)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
@@ -118,7 +121,7 @@ fun PantallaNotas(navController: NavHostController) {
                 ContextCompat.RECEIVER_NOT_EXPORTED
             )
         }
-        Log.d("PantallaNotas", "Receptor registrado para acción: ${WritingTimerService.TIMER_UPDATE_ACTION}")
+        Log.d("PantallaNotas", "Receptor registrado para acción: ${NotificationConstants.TIMER_UPDATE_ACTION}")
 
         onDispose {
             try {
@@ -134,7 +137,7 @@ fun PantallaNotas(navController: NavHostController) {
     LaunchedEffect(Unit) {
         try {
             val checkTimerIntent = Intent(context, WritingTimerService::class.java).apply {
-                action = WritingTimerService.CHECK_TIMER_ACTION
+                action = NotificationConstants.CHECK_TIMER_ACTION
             }
             context.startService(checkTimerIntent)
         } catch (e: Exception) {
@@ -187,7 +190,7 @@ fun PantallaNotas(navController: NavHostController) {
                 Button(
                     onClick = {
                         val intent = Intent(context, WritingTimerService::class.java).apply {
-                            action = WritingTimerService.START_TIMER_ACTION
+                            action = NotificationConstants.START_TIMER_ACTION
                             putExtra("duration_minutes", 1L)  // 1 minuto
                         }
                         

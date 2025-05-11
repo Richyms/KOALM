@@ -8,12 +8,13 @@ import android.os.Build
 import android.util.Log
 import com.example.koalm.R
 import com.example.koalm.services.NotificationReceiver
+import com.example.koalm.services.timers.ReadingTimerService
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
-class ReadingNotificationService : NotificationBase {
+class ReadingNotificationService : NotificationBase() {
     companion object {
         private const val TAG = "KOALM_NOTIFICATIONS"
         const val NOTIFICATION_ID = 2
@@ -24,6 +25,24 @@ class ReadingNotificationService : NotificationBase {
     override val channelDescription = R.string.reading_notification_channel_description
     override val defaultTitle = R.string.reading_notification_title
     override val defaultText = R.string.reading_notification_default_text
+    override val notificationId = NOTIFICATION_ID
+
+    override fun createNotificationIntent(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long,
+        additionalData: Map<String, Any>
+    ): Intent {
+        return super.createNotificationIntent(context, descripcion, diaSemana, durationMinutes, additionalData).apply {
+            putExtra("is_meditation", false)
+            putExtra("is_reading", true)
+            putExtra("is_digital_disconnect", false)
+            putExtra("notification_title", context.getString(defaultTitle))
+            putExtra("notification_action_button", context.getString(R.string.notification_books_button))
+            putExtra("timer_action", ReadingTimerService.START_TIMER_ACTION)
+        }
+    }
 
     override fun scheduleNotification(
         context: Context,
@@ -76,7 +95,9 @@ class ReadingNotificationService : NotificationBase {
                     putExtra("is_meditation", false)
                     putExtra("is_reading", true)
                     putExtra("is_digital_disconnect", false)
-                    putExtra("notas_habilitadas", false)
+                    putExtra("notification_title", context.getString(defaultTitle))
+                    putExtra("notification_action_button", context.getString(R.string.notification_books_button))
+                    putExtra("timer_action", ReadingTimerService.START_TIMER_ACTION)
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -155,7 +176,7 @@ class ReadingNotificationService : NotificationBase {
             // Cancelar también las alarmas con IDs adicionales (para los botones de acción)
             for (i in 0..6) {
                 val intent = Intent(context, NotificationReceiver::class.java).apply {
-                    action = NotificationConstants.START_TIMER_ACTION
+                    action = ReadingTimerService.START_TIMER_ACTION
                     putExtra("is_reading", true)
                 }
                 

@@ -9,20 +9,44 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationCompat
+import com.example.koalm.MainActivity
 import com.example.koalm.R
 import com.example.koalm.services.NotificationReceiver
-import com.example.koalm.services.WritingTimerService
+import com.example.koalm.services.timers.WritingTimerService
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
-class WritingNotificationService : NotificationBase {
+class WritingNotificationService : NotificationBase() {
+    companion object {
+        const val NOTIFICATION_ID = 1
+    }
+
     override val channelId = "escritura_habito"
     override val channelName = R.string.notification_channel_name
     override val channelDescription = R.string.notification_channel_description
     override val defaultTitle = R.string.notification_title
     override val defaultText = R.string.notification_default_text
+    override val notificationId = NOTIFICATION_ID
+
+    override fun createNotificationIntent(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long,
+        additionalData: Map<String, Any>
+    ): Intent {
+        return super.createNotificationIntent(context, descripcion, diaSemana, durationMinutes, additionalData).apply {
+            putExtra("is_meditation", false)
+            putExtra("is_reading", false)
+            putExtra("is_digital_disconnect", false)
+            putExtra("notas_habilitadas", additionalData["notas_habilitadas"] as? Boolean ?: false)
+            putExtra("notification_title", context.getString(defaultTitle))
+            putExtra("notification_action_button", context.getString(R.string.notification_notes_button))
+        }
+    }
 
     override fun scheduleNotification(
         context: Context,
@@ -66,6 +90,10 @@ class WritingNotificationService : NotificationBase {
                     putExtra("duration_minutes", durationMinutes)
                     putExtra("notas_habilitadas", additionalData["notas_habilitadas"] as? Boolean ?: false)
                     putExtra("is_meditation", false)
+                    putExtra("is_reading", false)
+                    putExtra("is_digital_disconnect", false)
+                    putExtra("notification_title", context.getString(defaultTitle))
+                    putExtra("notification_action_button", context.getString(R.string.notification_notes_button))
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -123,9 +151,5 @@ class WritingNotificationService : NotificationBase {
                 alarmManager.cancel(pendingIntent)
             }
         }
-    }
-
-    companion object {
-        const val NOTIFICATION_ID = 1
     }
 } 
