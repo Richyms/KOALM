@@ -83,6 +83,8 @@
     <string name="label_recordatorios_agua">recordatorios de 1 L</string>
     <string name="label_recordatorio_hidratación_f">Frecuencia de recordatorios (opcional)</string>
     <string name="label_recordatorio_hidratación_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
+    <!-- Modificar Hidratación -->
+    <string name="titulo_modificacion_hidratación">Modificar hábito de hidratación</string>
     <!-- Meditación -->
     <string name="titulo_config_meditacion">Configurar hábito de meditación</string>
     <string name="placeholder_descripcion_meditacion"> Es sano darte un tiempo para ti y para tu mente.</string>
