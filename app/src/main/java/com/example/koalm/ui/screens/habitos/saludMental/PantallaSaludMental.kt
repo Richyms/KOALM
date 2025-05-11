@@ -1,4 +1,4 @@
-package com.example.koalm.ui.screens.habitos.saludMental
+package com.example.koalm.ui.screens
 
 import android.util.Log
 import android.widget.Toast
@@ -24,8 +24,13 @@ import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import com.google.firebase.auth.FirebaseAuth
 
 private const val TAG = "PantallaSaludMental"
@@ -49,14 +54,13 @@ fun PantallaSaludMental(navController: NavHostController) {
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
-    
+
     // Estado de la UI
     var habitosActivos by remember { mutableStateOf<List<Habito>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    // Función para recargar los hábitos
     fun cargarHabitos() {
         scope.launch {
             try {
@@ -70,14 +74,10 @@ fun PantallaSaludMental(navController: NavHostController) {
                 }
 
                 val userId = currentUser.uid
-                Log.d(TAG, "Buscando hábitos para userId: $userId")
-                
-                habitosRepository.obtenerHabitosActivos(userId).fold(
+                Log.d(TAG, "Buscando hábitos MENTALES para userId: $userId")
+
+                habitosRepository.obtenerHabitosMentales(currentUser.uid).fold(
                     onSuccess = { habitos ->
-                        Log.d(TAG, "Hábitos encontrados: ${habitos.size}")
-                        habitos.forEach { habito ->
-                            Log.d(TAG, "Hábito: id=${habito.id}, titulo=${habito.titulo}")
-                        }
                         habitosActivos = habitos
                         isLoading = false
                     },
@@ -156,7 +156,7 @@ fun PantallaSaludMental(navController: NavHostController) {
         ) {
             // Sección de plantilla de hábitos
             Text(
-                text = "Crea tu hábito",
+                text = "Plantilla de hábitos",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -182,7 +182,7 @@ fun PantallaSaludMental(navController: NavHostController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     habitosActivos.forEach { habito ->
                         Log.d(TAG, "Renderizando hábito activo: ${habito.titulo}")
                         HabitoActivoCard(
@@ -222,9 +222,9 @@ fun PantallaSaludMental(navController: NavHostController) {
 @Composable
 private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController) {
     val context = LocalContext.current
-    
+
     Card(
-        onClick = { 
+        onClick = {
             try {
                 when (habito.tipo) {
                     TipoHabito.ESCRITURA -> navController.navigate("configurar_habito_escritura") {
@@ -242,6 +242,10 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
                     TipoHabito.LECTURA -> navController.navigate("configurar_habito_lectura") {
                         launchSingleTop = true
                         restoreState = true
+                    }
+                    else -> {
+                        // Manejar otros tipos o no hacer nada
+                        Log.w(TAG, "Tipo de hábito no manejado en salud mental: ${habito.tipo}")
                     }
                 }
             } catch (e: Exception) {
@@ -272,9 +276,9 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
                 tint = VerdePrincipal,
                 modifier = Modifier.size(24.dp)
             )
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column {
                 Text(
                     text = habito.titulo,
@@ -293,7 +297,7 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
 
 @Composable
 private fun HabitoActivoCard(
-    habito: Habito, 
+    habito: Habito,
     navController: NavHostController,
     onHabitDeleted: () -> Unit
 ) {
@@ -303,9 +307,9 @@ private fun HabitoActivoCard(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
-    
+
     Card(
-        onClick = { 
+        onClick = {
             try {
                 when (habito.tipo) {
                     TipoHabito.ESCRITURA -> navController.navigate("configurar_habito_escritura/${habito.id}") {
@@ -323,6 +327,10 @@ private fun HabitoActivoCard(
                     TipoHabito.LECTURA -> navController.navigate("configurar_habito_lectura/${habito.id}") {
                         launchSingleTop = true
                         restoreState = true
+                    }
+                    else -> {
+                        // Manejar otros tipos o no hacer nada
+                        Log.w(TAG, "Tipo de hábito no manejado en salud mental: ${habito.tipo}")
                     }
                 }
             } catch (e: Exception) {
@@ -353,6 +361,7 @@ private fun HabitoActivoCard(
                     TipoHabito.LECTURA -> Icons.Default.MenuBook
                     TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
                     TipoHabito.ESCRITURA -> Icons.Default.Edit
+                    else -> Icons.Default.FitnessCenter
                 },
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
@@ -399,7 +408,7 @@ private fun HabitoActivoCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = habito.diasSeleccionados.mapIndexed { index, seleccionado -> 
+                        text = habito.diasSeleccionados.mapIndexed { index, seleccionado ->
                             if (seleccionado) diasSemana[index] else ""
                         }.filter { it.isNotEmpty() }.joinToString(""),
                         style = MaterialTheme.typography.bodySmall,

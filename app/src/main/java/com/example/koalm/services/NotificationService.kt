@@ -18,6 +18,7 @@ import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.NotificationBase
 import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
+import com.example.koalm.services.notifications.sueñoNotificationService
 import com.example.koalm.services.notifications.NotificationConstants
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +39,8 @@ class NotificationService : Service() {
         "escritura" to WritingNotificationService(),
         "meditacion" to MeditationNotificationService(),
         "lectura" to ReadingNotificationService(),
-        "desconexion" to DigitalDisconnectNotificationService()
+        "desconexion" to DigitalDisconnectNotificationService(),
+        "sueño" to sueñoNotificationService()
     )
 
     private val habitosRepository = HabitoRepository()
@@ -56,7 +58,7 @@ class NotificationService : Service() {
         Log.d(TAG, "createNotificationChannels: Creando canales de notificaciones")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            
+
             notificationServices.values.forEach { service ->
                 val channel = NotificationChannel(
                     service.channelId,
@@ -69,7 +71,7 @@ class NotificationService : Service() {
                 }
                 notificationManager.createNotificationChannel(channel)
             }
-            
+
             Log.d(TAG, "createNotificationChannels: Canales creados exitosamente")
         }
     }
@@ -84,13 +86,18 @@ class NotificationService : Service() {
         notasHabilitadas: Boolean = false,
         isMeditation: Boolean = false,
         isReading: Boolean = false,
+        isSleeping: Boolean = false,
+        isAlimentation: Boolean = false,
+        isHidratation: Boolean = false,
         isDigitalDisconnect: Boolean = false
+
+
     ) {
         Log.d(TAG, "Iniciando programación de notificación para hábito: $habitoId")
         Log.d(TAG, "Hora programada: ${hora.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}")
         Log.d(TAG, "Duración: $durationMinutes minutos")
         Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
-        
+
         // Obtener el hábito de Firebase
         val db = FirebaseFirestore.getInstance()
         db.collection("habitos").document(habitoId)
@@ -100,7 +107,7 @@ class NotificationService : Service() {
                     val habito = document.toObject(Habito::class.java)
                     if (habito != null) {
                         Log.d(TAG, "Hábito encontrado. Tipo: ${habito.tipo}")
-                        
+
                         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                         val intent = Intent(context, NotificationReceiver::class.java).apply {
                             action = NotificationConstants.NOTIFICATION_ACTION
@@ -111,23 +118,24 @@ class NotificationService : Service() {
                             putExtra("is_reading", isReading)
                             putExtra("is_digital_disconnect", isDigitalDisconnect)
                             putExtra("notas_habilitadas", notasHabilitadas)
+                            putExtra("is_sleeping", isSleeping)
                         }
-                        
+
                         // Generar un ID único para la alarma basado en el ID del hábito
                         val alarmId = habitoId.hashCode()
-                        
+
                         // Configurar el tiempo de la alarma
                         val calendar = Calendar.getInstance().apply {
                             set(Calendar.HOUR_OF_DAY, hora.hour)
                             set(Calendar.MINUTE, hora.minute)
                             set(Calendar.SECOND, 0)
-                            
+
                             // Si la hora ya pasó hoy, programar para mañana
                             if (timeInMillis <= System.currentTimeMillis()) {
                                 add(Calendar.DAY_OF_YEAR, 1)
                             }
                         }
-                        
+
                         // Cancelar cualquier alarma existente para este hábito
                         val existingIntent = Intent(context, NotificationReceiver::class.java).apply {
                             action = NotificationConstants.NOTIFICATION_ACTION
@@ -141,7 +149,7 @@ class NotificationService : Service() {
                         )
                         alarmManager.cancel(existingPendingIntent)
                         Log.d(TAG, "Alarmas existentes canceladas para hábito: $habitoId")
-                        
+
                         // Programar la nueva alarma
                         val pendingIntent = PendingIntent.getBroadcast(
                             context,
@@ -149,7 +157,7 @@ class NotificationService : Service() {
                             intent,
                             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                         )
-                        
+
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             if (alarmManager.canScheduleExactAlarms()) {
                                 alarmManager.setAlarmClock(
@@ -170,7 +178,7 @@ class NotificationService : Service() {
                                 pendingIntent
                             )
                         }
-                        
+
                         Log.d(TAG, "Notificación programada exitosamente para hábito: $habitoId")
                     } else {
                         Log.e(TAG, "El hábito no existe o no está activo: $habitoId")

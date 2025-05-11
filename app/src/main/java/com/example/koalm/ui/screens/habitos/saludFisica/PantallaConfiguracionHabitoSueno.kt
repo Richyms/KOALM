@@ -1,39 +1,98 @@
 // PantallaConfiguracionHabitoSueno.kt
-package com.example.koalm.ui.screens.habitos.saludFisica
+package com.example.koalm.ui.screens
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
+import com.example.koalm.services.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.components.TimePickerDialog
+import com.example.koalm.ui.components.DurationSlider
+import com.example.koalm.ui.components.HoraField
+import com.example.koalm.ui.components.DiaCircle
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.koalm.R
-import com.example.koalm.ui.screens.habitos.saludMental.DiaCircle
-import com.example.koalm.ui.screens.habitos.saludMental.HoraField
-import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
+import com.example.koalm.model.ClaseHabito
+import com.example.koalm.model.Habito
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.ui.theme.GrisMedio
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 
+private const val TAG = "PantallaConfiguracionHabitoSueno"
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimePickerDialogLectura(
+    initialTime: LocalTime,
+    onTimePicked: (LocalTime) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val state = rememberTimePickerState(
+        initialHour = initialTime.hour,
+        initialMinute = initialTime.minute,
+        is24Hour = false
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                onTimePicked(LocalTime.of(state.hour, state.minute))
+                onDismiss()
+            }) { Text("Aceptar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        },
+        text = { TimePicker(state = state) }
+    )
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
@@ -49,6 +108,18 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
     var duracionHoras by remember { mutableStateOf(8f) }
     val rangoHoras = 1f..12f
     val horaDespertarCalculada = horaDormir.plusHours(duracionHoras.toLong())
+
+    val scope = rememberCoroutineScope()
+    val habitosRepository = remember { HabitoRepository() }
+    var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
+
+    val auth = FirebaseAuth.getInstance()
+
+    var horaRecordatorio by remember {
+        mutableStateOf(
+            LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
+        )
+    }
 
     // Lista dinámica de recordatorios
     val recordatorios = remember {
@@ -66,6 +137,107 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
     // Dialogo de agregar
     var mostrarDialogo by remember { mutableStateOf(false) }
     var nuevoRecordatorio by remember { mutableStateOf("") }
+
+    fun scheduleNotification(habito: Habito) {
+        Log.d(TAG, "Programando notificación para hábito de sueno")
+        Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+
+        val horaLocalDateTime = LocalDateTime.parse(
+            LocalDate.now().toString() + "T" + habito.hora,
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        )
+
+        val notificationService = NotificationService()
+        notificationService.scheduleNotification(
+            context = context,
+            habitoId = habito.id,
+            diasSeleccionados = habito.diasSeleccionados,
+            hora = horaLocalDateTime,
+            descripcion = habito.descripcion,
+            durationMinutes = 0,
+            isSleeping = true
+        )
+        Log.d(TAG, "Notificación programada exitosamente")
+    }
+
+    /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            scope.launch {
+                val currentUser = auth.currentUser
+                if (currentUser == null) {
+                    Log.e(TAG, "No hay usuario autenticado")
+                    Toast.makeText(
+                        context,
+                        "Debes iniciar sesión para crear un hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
+                // Crear el hábito en Firebase
+                val habito = Habito(
+                    titulo = "Sueño",
+                    descripcion = descripcion.ifEmpty { context.getString(R.string.titulo_config_sueño) },
+                    clase = ClaseHabito.FISICO,
+                    tipo = TipoHabito.SUEÑO,
+                    diasSeleccionados = diasSeleccionados,
+                    hora = horaDormir.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    duracionMinutos = (duracionHoras * 60).roundToInt(),
+                    userId = currentUser.uid
+                )
+
+                habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                    Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                    Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+
+                    // Programar notificación con el ID real del hábito
+                    val notificationService = NotificationService()
+                    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                    Log.d(TAG, "Iniciando servicio de notificaciones")
+                    context.startService(Intent(context, NotificationService::class.java))
+
+                    notificationService.scheduleNotification(
+                        context = context,
+                        habitoId = habitoId,
+                        diasSeleccionados = diasSeleccionados,
+                        hora = notificationTime,
+                        descripcion = descripcion.ifEmpty {
+                            context.getString(R.string.sleeping_notification_default_text)
+                        },
+                        durationMinutes = 0,
+                        isAlimentation = false,
+                        isSleeping = true,
+                        isHidratation = false
+                    )
+
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.success_notifications_scheduled),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navController.navigateUp()
+                }.onFailure { error ->
+                    Log.e(TAG, "Error al crear el hábito: ${error.message}")
+                    Toast.makeText(
+                        context,
+                        "Error al crear el hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(R.string.error_notification_permission),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -104,12 +276,12 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                     OutlinedTextField(
                         value = descripcion,
                         onValueChange = { descripcion = it },
-                        label = { Text(stringResource(R.string.label_descripcion)) },
-                        placeholder = { Text(stringResource(R.string.placeholder_descripcion_sueño)) },
+                        label = {Text("Añadir descripción.") },
+                        placeholder = { Text("Ej. Dormir bien transforma tu energía, tu salud y tu bienestar mental.") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Text("Frecuencia: *")
+                    Text("Elige a qué hora planeas dormir:")
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -124,7 +296,6 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                             )
                         }
                     }
-                    Text("Elige a qué hora planeas dormir: *")
 
                     // Horas de dormir y despertar
                     Row(
@@ -132,80 +303,29 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Box(modifier = Modifier.weight(1f)) {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                // Campo de hora de dormir
-                                HoraField(
-                                    hora = horaDormir,
-                                    onClick = { mostrarTimePickerInicio = true }
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                // Etiqueta de "Inicio del sueño"
-                                Text(
-                                    text = "Inicio del sueño",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            HoraField(
+                                hora = horaDormir,
+                                onClick = { mostrarTimePickerInicio = true }
+                            )
                         }
                         Box(modifier = Modifier.weight(1f)) {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                // Campo de hora de despertar
-                                HoraFieldCentrada(horaDespertarCalculada)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                // Etiqueta de "Fin del sueño"
-                                Text(
-                                    text = "Fin del sueño",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            HoraFieldCentrada(horaDespertarCalculada)
                         }
                     }
 
-
                     // Slider editable
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val (activeColor, inactiveColor) = when {
-                            duracionHoras >= 8f -> Color(0xFF376A3E) to Color(0xFF376A3E).copy(alpha = 0.3f)
-                            duracionHoras >= 6f -> Color(0xFF795A0C) to Color(0xFFF2DDB8)
-                            else -> Color(0xFF914B43) to Color(0xFFFFD3CD)
-                        }
-                        
-                        val mensajeSueño = when {
-                            duracionHoras >= 8f -> "Sueño excelente"
-                            duracionHoras >= 6f -> "Sueño regular"
-                            else -> "No te hagas tanto daño"
-                        }
-
-                        val haptics = LocalHapticFeedback.current
-
-                        Slider(
+                        DurationSlider(
                             value = duracionHoras,
-                            onValueChange = { 
-                                duracionHoras = it
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            },
+                            onValueChange = { duracionHoras = it },
                             valueRange = rangoHoras,
-                            steps = 11,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = SliderDefaults.colors(
-                                thumbColor = activeColor,
-                                activeTrackColor = activeColor,
-                                inactiveTrackColor = inactiveColor
-                            )
+                            tickEvery = 1F,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = "$mensajeSueño\n${duracionHoras.roundToInt()} horas",
+                            text = "Sueño excelente\n${duracionHoras.roundToInt()} horas",
                             style = MaterialTheme.typography.bodySmall,
-                            color = activeColor,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                     }
@@ -237,38 +357,102 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                 }
             }
 
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.height(24.dp))
 
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Button(
-                    onClick = {
+            Button(
+                onClick = {
+                    if (!diasSeleccionados.any { it }) {
                         Toast.makeText(
                             context,
-                            "Configuración de sueño guardada",
+                            context.getString(R.string.error_no_days_selected),
                             Toast.LENGTH_SHORT
                         ).show()
-                        navController.navigateUp()
-                    },
-                    modifier = Modifier
-                        .width(200.dp)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(
-                        stringResource(R.string.boton_guardar),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+                        return@Button
+                    }
+
+                    if (ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        scope.launch {
+                            val currentUser = auth.currentUser
+                            if (currentUser == null) {
+                                Log.e(TAG, "No hay usuario autenticado")
+                                Toast.makeText(
+                                    context,
+                                    "Debes iniciar sesión para crear un hábito",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@launch
+                            }
+
+                            // Crear el hábito en Firebase
+                            val habito = Habito(
+                                titulo = "Sueño",
+                                descripcion = descripcion.ifEmpty { context.getString(R.string.titulo_config_sueño) },
+                                clase = ClaseHabito.FISICO,
+                                tipo = TipoHabito.SUEÑO,
+                                diasSeleccionados = diasSeleccionados,
+                                hora = horaDormir.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                duracionMinutos = (duracionHoras * 60).roundToInt(),
+                                userId = currentUser.uid
+                            )
+
+                            habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                                Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                                Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+
+                                // Programar notificación con el ID real del hábito
+                                val notificationService = NotificationService()
+                                val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                                Log.d(TAG, "Iniciando servicio de notificaciones")
+                                context.startService(Intent(context, NotificationService::class.java))
+
+                                notificationService.scheduleNotification(
+                                    context = context,
+                                    habitoId = habitoId,
+                                    diasSeleccionados = diasSeleccionados,
+                                    hora = notificationTime,
+                                    descripcion = descripcion.ifEmpty {
+                                        context.getString(R.string.sleeping_notification_default_text)
+                                    },
+                                    durationMinutes = 0,
+                                    isAlimentation = false,
+                                    isSleeping = true,
+                                    isHidratation = false
+                                )
+
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.success_notifications_scheduled),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                navController.navigateUp()
+                            }.onFailure { error ->
+                                Log.e(TAG, "Error al crear el hábito: ${error.message}")
+                                Toast.makeText(
+                                    context,
+                                    "Error al crear el hábito",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+                modifier = Modifier
+                    .width(150.dp) // ancho
+                    .align(Alignment.CenterHorizontally) // Centrar
+            ) {
+                Text("Guardar")
             }
         }
     }
 
     if (mostrarTimePickerInicio) {
-        TimePickerDialog(
+        TimePickerDialogLectura(  // ← Usará el mismo que en Lectura
             initialTime = horaDormir,
             onTimePicked = { horaDormir = it },
             onDismiss = { mostrarTimePickerInicio = false }

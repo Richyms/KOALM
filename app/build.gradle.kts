@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.picasso)
     implementation(libs.coil.compose)
 
+
+
     // — Firebase & Firestore
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

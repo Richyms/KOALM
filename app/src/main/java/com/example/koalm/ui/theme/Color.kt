@@ -8,7 +8,7 @@ val VerdeClaro = Color(0xFF81C784)          // Efecto hover o acentos suaves
 val VerdeContenedor = Color(0xFFF6FBF2)     // Color de fondo para contenedores
 val VerdeBorde = Color(0xFFC1C8BD)          // Color para bordes de contenedores
 
-// Grises y neutros
+// Grises y neutroskl
 val GrisClaro = Color(0xFFE0E0E0)           // Fondos secundarios
 val GrisMedio = Color(0xFF9E9E9E)           // Texto o bordes inactivos
 val GrisCard = Color(0xFFF3F3F3)            // Fondo de cards

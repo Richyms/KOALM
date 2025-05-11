@@ -40,7 +40,10 @@ enum class TipoHabito {
     LECTURA,
     MEDITACION,
     DESCONEXION_DIGITAL,
-    ESCRITURA
+    ESCRITURA,
+    SUEÑO,
+    ALIMENTACION,
+    HIDRATACION
 } 
 
 

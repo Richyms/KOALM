@@ -25,14 +25,14 @@ class HabitoRepository {
     suspend fun crearHabito(habito: Habito): Result<String> = try {
         Log.d(TAG, "Iniciando creación de hábito: ${habito.titulo}")
         Log.d(TAG, "Datos del hábito: userId=${habito.userId}, tipo=${habito.tipo}, clase=${habito.clase}")
-        
+
         val habitoConFechas = habito.copy(
             fechaCreacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
             fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
         )
-        
+
         Log.d(TAG, "Datos a guardar en Firebase: ${habitoConFechas.toMap()}")
-        
+
         val docRef = habitosCollection.add(habitoConFechas.toMap()).await()
         Log.d(TAG, "Hábito creado exitosamente con ID: ${docRef.id}")
         Result.success(docRef.id)
@@ -43,15 +43,15 @@ class HabitoRepository {
 
     suspend fun obtenerHabitosActivos(userId: String): Result<List<Habito>> = try {
         Log.d(TAG, "Iniciando búsqueda de hábitos para userId: $userId")
-        
+
         val query = habitosCollection
             .whereEqualTo("userId", userId)
-        
+
         Log.d(TAG, "Ejecutando query: ${query.toString()}")
-        
+
         val snapshot = query.get().await()
         Log.d(TAG, "Query completada. Documentos encontrados: ${snapshot.documents.size}")
-        
+
         val habitos = snapshot.documents.mapNotNull { doc ->
             try {
                 val data = doc.data
@@ -90,14 +90,77 @@ class HabitoRepository {
                 null
             }
         }
-        
+
         val habitosOrdenados = habitos.sortedByDescending { it.fechaCreacion }
-        
+
         Log.d(TAG, "Procesamiento completado. Hábitos válidos: ${habitosOrdenados.size}")
         Result.success(habitosOrdenados)
     } catch (e: Exception) {
         Log.e(TAG, "Error al obtener hábitos: ${e.message}", e)
         Result.failure(e)
+    }
+    suspend fun obtenerHabitosMentales(userId: String): Result<List<Habito>> {
+        return obtenerHabitosPorClase(userId, ClaseHabito.MENTAL)
+    }
+
+    suspend fun obtenerHabitosFisicos(userId: String): Result<List<Habito>> {
+        return obtenerHabitosPorClase(userId, ClaseHabito.FISICO)
+    }
+
+    private suspend fun obtenerHabitosPorClase(userId: String, clase: ClaseHabito): Result<List<Habito>> {
+        return try {
+            Log.d(TAG, "Buscando hábitos de clase ${clase.name} para userId: $userId")
+
+            val query = habitosCollection
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("clase", clase.name)
+
+            Log.d(TAG, "Ejecutando query filtrada: ${query.toString()}")
+
+            val snapshot = query.get().await()
+            Log.d(TAG, "Query completada. Documentos encontrados: ${snapshot.documents.size}")
+
+            val habitos = snapshot.documents.mapNotNull { doc ->
+                try {
+                    val data = doc.data ?: return@mapNotNull null
+                    Log.d(TAG, "Procesando documento ${doc.id}: $data")
+
+                    Habito(
+                        id = doc.id,
+                        titulo = data["titulo"] as? String ?: "",
+                        descripcion = data["descripcion"] as? String ?: "",
+                        clase = clase, // Ya sabemos que es de esta clase
+                        tipo = try {
+                            TipoHabito.valueOf(data["tipo"] as? String ?: throw Exception("Tipo no especificado"))
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al convertir tipo: ${data["tipo"]}", e)
+                            when(clase) {
+                                ClaseHabito.MENTAL -> TipoHabito.ESCRITURA
+                                ClaseHabito.FISICO -> TipoHabito.SUEÑO
+                                else -> TipoHabito.ESCRITURA
+                            }
+                        },
+                        diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
+                        hora = data["hora"] as? String ?: "",
+                        duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
+                        notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
+                        userId = data["userId"] as? String,
+                        fechaCreacion = data["fechaCreacion"] as? String,
+                        fechaModificacion = data["fechaModificacion"] as? String
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al procesar documento ${doc.id}: ${e.message}", e)
+                    null
+                }
+            }
+
+            val habitosOrdenados = habitos.sortedByDescending { it.fechaCreacion }
+            Log.d(TAG, "Procesamiento completado. Hábitos ${clase.name} válidos: ${habitosOrdenados.size}")
+            Result.success(habitosOrdenados)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener hábitos ${clase.name}: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     suspend fun eliminarHabito(habitoId: String): Result<Unit> = try {
@@ -129,18 +192,18 @@ class HabitoRepository {
         return try {
             Log.d(TAG, "Obteniendo hábito con ID: $habitoId")
             val doc = habitosCollection.document(habitoId).get().await()
-            
+
             if (!doc.exists()) {
                 Log.e(TAG, "Hábito no encontrado: $habitoId")
                 return Result.failure(Exception("Hábito no encontrado"))
             }
-            
+
             val data = doc.data
             if (data == null) {
                 Log.e(TAG, "Datos del hábito son nulos: $habitoId")
                 return Result.failure(Exception("Datos del hábito son nulos"))
             }
-            
+
             val habito = Habito(
                 id = doc.id,
                 titulo = data["titulo"] as? String ?: "",
@@ -165,7 +228,7 @@ class HabitoRepository {
                 fechaCreacion = data["fechaCreacion"] as? String,
                 fechaModificacion = data["fechaModificacion"] as? String
             )
-            
+
             Log.d(TAG, "Hábito obtenido exitosamente: ${habito.titulo}")
             Result.success(habito)
         } catch (e: Exception) {
