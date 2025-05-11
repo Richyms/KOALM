@@ -17,6 +17,10 @@ import com.example.koalm.services.notifications.NotificationConstants
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
+import com.example.koalm.services.timers.DigitalDisconnectTimerService
+import com.example.koalm.services.timers.MeditationTimerService
+import com.example.koalm.services.timers.ReadingTimerService
+import com.example.koalm.services.timers.WritingTimerService
 
 class NotificationReceiver : BroadcastReceiver() {
     companion object {
@@ -24,24 +28,32 @@ class NotificationReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(TAG, "Notificación recibida. Action: ${intent.action}")
-        Log.d(TAG, "Extras recibidos: ${intent.extras?.keySet()?.joinToString { "$it=${intent.extras?.get(it)}" }}")
+        Log.d(TAG, "Received intent: ${intent.action}")
+        Log.d(TAG, "Extras: ${intent.extras?.keySet()?.joinToString { "$it=${intent.extras?.get(it)}" }}")
 
         when (intent.action) {
             NotificationConstants.START_TIMER_ACTION -> {
-                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
-                val isMeditation = intent.getBooleanExtra("is_meditation", false)
+                val duration = intent.getLongExtra("duration_minutes", 0)
                 val isReading = intent.getBooleanExtra("is_reading", false)
+                val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
-
+                
+                Log.d(TAG, "Starting timer with duration: $duration, isReading: $isReading, isMeditation: $isMeditation, isDigitalDisconnect: $isDigitalDisconnect")
+                
                 when {
-                    isMeditation -> startMeditationTimer(context, durationMinutes)
-                    isReading -> startReadingTimer(context, durationMinutes)
-                    isDigitalDisconnect -> startDigitalDisconnectTimer(context, durationMinutes)
-                    else -> startWritingTimer(context, durationMinutes, notasHabilitadas)
+                    isReading -> startReadingTimer(context, duration)
+                    isMeditation -> startMeditationTimer(context, duration)
+                    isDigitalDisconnect -> startDigitalDisconnectTimer(context, duration)
+                    else -> startWritingTimer(context, duration)
                 }
-                return
+            }
+            NotificationConstants.OPEN_NOTES_ACTION -> {
+                Log.d(TAG, "Opening notes")
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    putExtra("open_notes", true)
+                }
+                context.startActivity(intent)
             }
             NotificationConstants.NOTIFICATION_ACTION -> {
                 val descripcion = intent.getStringExtra("descripcion") ?: ""
@@ -92,6 +104,34 @@ class NotificationReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
             Log.d(TAG, "Canal de notificación de meditación creado")
         }
+
+        val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = NotificationConstants.START_TIMER_ACTION
+            putExtra("duration_minutes", durationMinutes)
+            putExtra("is_meditation", true)
+        }
+        
+        val startTimerPendingIntent = PendingIntent.getBroadcast(
+            context,
+            MeditationNotificationService.NOTIFICATION_ID + diaSemana,
+            startTimerIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val historyIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "historial_meditacion")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+        
+        val historyPendingIntent = PendingIntent.getActivity(
+            context,
+            MeditationNotificationService.NOTIFICATION_ID + diaSemana + 100,
+            historyIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         
         val notification = NotificationCompat.Builder(context, MeditationNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -99,6 +139,16 @@ class NotificationReceiver : BroadcastReceiver() {
             .setContentText(descripcion)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_timer,
+                context.getString(R.string.start_timer),
+                startTimerPendingIntent
+            )
+            .addAction(
+                R.drawable.ic_notification,
+                context.getString(R.string.historial_meditacion),
+                historyPendingIntent
+            )
             .build()
         
         notificationManager.notify(MeditationNotificationService.NOTIFICATION_ID + diaSemana, notification)
@@ -310,35 +360,59 @@ class NotificationReceiver : BroadcastReceiver() {
         notificationManager.notify(DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana, notification)
     }
 
-    private fun startDigitalDisconnectTimer(context: Context, durationMinutes: Long) {
+    private fun startDigitalDisconnectTimer(context: Context, duration: Long) {
+        Log.d(TAG, "Starting digital disconnect timer for $duration minutes")
         val intent = Intent(context, DigitalDisconnectTimerService::class.java).apply {
-            putExtra("duration_minutes", durationMinutes)
+            putExtra(NotificationConstants.EXTRA_DURATION, duration)
         }
-        ContextCompat.startForegroundService(context, intent)
+        try {
+            context.startForegroundService(intent)
+            Log.d(TAG, "Digital disconnect timer service started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting digital disconnect timer service", e)
+        }
     }
 
-    private fun startWritingTimer(context: Context, durationMinutes: Long, notasHabilitadas: Boolean) {
+    private fun startWritingTimer(context: Context, duration: Long) {
+        Log.d(TAG, "Starting writing timer for $duration minutes")
         val intent = Intent(context, WritingTimerService::class.java).apply {
-            putExtra("duration_minutes", durationMinutes)
-            putExtra("notas_habilitadas", notasHabilitadas)
-            putExtra("is_reading", true)
+            putExtra(NotificationConstants.EXTRA_DURATION, duration)
         }
-        ContextCompat.startForegroundService(context, intent)
+        try {
+            context.startForegroundService(intent)
+            Log.d(TAG, "Writing timer service started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting writing timer service", e)
+        }
     }
 
-    private fun startMeditationTimer(context: Context, durationMinutes: Long) {
-        val intent = Intent(context, WritingTimerService::class.java).apply {
-            putExtra("duration_minutes", durationMinutes)
-            putExtra("is_meditation", true)
+    private fun startMeditationTimer(context: Context, duration: Long) {
+        Log.d(TAG, "Starting meditation timer for $duration minutes")
+        val intent = Intent(context, MeditationTimerService::class.java).apply {
+            putExtra(NotificationConstants.EXTRA_DURATION, duration)
         }
-        ContextCompat.startForegroundService(context, intent)
+        try {
+            context.startForegroundService(intent)
+            Log.d(TAG, "Meditation timer service started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting meditation timer service", e)
+        }
     }
 
-    private fun startReadingTimer(context: Context, durationMinutes: Long) {
-        val intent = Intent(context, WritingTimerService::class.java).apply {
-            putExtra("duration_minutes", durationMinutes)
-            putExtra("is_reading", true)
+    private fun startReadingTimer(context: Context, duration: Long) {
+        Log.d(TAG, "Starting reading timer for $duration minutes")
+        try {
+            val intent = Intent(context, ReadingTimerService::class.java).apply {
+                putExtra("duration_minutes", duration)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+            Log.d(TAG, "Reading timer service started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting reading timer service", e)
         }
-        ContextCompat.startForegroundService(context, intent)
     }
 } 

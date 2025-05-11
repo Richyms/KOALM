@@ -156,7 +156,7 @@ fun PantallaSaludMental(navController: NavHostController) {
         ) {
             // Sección de plantilla de hábitos
             Text(
-                text = "Plantilla de hábitos",
+                text = "Crea tu hábito",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)

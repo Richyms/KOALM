@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
-class MeditationNotificationService : NotificationBase {
+class MeditationNotificationService : NotificationBase() {
     companion object {
         private const val TAG = "KOALM_NOTIFICATIONS"
         const val NOTIFICATION_ID = 3
@@ -25,6 +25,7 @@ class MeditationNotificationService : NotificationBase {
     override val channelDescription = R.string.meditation_notification_channel_description
     override val defaultTitle = R.string.meditation_notification_title
     override val defaultText = R.string.meditation_notification_default_text
+    override val notificationId = NOTIFICATION_ID
 
     override fun scheduleNotification(
         context: Context,
@@ -78,6 +79,8 @@ class MeditationNotificationService : NotificationBase {
                     putExtra("is_reading", false)
                     putExtra("is_digital_disconnect", false)
                     putExtra("notas_habilitadas", false)
+                    putExtra("notification_title", context.getString(defaultTitle))
+                    putExtra("notification_action_button", context.getString(R.string.notification_start_timer))
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -179,6 +182,22 @@ class MeditationNotificationService : NotificationBase {
             Log.d(TAG, "MeditationNotificationService: Cancelación de notificaciones completada exitosamente")
         } catch (e: Exception) {
             Log.e(TAG, "MeditationNotificationService: Error al cancelar notificaciones: ${e.message}", e)
+        }
+    }
+
+    override fun createNotificationIntent(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long,
+        additionalData: Map<String, Any>
+    ): Intent {
+        return super.createNotificationIntent(context, descripcion, diaSemana, durationMinutes, additionalData).apply {
+            putExtra("is_meditation", true)
+            putExtra("is_reading", false)
+            putExtra("is_digital_disconnect", false)
+            putExtra("notification_title", context.getString(defaultTitle))
+            putExtra("notification_action_button", context.getString(R.string.notification_start_timer))
         }
     }
 } 

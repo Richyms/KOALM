@@ -15,12 +15,33 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 
-class DigitalDisconnectNotificationService : NotificationBase {
+class DigitalDisconnectNotificationService : NotificationBase() {
+    companion object {
+        const val NOTIFICATION_ID = 4
+    }
+
     override val channelId = "desconexion_digital_habito"
     override val channelName = R.string.digital_disconnect_notification_channel_name
     override val channelDescription = R.string.digital_disconnect_notification_channel_description
     override val defaultTitle = R.string.digital_disconnect_notification_title
     override val defaultText = R.string.digital_disconnect_notification_default_text
+    override val notificationId = NOTIFICATION_ID
+
+    override fun createNotificationIntent(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int,
+        durationMinutes: Long,
+        additionalData: Map<String, Any>
+    ): Intent {
+        return super.createNotificationIntent(context, descripcion, diaSemana, durationMinutes, additionalData).apply {
+            putExtra("is_meditation", false)
+            putExtra("is_reading", false)
+            putExtra("is_digital_disconnect", true)
+            putExtra("notification_title", context.getString(defaultTitle))
+            putExtra("notification_action_button", context.getString(R.string.notification_disconnect_button))
+        }
+    }
 
     override fun scheduleNotification(
         context: Context,
@@ -63,6 +84,10 @@ class DigitalDisconnectNotificationService : NotificationBase {
                     putExtra("dia_semana", index)
                     putExtra("duration_minutes", durationMinutes)
                     putExtra("is_digital_disconnect", true)
+                    putExtra("is_meditation", false)
+                    putExtra("is_reading", false)
+                    putExtra("notification_title", context.getString(defaultTitle))
+                    putExtra("notification_action_button", context.getString(R.string.notification_disconnect_button))
                 }
                 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -120,9 +145,5 @@ class DigitalDisconnectNotificationService : NotificationBase {
                 alarmManager.cancel(pendingIntent)
             }
         }
-    }
-
-    companion object {
-        const val NOTIFICATION_ID = 4000 // ID único para evitar conflictos con otros servicios
     }
 } 

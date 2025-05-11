@@ -1,4 +1,4 @@
-package com.example.koalm.services
+package com.example.koalm.services.timers
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,24 +11,16 @@ import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import com.example.koalm.MainActivity
 import com.example.koalm.R
 import com.example.koalm.services.notifications.NotificationConstants
 import com.example.koalm.services.notifications.WritingNotificationService
-import java.util.concurrent.TimeUnit
 
 class WritingTimerService : Service() {
     companion object {
-        private const val CHANNEL_ID = "escritura_timer"
-        private const val NOTIFICATION_ID = 200
-        private const val TAG = "KOALM_TIMER"
-        const val TIMER_ACTION = "com.example.koalm.TIMER_ACTION"
-        const val START_TIMER_ACTION = "com.example.koalm.START_TIMER_ACTION"
-        const val TIMER_UPDATE_ACTION = "com.example.koalm.TIMER_UPDATE_ACTION"
-        const val CHECK_TIMER_ACTION = "com.example.koalm.CHECK_TIMER_ACTION"
-        const val EXTRA_REMAINING_TIME = "remaining_time"
-        const val EXTRA_IS_ACTIVE = "is_active"
+        private const val CHANNEL_ID = NotificationConstants.WRITING_CHANNEL_ID
+        private const val NOTIFICATION_ID = NotificationConstants.NOTIFICATION_ID
+        private const val TAG = "KOALM_WRITING_TIMER"
     }
 
     private var timer: CountDownTimer? = null
@@ -37,18 +29,18 @@ class WritingTimerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.e(TAG, "onCreate: Servicio de temporizador creado")
+        Log.d(TAG, "WritingTimerService creado")
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.e(TAG, "onStartCommand: Iniciando servicio de temporizador")
+        Log.d(TAG, "onStartCommand llamado")
         
-        durationMinutes = intent?.getLongExtra("duration_minutes", 0) ?: 0
-        notasHabilitadas = intent?.getBooleanExtra("notas_habilitadas", false) ?: false
+        durationMinutes = intent?.getLongExtra(NotificationConstants.EXTRA_DURATION, 0) ?: 0
+        notasHabilitadas = intent?.getBooleanExtra(NotificationConstants.EXTRA_NOTES_ENABLED, false) ?: false
         
         if (durationMinutes <= 0) {
-            Log.e(TAG, "onStartCommand: Duración inválida: $durationMinutes")
+            Log.e(TAG, "Duración inválida: $durationMinutes")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -64,7 +56,7 @@ class WritingTimerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         timer?.cancel()
-        Log.e(TAG, "onDestroy: Servicio detenido")
+        Log.d(TAG, "Servicio detenido")
     }
 
     private fun createNotificationChannel() {
@@ -81,7 +73,7 @@ class WritingTimerService : Service() {
             }
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
-            Log.e(TAG, "createNotificationChannel: Canal de notificación creado")
+            Log.d(TAG, "Canal de notificación creado: $CHANNEL_ID")
         }
     }
 
@@ -102,8 +94,8 @@ class WritingTimerService : Service() {
         val activityIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             action = NotificationConstants.START_TIMER_ACTION
-            putExtra("duration_minutes", durationMinutes)
-            putExtra("notas_habilitadas", notasHabilitadas)
+            putExtra(NotificationConstants.EXTRA_DURATION, durationMinutes)
+            putExtra(NotificationConstants.EXTRA_NOTES_ENABLED, notasHabilitadas)
         }
         
         val pendingIntent = PendingIntent.getActivity(
@@ -124,7 +116,7 @@ class WritingTimerService : Service() {
     }
 
     private fun startTimer() {
-        Log.e(TAG, "startTimer: Iniciando temporizador de $durationMinutes minutos")
+        Log.d(TAG, "Iniciando temporizador de $durationMinutes minutos")
         
         timer?.cancel()
         timer = object : CountDownTimer(durationMinutes * 60 * 1000, 1000) {
@@ -135,7 +127,7 @@ class WritingTimerService : Service() {
             }
 
             override fun onFinish() {
-                Log.e(TAG, "onFinish: Temporizador finalizado")
+                Log.d(TAG, "Temporizador finalizado")
                 showCompletionNotification()
                 stopSelf()
             }
@@ -214,6 +206,6 @@ class WritingTimerService : Service() {
             notificationManager.notify(NOTIFICATION_ID + 1, builder.build())
         }
         
-        Log.e(TAG, "showCompletionNotification: Notificación de finalización mostrada")
+        Log.d(TAG, "Notificación de finalización mostrada")
     }
 } 
