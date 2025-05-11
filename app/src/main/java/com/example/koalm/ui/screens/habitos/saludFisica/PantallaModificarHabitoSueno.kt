@@ -1,4 +1,4 @@
-// PantallaConfiguracionHabitoSueno.kt
+/*  PantallaModificarHabitoSueno.kt  */
 package com.example.koalm.ui.screens.habitos.saludFisica
 
 import android.widget.Toast
@@ -36,7 +36,7 @@ import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
+fun PantallaModificarHabitoSueno(navController: NavHostController) {
     val context = LocalContext.current
 
     var descripcion by remember { mutableStateOf("") }
@@ -70,7 +70,7 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Configurar hábito de sueño") },
+                title = { Text("Modificar hábito de sueño") },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -178,7 +178,7 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                             duracionHoras >= 6f -> Color(0xFF795A0C) to Color(0xFFF2DDB8)
                             else -> Color(0xFF914B43) to Color(0xFFFFD3CD)
                         }
-                        
+
                         val mensajeSueño = when {
                             duracionHoras >= 8f -> "Sueño excelente"
                             duracionHoras >= 6f -> "Sueño regular"
@@ -189,7 +189,7 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
 
                         Slider(
                             value = duracionHoras,
-                            onValueChange = { 
+                            onValueChange = {
                                 duracionHoras = it
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             },
@@ -305,29 +305,5 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                 }
             }
         )
-    }
-}
-@Composable
-fun HoraFieldCentrada(hora: LocalTime) {
-    Surface(
-        tonalElevation = 0.dp,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
     }
 }
