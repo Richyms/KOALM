@@ -376,3 +376,9 @@ fun PantallaModificarHabitoMeditacion(navController: NavHostController) {
         )
     }
 }
+private fun formatearDuracion(min: Int): String = when {
+    min < 60           -> "$min min"
+    min == 60          -> "1 hora"
+    min % 60 == 0      -> "${min/60} h"
+    else               -> "${min/60} h ${min%60} min"
+}
