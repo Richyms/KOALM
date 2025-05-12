@@ -1,3 +1,4 @@
+/*PantallaModificarHabitoDesconexionDigital.kt*/
 package com.example.koalm.ui.screens.habitos.saludMental
 
 import android.Manifest
@@ -56,7 +57,7 @@ private const val TAG = "PantallaConfiguracionDesconexion"
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
+fun PantallaModificarDesconexionDigital(navController: NavHostController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val habitosRepository = remember { HabitoRepository() }
@@ -113,11 +114,11 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
                     habitosRepository.crearHabito(habito).fold(
                         onSuccess = { habitoId ->
                             Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
-                            
+
                             // Programar notificaciones
                             val notificationService = DigitalDisconnectNotificationService()
                             val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
-                            
+
                             notificationService.scheduleNotification(
                                 context = context,
                                 diasSeleccionados = diasSeleccionados,
@@ -316,188 +317,6 @@ private fun Etiqueta(texto: String) = Text(
     style = MaterialTheme.typography.titleMedium,
     fontWeight = FontWeight.Medium
 )
-
-/**
- * Muestra un día en forma de círculo seleccionable.
- */
-@Composable
-fun DiaCircleDesconexion(label: String, selected: Boolean, onClick: () -> Unit) {
-    val bg = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-    val textColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Box(
-        Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .border(1.dp, borderColor, CircleShape)
-            .background(bg)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(label, color = textColor, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
-/**
- * Campo que muestra la hora elegida y abre el `TimePickerDialog`.
- */
-@Composable
-fun HoraFieldDesconexion(hora: LocalTime, onClick: () -> Unit) {
-    Surface(
-        tonalElevation = 0.dp,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.Default.Schedule, contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-/* ──────────────────────────  SLIDER «PIXEL STYLE»  ─────────────────────────── */
-
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@Composable
-fun DurationSliderDesconexion(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float>,
-    tickEvery: Int,
-    modifier: Modifier = Modifier,
-    trackHeight: Dp = 16.dp,
-    thumbWidth: Dp = 4.dp,
-) {
-    val density = LocalDensity.current
-    val haptics = LocalHapticFeedback.current
-
-    BoxWithConstraints(modifier = modifier) {
-        val maxWidthPx = with(density) { maxWidth.toPx() }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(trackHeight + 24.dp)
-        ) {
-            // Track
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(trackHeight)
-                    .clip(RoundedCornerShape(trackHeight / 2))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.Center)
-            )
-
-            // Ticks
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(trackHeight)
-                    .align(Alignment.Center),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val tickCount =
-                    ((valueRange.endInclusive - valueRange.start) / tickEvery).toInt() + 1
-                repeat(tickCount) {
-                    Box(
-                        Modifier
-                            .size(trackHeight * 0.3f)
-                            .clip(CircleShape)
-                            .background(
-                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                            )
-                    )
-                }
-            }
-
-            // Slider "real" (transparente, continuo)
-            Slider(
-                value = value,
-                onValueChange = {
-                    onValueChange(it)
-                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                },
-                valueRange = valueRange,
-                steps = 0, // continuo
-                colors = SliderDefaults.colors(
-                    activeTrackColor = Color.Transparent,
-                    inactiveTrackColor = Color.Transparent,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                    thumbColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxSize()
-            )
-
-            // Thumb visual ligado a la posición actual
-            val progress = (value - valueRange.start) /
-                    (valueRange.endInclusive - valueRange.start)
-            val thumbOffset = with(density) { (progress * maxWidthPx).toDp() }
-
-            Box(
-                Modifier
-                    .width(thumbWidth)
-                    .height(trackHeight + 24.dp)
-                    .align(Alignment.CenterStart)
-                    .offset(x = thumbOffset)
-                    .clip(RoundedCornerShape(thumbWidth))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        }
-    }
-}
-
-/* ────────────────────────────  TIME PICKER  ──────────────────────────────── */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePickerDialogDesconexion(
-    initialTime: LocalTime,
-    onTimePicked: (LocalTime) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val state = rememberTimePickerState(
-        initialTime.hour, initialTime.minute, is24Hour = false
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                onTimePicked(LocalTime.of(state.hour, state.minute))
-                onDismiss()
-            }) { Text(stringResource(android.R.string.ok).uppercase()) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel).uppercase())
-            }
-        },
-        text = { TimePicker(state, modifier = Modifier.fillMaxWidth()) }
-    )
-}
-
-/* ────────────────────────────  HELPERS  ─────────────────────────────────── */
 
 private fun formatearDuracion(min: Int): String = when {
     min < 60 -> "$min min"
