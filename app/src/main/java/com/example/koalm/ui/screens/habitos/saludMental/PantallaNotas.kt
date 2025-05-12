@@ -3,6 +3,7 @@ package com.example.koalm.ui.screens.habitos.saludMental
 
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
@@ -19,11 +20,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,23 +33,28 @@ import com.example.koalm.R
 import com.example.koalm.model.Nota
 import com.example.koalm.services.timers.WritingTimerService
 import com.example.koalm.services.notifications.NotificationConstants
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import java.text.SimpleDateFormat
-
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import com.example.koalm.ui.theme.VerdePrincipal
 import com.example.koalm.ui.viewmodels.TimerViewModel
-
-import java.util.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaNotas(navController: NavHostController) {
     val context = LocalContext.current
     var notas by remember { mutableStateOf(listOf<Nota>()) }
+    
+    // Cargar la duración guardada del temporizador (por defecto 15 minutos)
+    val sharedPreferences = remember { context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE) }
+    val defaultDuration = 15L * 60 * 1000 // 15 minutos en milisegundos
+    val timerDuration = remember { 
+        mutableStateOf(sharedPreferences.getLong("writing_timer_duration", defaultDuration))
+    }
+    
     var mostrarDialogoNuevaNota by remember { mutableStateOf(false) }
     var notaAEditar by remember { mutableStateOf<Nota?>(null) }
     val timerViewModel: TimerViewModel = viewModel()
@@ -191,7 +197,7 @@ fun PantallaNotas(navController: NavHostController) {
                     onClick = {
                         val intent = Intent(context, WritingTimerService::class.java).apply {
                             action = NotificationConstants.START_TIMER_ACTION
-                            putExtra("duration_minutes", 1L)  // 1 minuto
+                            putExtra(NotificationConstants.EXTRA_DURATION, (timerDuration.value / (60 * 1000)).toLong())  // Convertir a minutos
                         }
                         
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -200,8 +206,8 @@ fun PantallaNotas(navController: NavHostController) {
                             context.startService(intent)
                         }
                         
-                        // Iniciar el temporizador en el ViewModel
-                        timerViewModel.start(60_000)  // 1 minuto en milisegundos
+                        // Iniciar el temporizador en el ViewModel con la duración guardada
+                        timerViewModel.start(timerDuration.value)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = VerdePrincipal,
@@ -209,12 +215,12 @@ fun PantallaNotas(navController: NavHostController) {
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Schedule,
+                        imageVector = Icons.Filled.Schedule,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Iniciar temporizador")
+                    Text("Iniciar temporizador (${timerDuration.value / (60 * 1000)} min)")
                 }
 
                 Text(
@@ -342,7 +348,7 @@ private fun DialogoEditarNota(
 ) {
     var titulo by remember { mutableStateOf(nota.titulo) }
     var contenido by remember { mutableStateOf(nota.contenido) }
-    val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+    val fechaActual = SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -387,12 +393,6 @@ private fun DialogoEditarNota(
     )
 }
 
-private fun formatTime(millis: Long): String {
-    val minutes = millis / 60_000
-    val seconds = (millis % 60_000) / 1_000
-    return String.format("%02d:%02d", minutes, seconds)
-}
-
 @Composable
 private fun DialogoNuevaNota(
     onDismiss: () -> Unit,
@@ -400,7 +400,7 @@ private fun DialogoNuevaNota(
 ) {
     var titulo by remember { mutableStateOf("") }
     var contenido by remember { mutableStateOf("") }
-    val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+    val fechaActual = SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
     val auth = FirebaseAuth.getInstance()
     val userId = auth.currentUser?.uid
 
@@ -447,4 +447,10 @@ private fun DialogoNuevaNota(
             }
         }
     )
+}
+
+private fun formatTime(millis: Long): String {
+    val minutes = millis / 60_000
+    val seconds = (millis % 60_000) / 1_000
+    return String.format("%02d:%02d", minutes, seconds)
 }
