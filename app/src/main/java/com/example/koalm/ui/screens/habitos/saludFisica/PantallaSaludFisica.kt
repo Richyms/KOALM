@@ -63,7 +63,7 @@ fun PantallaSaludFisica(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Plantilla de hábitos",
+                text = "Configura tus hábitos",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)

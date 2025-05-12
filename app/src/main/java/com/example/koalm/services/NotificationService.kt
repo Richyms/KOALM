@@ -11,7 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import com.example.koalm.R
-import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitosPredeterminados
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.services.notifications.MeditationNotificationService
@@ -97,7 +97,7 @@ class NotificationService : Service() {
             .get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
-                    val habito = document.toObject(Habito::class.java)
+                    val habito = document.toObject(HabitosPredeterminados::class.java)
                     if (habito != null) {
                         Log.d(TAG, "Hábito encontrado. Tipo: ${habito.tipo}")
                         

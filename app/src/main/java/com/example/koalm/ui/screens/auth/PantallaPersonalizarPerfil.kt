@@ -206,7 +206,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                         apellido   = apellidos,
                         nacimiento = fechasec,
                         peso       = String.format(Locale.US, "%.2f", peso.toFloatOrNull() ?: 0f).toFloat(),
-                        altura     = altura.toIntOrNull(),
+                        altura     = altura.toIntOrNull()?.takeIf { it in 1..999 },
                         genero     = generoSeleccionado
                     )
 
@@ -565,10 +565,13 @@ fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
 
 @Composable
 fun CampoAltura(value: String, onValueChange: (String) -> Unit) {
-    val filtered = value.filter { it.isDigit() }
+    val filtered = value.filter { it.isDigit() }.take(3)  // Solo dígitos, máximo 3 caracteres
     OutlinedTextField(
         value = filtered,
-        onValueChange = { onValueChange(it.filter { c -> c.isDigit() }) },
+        onValueChange = {
+            val newValue = it.filter { c -> c.isDigit() }.take(3)
+            onValueChange(newValue)
+        },
         label = { Text("Altura *") },
         modifier = Modifier
             .fillMaxWidth()

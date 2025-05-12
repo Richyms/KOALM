@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitosPredeterminados
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.ui.components.BarraNavegacionInferior
@@ -51,7 +51,7 @@ fun PantallaSaludMental(navController: NavHostController) {
     val auth = FirebaseAuth.getInstance()
     
     // Estado de la UI
-    var habitosActivos by remember { mutableStateOf<List<Habito>>(emptyList()) }
+    var habitosActivos by remember { mutableStateOf<List<HabitosPredeterminados>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -103,22 +103,22 @@ fun PantallaSaludMental(navController: NavHostController) {
     }
 
     val habitosPlantilla = listOf(
-        Habito(
+        HabitosPredeterminados(
             titulo = "Lectura",
             descripcion = "Registra y administra tus lecturas.",
             tipo = TipoHabito.LECTURA
         ),
-        Habito(
+        HabitosPredeterminados(
             titulo = "Meditación",
             descripcion = "Tomate un tiempo para ti y tu mente.",
             tipo = TipoHabito.MEDITACION
         ),
-        Habito(
+        HabitosPredeterminados(
             titulo = "Desconexión digital",
             descripcion = "Re-vive fuera de tu pantalla.",
             tipo = TipoHabito.DESCONEXION_DIGITAL
         ),
-        Habito(
+        HabitosPredeterminados(
             titulo = "Escritura",
             descripcion = "Tomate un tiempo para ti y tu cuaderno",
             tipo = TipoHabito.ESCRITURA
@@ -156,7 +156,7 @@ fun PantallaSaludMental(navController: NavHostController) {
         ) {
             // Sección de plantilla de hábitos
             Text(
-                text = "Crea tu hábito",
+                text = "Configura tus hábitos",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -220,7 +220,7 @@ fun PantallaSaludMental(navController: NavHostController) {
 }
 
 @Composable
-private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController) {
+private fun HabitoPlantillaCard(habito: HabitosPredeterminados, navController: NavHostController) {
     val context = LocalContext.current
     
     Card(
@@ -243,6 +243,10 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
                         launchSingleTop = true
                         restoreState = true
                     }
+
+                    TipoHabito.SUEÑO -> TODO()
+                    TipoHabito.ALIMENTACION -> TODO()
+                    TipoHabito.HIDRATACION -> TODO()
                 }
             } catch (e: Exception) {
                 Log.e("PantallaSaludMental", "Error al navegar: ${e.message}", e)
@@ -293,7 +297,7 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
 
 @Composable
 private fun HabitoActivoCard(
-    habito: Habito, 
+    habito: HabitosPredeterminados,
     navController: NavHostController,
     onHabitDeleted: () -> Unit
 ) {
@@ -324,6 +328,10 @@ private fun HabitoActivoCard(
                         launchSingleTop = true
                         restoreState = true
                     }
+
+                    TipoHabito.SUEÑO -> TODO()
+                    TipoHabito.ALIMENTACION -> TODO()
+                    TipoHabito.HIDRATACION -> TODO()
                 }
             } catch (e: Exception) {
                 Log.e("PantallaSaludMental", "Error al navegar: ${e.message}", e)
@@ -353,6 +361,9 @@ private fun HabitoActivoCard(
                     TipoHabito.LECTURA -> Icons.Default.MenuBook
                     TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
                     TipoHabito.ESCRITURA -> Icons.Default.Edit
+                    TipoHabito.SUEÑO -> TODO()
+                    TipoHabito.ALIMENTACION -> TODO()
+                    TipoHabito.HIDRATACION -> TODO()
                 },
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary

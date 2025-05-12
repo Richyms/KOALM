@@ -42,7 +42,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitosPredeterminados
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.notifications.MeditationNotificationService
@@ -52,6 +52,9 @@ import kotlinx.coroutines.launch
 /* foundation */
 // import androidx.compose.foundation.Canvas          // ←  dibujar el track
 import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
+import com.example.koalm.model.ProgresoDiario
+import com.google.firebase.firestore.FirebaseFirestore
+import java.time.LocalDate
 
 //@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +66,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
+    val userEmail = FirebaseAuth.getInstance().currentUser?.email
     
     //------------------------------ Estados -------------------------------------
     var descripcion         by remember { mutableStateOf("") }
@@ -103,7 +107,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                 }
 
                 // Crear el hábito en Firebase
-                val habito = Habito(
+                val habito = HabitosPredeterminados(
                     titulo = "Meditación",
                     descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
                     clase = ClaseHabito.MENTAL,
@@ -144,6 +148,42 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             "ejercicio_respiracion" to ejerciciorespiracionHabilitados
                         )
                     )
+                    // Obtener la referencia al usuario actual en Firebase Authentication
+                    val db = FirebaseFirestore.getInstance()
+                    val userHabitsRef = userEmail?.let {
+                        db.collection("habitos").document(it)
+                            .collection("predeterminados")
+                    }
+
+                    // Crear el objeto de progreso
+                    val progreso = ProgresoDiario(
+                        realizados = 0,
+                        completado = false,
+                        totalRecordatoriosPorDia = 1
+                    )
+
+                    // Referenciar al documento de progreso usando la fecha actual como ID
+                    val progresoRef = userHabitsRef?.document(habitoId)
+                        ?.collection("progreso")
+                        ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                    // Guardar en Firestore usando el .toMap()
+                    progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                        Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                        Toast.makeText(
+                            context,
+                            "Progreso diario guardado",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        navController.navigateUp()
+                    }?.addOnFailureListener { e ->
+                        Toast.makeText(
+                            context,
+                            "Error al guardar el progreso: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        navController.navigateUp()
+                    }
 
                     Toast.makeText(
                         context,

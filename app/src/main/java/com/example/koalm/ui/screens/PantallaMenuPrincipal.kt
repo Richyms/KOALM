@@ -1,5 +1,6 @@
 package com.example.koalm.ui.screens
 import android.content.Context
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.core.content.edit
@@ -17,8 +18,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.PhoneDisabled
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,10 +57,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.koalm.data.HabitosRepository
+import com.example.koalm.model.HabitosPredeterminados
 import com.example.koalm.model.ProgresoDiario
+import com.example.koalm.model.TipoHabito
 import com.example.koalm.ui.components.obtenerIconoPorNombre
 import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 
 
@@ -72,6 +84,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
     // Obtener el nombre de nuestro usuaio KOOL
     val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
     val db = FirebaseFirestore.getInstance()
     var username by remember { mutableStateOf("") }
 
@@ -90,7 +103,6 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
             }
         }
     }
-
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -140,7 +152,9 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
                 SeccionTitulo("Mis hábitos")
                 if (usuarioEmail != null) {
-                    DashboardScreen(usuarioEmail = usuarioEmail)
+                    if (userId != null) {
+                        DashboardScreen(usuarioEmail = usuarioEmail, userId = userId)
+                    }
                 }
 
                 SeccionTitulo("Estadísticas")
@@ -344,17 +358,22 @@ fun HabitoCarruselItem(titulo: String, descripcion: String, imagenId: Int) {
 @Composable
 fun DashboardScreen(
     usuarioEmail: String,
+    userId: String,
     viewModel: DashboardViewModel = viewModel()
 ) {
     val habitos = viewModel.habitos
+    val habitosPre = viewModel.habitosPre
     val cargando = viewModel.cargando
+
+    Log.d("HABITOS_DEBUG", "Cantidad de hábitos personalizados ${habitos.size}")
+    Log.d("HABITOS_DEBUG", "Cantidad de hábitos predeterminados: ${habitosPre.size}")
 
     var tipoSeleccionado by remember { mutableStateOf("todos") }
     val tipos = listOf("todos", "personalizado", "físico", "mental")
 
     // Cargar los hábitos
-    LaunchedEffect(usuarioEmail) {
-        viewModel.cargarHabitos(usuarioEmail)
+    LaunchedEffect(usuarioEmail, userId) {
+        viewModel.cargarHabitos(usuarioEmail, userId)
     }
 
         // Filtros de tipo
@@ -384,36 +403,53 @@ fun DashboardScreen(
             // Mostrar un indicador de carga mientras se están obteniendo los datos
             CircularProgressIndicator()
         } else {
-            // Filtrar los hábitos según el tipo seleccionado
             val diaActual = (LocalDate.now().dayOfWeek.value + 6) % 7
+            val tipoFiltrado = tipoSeleccionado.lowercase()
 
-            val habitosFiltrados = habitos.filter { habito ->
-                val tipoCoincide = tipoSeleccionado == "todos" || habito.tipo.equals(tipoSeleccionado, ignoreCase = true)
-
+            // Filtrar hábitos personalizados
+            val habitosFiltradosPersonalizados = habitos.filter { habito ->
+                val tipoCoincide = tipoFiltrado == "todos" || habito.clase.name.lowercase() == tipoFiltrado
                 val frecuencia = habito.frecuencia
-
-                val frecuenciaEsDiaria = frecuencia == null || frecuencia.all { it == false }
-
-                val diaActivo = frecuenciaEsDiaria || (frecuencia?.getOrNull(diaActual) == true)
+                val frecuenciaEsDiaria = frecuencia == null || frecuencia.all { !it }
+                val diaActivo = frecuenciaEsDiaria || frecuencia?.getOrNull(diaActual) == true
 
                 tipoCoincide && diaActivo
             }
 
-            // Mostrar los hábitos filtrados
-            if (habitosFiltrados.isNotEmpty()) {
-                habitosFiltrados.forEach { habito ->
-                    HabitoCardPersonalizado (
+            // Filtrar hábitos predeterminados
+            val habitosFiltradosPredeterminados = habitosPre.filter { habito ->
+                val tipoCoincide = tipoFiltrado == "todos" || habito.clase.name.lowercase() == tipoFiltrado
+                val frecuencia = habito.diasSeleccionados
+                val diaActivo = frecuencia.getOrNull(diaActual) == true
+
+                tipoCoincide && diaActivo
+            }
+
+            val hayHabitos = habitosFiltradosPersonalizados.isNotEmpty() || habitosFiltradosPredeterminados.isNotEmpty()
+
+            if (hayHabitos) {
+                habitosFiltradosPersonalizados.forEach { habito ->
+                    HabitoCardPersonalizado(
                         habito = habito,
                         progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
                         onIncrementar = {
-                            viewModel.incrementarProgreso(usuarioEmail,habito)
+                            viewModel.incrementarProgreso(usuarioEmail, habito)
+                        }
+                    )
+                }
+
+                habitosFiltradosPredeterminados.forEach { habito ->
+                    HabitoCardPredeterminado(
+                        habito = habito,
+                        progreso = viewModel.progresosPre[habito.id],
+                        onIncrementar = {
+                            viewModel.incrementarProgresoPre(usuarioEmail, habito)
                         }
                     )
                 }
             } else {
-                // Mensaje si no hay hábitos para mostrar
                 Text(
-                    text = "No tienes hábitos de tipo ${tipoSeleccionado.lowercase()}",
+                    text = "No tienes hábitos de tipo ${tipoFiltrado}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
@@ -471,7 +507,8 @@ fun HabitoCardPersonalizado(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .background(colorFondo.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp))
+            .border(1.dp, colorIcono, RoundedCornerShape(16.dp))
+            .background(colorFondo.copy(alpha = 0.2f), shape = RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
         Row(
@@ -566,4 +603,205 @@ fun HabitoCardPersonalizado(
     }
 }
 
+@Composable
+fun HabitoCardPredeterminado(
+    habito: HabitosPredeterminados,
+    progreso: ProgresoDiario?,
+    onIncrementar: () -> Unit
+) {
+
+    val realizados = progreso?.realizados ?: 0
+    val completado = progreso?.completado ?: false
+    val totalRecordatoriosxDia = progreso?.totalRecordatoriosPorDia ?: 0
+
+    // Progreso del hábito visualmente
+    val progresoPorcentaje = if (totalRecordatoriosxDia == 1) {
+        if (completado) 1f else 0f
+    } else {
+        realizados.toFloat() / totalRecordatoriosxDia
+    }
+
+    var progresoAnimado by remember { mutableFloatStateOf(progresoPorcentaje) }
+
+    LaunchedEffect(progresoPorcentaje) {
+        progresoAnimado = progresoPorcentaje
+    }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progresoAnimado,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    // Visualizar recordatorios
+    val progresoText = if (realizados >= 1) "Completado: 1/1" else "Realizado: 0/1"
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp))
+            .background(VerdeContenedor.copy(alpha = 0.3f), shape = RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+                Icon(
+                    imageVector = when (habito.tipo) {
+                        TipoHabito.MEDITACION -> Icons.Default.SelfImprovement
+                        TipoHabito.LECTURA -> Icons.Default.MenuBook
+                        TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
+                        TipoHabito.ESCRITURA -> Icons.Default.Edit
+                        TipoHabito.SUEÑO -> TODO()
+                        TipoHabito.ALIMENTACION -> TODO()
+                        TipoHabito.HIDRATACION -> TODO()
+                    },
+                    contentDescription = "Icono del Hábito",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .size(33.dp)
+                        .padding(end = 12.dp)
+                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = habito.titulo,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = progresoText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = habito.hora,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            val diasDeLaSemana = listOf("L", "M", "M", "J", "V", "S", "D")
+                            Text(
+                                text = habito.diasSeleccionados.mapIndexed { index, seleccionado ->
+                                    if (seleccionado) diasDeLaSemana[index] else ""
+                                }.filter { it.isNotEmpty() }.joinToString(""),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Timer,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = formatearDuracion(habito.duracionMinutos),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+            if (completado) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    modifier = Modifier
+                        .size(40.dp),
+                    contentDescription = "Completado",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.Transparent, shape = CircleShape)
+                        .drawBehind {
+                            val strokeWidth = 4.dp.toPx()
+                            val radius = size.minDimension / 2 - strokeWidth / 2
+
+                            // Fondo base gris
+                            drawCircle(
+                                color = Color.LightGray,
+                                radius = radius,
+                                center = center,
+                                style = Stroke(width = strokeWidth)
+                            )
+
+                            // Fondo animado sobrepuesto
+                            drawArc(
+                                color = VerdePrincipal,
+                                startAngle = -90f,
+                                sweepAngle = 360 * animatedProgress,
+                                useCenter = false,
+                                style = Stroke(width = strokeWidth),
+                                topLeft = Offset(
+                                    (size.width - radius * 2) / 2,
+                                    (size.height - radius * 2) / 2
+                                ),
+                                size = Size(radius * 2, radius * 2)
+                            )
+                        }
+                )  {
+                    IconButton(
+                        onClick = onIncrementar,
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Sumar", tint = Color.Black)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LinearProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(50)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = Color(0xFFE0E0E0),
+        )
+    }
+}
+
+private fun formatearDuracion(minutos: Int): String {
+    return if (minutos < 60) {
+        "${minutos}min"
+    } else {
+        val horas = minutos / 60
+        val mins = minutos % 60
+        if (mins == 0) "${horas}h" else "${horas}h ${mins}min"
+    }
+}
 

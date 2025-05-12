@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
-import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitosPredeterminados
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
@@ -61,6 +61,7 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val habitosRepository = remember { HabitoRepository() }
     val auth = FirebaseAuth.getInstance()
+    val userEmail = FirebaseAuth.getInstance().currentUser?.email
 
     /* -----------------------------  State  ------------------------------ */
     var titulo by remember { mutableStateOf("") }
@@ -99,7 +100,7 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
 
             scope.launch {
                 try {
-                    val habito = Habito(
+                    val habito = HabitosPredeterminados(
                         titulo = titulo.ifEmpty { "Desconexión Digital" },
                         descripcion = descripcion.ifEmpty { "Tiempo para desconectar y reconectar contigo mismo" },
                         tipo = TipoHabito.DESCONEXION_DIGITAL,

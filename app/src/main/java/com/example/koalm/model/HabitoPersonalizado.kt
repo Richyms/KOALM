@@ -17,7 +17,7 @@ data class HabitoPersonalizado(
     var rachaActual: Int = 0,
     var rachaMaxima: Int = 0,
     var ultimoDiaCompletado: String? = null,
-    val tipo: String = "personalizado"
+    val clase: ClaseHabito = ClaseHabito.PERSONALIZADO
 ) {
 
     // Metodo para convertir a un mapa, útil para Firestore u otros usos
@@ -35,7 +35,7 @@ data class HabitoPersonalizado(
         "rachaActual" to rachaActual,
         "rachaMaxima" to rachaMaxima,
         "ultimoDiaCompletado" to ultimoDiaCompletado,
-        "tipo" to tipo
+        "clase" to clase.name
     )
 
     companion object {

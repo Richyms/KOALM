@@ -132,8 +132,8 @@ fun PantallaIniciarSesion(
                                                     val apellido = doc.getString("apellido") ?: ""
                                                     val nacimiento = doc.getString("nacimiento") ?: ""
                                                     val genero = doc.getString("genero") ?: ""
-                                                    val peso = doc.getDouble("peso")?.toFloat() ?: 0f
-                                                    val altura = doc.getLong("altura")?.toInt() ?: 0
+                                                    val peso = doc.getDouble("peso")?.toFloat()
+                                                    val altura = doc.getLong("altura")?.toInt()
 
                                                     // Creamos el objeto con los datos nuevos (y conservamos los antiguos campos que no cambian uwu)
                                                     val uLogin = Usuario(
@@ -163,8 +163,8 @@ fun PantallaIniciarSesion(
                                                                 apellido.isNotBlank(),
                                                                 nacimiento.isNotBlank(),
                                                                 genero.isNotBlank(),
-                                                                peso > 0f,
-                                                                altura > 0
+                                                                peso != null,
+                                                                altura != null
                                                             ).all { it }
 
                                                             // Determinamos la pantalla de destino dependiendo de si el perfil está completo

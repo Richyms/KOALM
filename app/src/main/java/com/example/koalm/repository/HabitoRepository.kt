@@ -1,18 +1,25 @@
 package com.example.koalm.repository
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitoPersonalizado
+import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.services.NotificationService
 import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -20,19 +27,23 @@ import java.time.format.DateTimeFormatter
 class HabitoRepository {
     private val TAG = "HabitoRepository"
     private val db = FirebaseFirestore.getInstance()
-    private val habitosCollection = db.collection("habitos")
 
-    suspend fun crearHabito(habito: Habito): Result<String> = try {
+    private val userEmail = FirebaseAuth.getInstance().currentUser?.email
+        ?: throw IllegalStateException("Usuario no autenticado")
+
+    private val habitosCollection = db.collection("habitos").document(userEmail).collection("predeterminados")
+
+    suspend fun crearHabito(habito: HabitosPredeterminados): Result<String> = try {
         Log.d(TAG, "Iniciando creación de hábito: ${habito.titulo}")
         Log.d(TAG, "Datos del hábito: userId=${habito.userId}, tipo=${habito.tipo}, clase=${habito.clase}")
-        
+
         val habitoConFechas = habito.copy(
             fechaCreacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
             fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
         )
-        
+
         Log.d(TAG, "Datos a guardar en Firebase: ${habitoConFechas.toMap()}")
-        
+
         val docRef = habitosCollection.add(habitoConFechas.toMap()).await()
         Log.d(TAG, "Hábito creado exitosamente con ID: ${docRef.id}")
         Result.success(docRef.id)
@@ -41,7 +52,7 @@ class HabitoRepository {
         Result.failure(e)
     }
 
-    suspend fun obtenerHabitosActivos(userId: String): Result<List<Habito>> = try {
+    suspend fun obtenerHabitosActivos(userId: String): Result<List<HabitosPredeterminados>> = try {
         Log.d(TAG, "Iniciando búsqueda de hábitos para userId: $userId")
         
         val query = habitosCollection
@@ -57,7 +68,7 @@ class HabitoRepository {
                 val data = doc.data
                 if (data != null) {
                     Log.d(TAG, "Procesando documento ${doc.id}: $data")
-                    Habito(
+                    HabitosPredeterminados(
                         id = doc.id,
                         titulo = data["titulo"] as? String ?: "",
                         descripcion = data["descripcion"] as? String ?: "",
@@ -110,7 +121,7 @@ class HabitoRepository {
         Result.failure(e)
     }
 
-    suspend fun actualizarHabito(habito: Habito): Result<Unit> = try {
+    suspend fun actualizarHabito(habito: HabitosPredeterminados): Result<Unit> = try {
         Log.d(TAG, "Actualizando hábito ${habito.id}")
         val habitoActualizado = habito.copy(
             fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
@@ -125,7 +136,7 @@ class HabitoRepository {
         Result.failure(e)
     }
 
-    suspend fun obtenerHabito(habitoId: String): Result<Habito> {
+    suspend fun obtenerHabito(habitoId: String): Result<HabitosPredeterminados> {
         return try {
             Log.d(TAG, "Obteniendo hábito con ID: $habitoId")
             val doc = habitosCollection.document(habitoId).get().await()
@@ -141,7 +152,7 @@ class HabitoRepository {
                 return Result.failure(Exception("Datos del hábito son nulos"))
             }
             
-            val habito = Habito(
+            val habito = HabitosPredeterminados(
                 id = doc.id,
                 titulo = data["titulo"] as? String ?: "",
                 descripcion = data["descripcion"] as? String ?: "",
@@ -173,4 +184,71 @@ class HabitoRepository {
             Result.failure(e)
         }
     }
+
+    companion object {
+        @SuppressLint("StaticFieldLeak")
+        val db = FirebaseFirestore.getInstance()
+        // Incrementar el progreso de un hábito
+        suspend fun incrementarProgresoHabito(email: String, habito: HabitosPredeterminados) {
+            val progresoRef = db.collection("habitos")
+                .document(email)
+                .collection("predeterminados")
+                .document(habito.id)
+                .collection("progreso")
+                .document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+            val snapshot = progresoRef.get().await()
+            val progresoActual = snapshot.toObject(ProgresoDiario::class.java)
+
+            // Inicializamos si no existía
+            val nuevoProgreso = progresoActual ?: ProgresoDiario(
+                realizados = 0,
+                completado = false,
+                totalRecordatoriosPorDia = 1
+            )
+
+            // No hacer nada si ya estaba completo
+            if (nuevoProgreso.completado) return
+
+            nuevoProgreso.realizados += 1
+            nuevoProgreso.completado = nuevoProgreso.realizados >= 1
+
+            // Actualizamos la racha si se completó hoy
+            if (nuevoProgreso.completado) {
+                actualizarRacha(habito, nuevoProgreso)
+            }
+
+            // Guardamos progreso
+            progresoRef.set(nuevoProgreso, SetOptions.merge()).await()
+
+            // Guardamos cambios del hábito (racha y último día)
+            db.collection("habitos")
+                .document(email)
+                .collection("predeterminados")
+                .document(habito.id)
+                .set(habito, SetOptions.merge())
+                .await()
+
+            Log.d("Firestore", "Progreso actualizado para el hábito: ${habito.id}")
+        }
+
+        // Actualizar racha del hábito
+        private fun actualizarRacha(habito: HabitosPredeterminados, progreso: ProgresoDiario) {
+            val hoy = LocalDate.now()
+            val ultimoDia = habito.ultimoDiaCompletado?.let { LocalDate.parse(it) }
+
+            if (ultimoDia == null || !ultimoDia.plusDays(1).isEqual(hoy)) {
+                habito.rachaActual = 1
+            } else {
+                habito.rachaActual += 1
+            }
+
+            if (habito.rachaActual > habito.rachaMaxima) {
+                habito.rachaMaxima = habito.rachaActual
+            }
+
+            habito.ultimoDiaCompletado = hoy.toString()
+        }
+    }
+
 } 

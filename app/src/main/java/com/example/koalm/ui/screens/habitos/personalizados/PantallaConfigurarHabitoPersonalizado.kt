@@ -569,7 +569,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                                     rachaActual = 0,  // Inicialmente 0, la racha se actualizará después
                                     rachaMaxima = 0,  // Inicialmente 0, la racha máxima se actualizará después
                                     ultimoDiaCompletado = null,  // Inicialmente no hay último día completado
-                                    tipo = "personalizado"
                                 )
 
                                 // Convertir el objeto a un mapa

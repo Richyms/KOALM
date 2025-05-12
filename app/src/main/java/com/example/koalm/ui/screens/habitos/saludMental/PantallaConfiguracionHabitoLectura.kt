@@ -30,7 +30,8 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.NotificationService
@@ -38,6 +39,7 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -55,6 +57,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
+    val userEmail = FirebaseAuth.getInstance().currentUser?.email
     
     /*  Duración  */
     var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
@@ -71,7 +74,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
     }
     var mostrarTimePicker by remember { mutableStateOf(false) }
 
-    fun scheduleNotification(habito: Habito) {
+    fun scheduleNotification(habito: HabitosPredeterminados) {
         Log.d(TAG, "Programando notificación para hábito de lectura")
         Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
         
@@ -111,7 +114,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                 }
 
                 // Crear el hábito en Firebase
-                val habito = Habito(
+                val habito = HabitosPredeterminados(
                     titulo = "Lectura",
                     descripcion = descripcion.ifEmpty { context.getString(R.string.reading_notification_default_text) },
                     clase = ClaseHabito.MENTAL,
@@ -350,7 +353,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                                 }
 
                                 // Crear el hábito en Firebase
-                                val habito = Habito(
+                                val habito = HabitosPredeterminados(
                                     titulo = "Lectura",
                                     descripcion = descripcion.ifEmpty { context.getString(R.string.reading_notification_default_text) },
                                     clase = ClaseHabito.MENTAL,
@@ -387,6 +390,43 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                                         isReading = true,
                                         isDigitalDisconnect = false
                                     )
+
+                                    // Obtener la referencia al usuario actual en Firebase Authentication
+                                    val db = FirebaseFirestore.getInstance()
+                                    val userHabitsRef = userEmail?.let {
+                                        db.collection("habitos").document(it)
+                                            .collection("predeterminados")
+                                    }
+
+                                    // Crear el objeto de progreso
+                                    val progreso = ProgresoDiario(
+                                        realizados = 0,
+                                        completado = false,
+                                        totalRecordatoriosPorDia = 1
+                                    )
+
+                                    // Referenciar al documento de progreso usando la fecha actual como ID
+                                    val progresoRef = userHabitsRef?.document(habitoId)
+                                        ?.collection("progreso")
+                                        ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                    // Guardar en Firestore usando el .toMap()
+                                    progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                        Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                        Toast.makeText(
+                                            context,
+                                            "Progreso diario guardado",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigateUp()
+                                    }?.addOnFailureListener { e ->
+                                        Toast.makeText(
+                                            context,
+                                            "Error al guardar el progreso: ${e.message}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigateUp()
+                                    }
 
                                     Toast.makeText(
                                         context,

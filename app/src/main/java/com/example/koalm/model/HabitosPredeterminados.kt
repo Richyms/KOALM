@@ -1,6 +1,6 @@
 package com.example.koalm.model
 
-data class Habito(
+data class HabitosPredeterminados(
     val id: String = "",
     val titulo: String = "",
     val descripcion: String = "",
@@ -12,7 +12,10 @@ data class Habito(
     val notasHabilitadas: Boolean = false,
     val userId: String? = null,
     val fechaCreacion: String? = null,
-    val fechaModificacion: String? = null
+    val fechaModificacion: String? = null,
+    var rachaActual: Int = 0,
+    var rachaMaxima: Int = 0,
+    var ultimoDiaCompletado: String? = null
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "id" to id,
@@ -26,7 +29,10 @@ data class Habito(
         "notasHabilitadas" to notasHabilitadas,
         "userId" to userId,
         "fechaCreacion" to fechaCreacion,
-        "fechaModificacion" to fechaModificacion
+        "fechaModificacion" to fechaModificacion,
+        "rachaActual" to rachaActual,
+        "rachaMaxima" to rachaMaxima,
+        "ultimoDiaCompletado" to ultimoDiaCompletado
     )
 }
 
@@ -40,8 +46,11 @@ enum class TipoHabito {
     LECTURA,
     MEDITACION,
     DESCONEXION_DIGITAL,
-    ESCRITURA
-} 
+    ESCRITURA,
+    SUEÑO,
+    ALIMENTACION,
+    HIDRATACION
+}
 
 
 
