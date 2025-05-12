@@ -91,6 +91,8 @@
     <string name="label_duracion_meditacion">Duración de la Meditación</string>
     <string name="label_sonidos">Sonidos ambientales durante la meditación.</string>
     <string name="label_respiracion">Recordatorio de ejercicios de respiración previos.</string>
+    <!-- Modificar Meditación -->
+    <string name="titulo_modificacion_meditacion">Modificar hábito de Meditación</string>
 
     <!-- Lectura -->
     <string name="titulo_config_lectura">Configurar hábito de lectura</string>

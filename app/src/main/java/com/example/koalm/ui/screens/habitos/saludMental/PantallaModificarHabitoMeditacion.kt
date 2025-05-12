@@ -1,4 +1,4 @@
-/*  PantallaConfiguracionHabitoMeditación.kt  */
+/*  PantallaMeditacionHabitoMeditación.kt  */
 package com.example.koalm.ui.screens.habitos.saludMental
 
 import androidx.compose.foundation.BorderStroke
@@ -57,23 +57,23 @@ import androidx.compose.foundation.clickable       // ←  .clickable() que repo
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
+fun PantallaModificarHabitoMeditacion(navController: NavHostController) {
     val context = LocalContext.current
     val TAG = "PantallaConfiguracionHabitoMeditacion"
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
-    
+
     //------------------------------ Estados -------------------------------------
     var descripcion         by remember { mutableStateOf("") }
     val diasSemana          = listOf("L","M","M","J","V","S","D")
     var diasSeleccionados   by remember { mutableStateOf(List(7){false})}
 
     /* Hora */
-    var horaRecordatorio by remember { 
+    var horaRecordatorio by remember {
         mutableStateOf(
             LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
-        ) 
+        )
     }
     var mostrarTimePicker    by remember { mutableStateOf(false) }
 
@@ -118,7 +118,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
                     Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
                     Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
-                    
+
                     // Programar notificación con el ID real del hábito
                     val notificationService = MeditationNotificationService()
                     val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
@@ -173,7 +173,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.titulo_config_meditacion)) },
+                title = { Text(stringResource(R.string.titulo_modificacion_meditacion)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -303,7 +303,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { 
+                    .clickable {
                         try {
                             navController.navigate("temporizador_meditacion") {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -375,12 +375,4 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
             onDismiss = { mostrarTimePicker = false }
         )
     }
-}
-
-/*──────────────────────────  HELPERS  ─────────────────────────────────────*/
-fun formatearDuracion(min: Int): String = when {
-    min < 60           -> "$min min"
-    min == 60          -> "1 hora"
-    min % 60 == 0      -> "${min/60} h"
-    else               -> "${min/60} h ${min%60} min"
 }
