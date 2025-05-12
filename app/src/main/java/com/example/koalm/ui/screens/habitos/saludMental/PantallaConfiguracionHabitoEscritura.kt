@@ -6,7 +6,10 @@ package com.example.koalm.ui.screens.habitos.saludMental
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -23,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -47,15 +51,16 @@ import com.example.koalm.model.Habito
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.NotificationService
-import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.VerdeBorde
-import com.example.koalm.ui.theme.VerdeContenedor
+import com.example.koalm.services.notifications.NotificationConstants
+import com.example.koalm.services.notifications.WritingNotificationService
+import com.example.koalm.ui.components.*
+import com.example.koalm.ui.theme.*
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import kotlinx.coroutines.launch
-import com.google.firebase.auth.FirebaseAuth
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,6 +83,13 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     //  Duración
     var duracionMin by remember { mutableStateOf(15f) }      // 1-180 min
     val rangoDuracion = 1f..180f
+
+    // Cargar la duración guardada del temporizador
+    val sharedPreferences = context.getSharedPreferences("AppPreferences", MODE_PRIVATE)
+    LaunchedEffect(Unit) {
+        val defaultDuration = 15L * 60 * 1000 // 15 minutos en milisegundos
+        duracionMin = (sharedPreferences.getLong("writing_timer_duration", defaultDuration) / (60 * 1000)).toFloat()
+    }
 
     //  Hora de notificación
     var hora by remember { 
@@ -299,12 +311,13 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
             ) {
                 Button(
                     onClick = {
-                        if (!diasSeleccionados.any { it }) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.error_no_days_selected),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        if (!diasSeleccionados.contains(true)) {
+                            Toast.makeText(context, "Selecciona al menos un día", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        
+                        if (duracionMin <= 0) {
+                            Toast.makeText(context, "La duración debe ser mayor a 0 minutos", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
 
@@ -357,6 +370,12 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 )
 
                                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                                    // Guardar la duración en SharedPreferences
+                                    with(sharedPreferences.edit()) {
+                                        putLong("writing_timer_duration", (duracionMin * 60 * 1000).toLong()) // Guardar en milisegundos
+                                        apply()
+                                    }
+                                    
                                     // Programar notificación
                                     notificationService.scheduleNotification(
                                         context = context,
@@ -657,7 +676,11 @@ private fun programarNotificacion(
 
     kotlinx.coroutines.runBlocking {
         habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-            // Programar notificación
+            // Guardar la duración del temporizador en SharedPreferences
+            val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+            sharedPreferences.edit().putLong("writing_timer_duration", (duracionMin * 60 * 1000).toLong()).apply()
+
+            // Programar notificaciones
             notificationService.scheduleNotification(
                 context = context,
                 habitoId = habitoId,
