@@ -691,7 +691,8 @@ fun HabitoCardPredeterminado(
                             Text(
                                 text = habito.hora,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 4.dp)
                             )
                         }
 
