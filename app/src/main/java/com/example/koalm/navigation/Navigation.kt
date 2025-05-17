@@ -7,8 +7,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfigurarDesconexionDigital
 import com.example.koalm.ui.screens.auth.PantallaCodigoRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaGustosUsuario
@@ -88,6 +90,19 @@ fun AppNavigation(
         screenWithSlide("estadisticas") { PantallaParametrosSalud(navController) }
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
+        composable(
+            "configurar_habito_personalizado/{nombreHabitoEditar}",
+            arguments = listOf(navArgument("nombreHabitoEditar") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            PantallaConfigurarHabitoPersonalizado(
+                navController = navController,
+                nombreHabitoEditar = backStackEntry.arguments?.getString("nombreHabitoEditar")
+                )
+        }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
         screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
         screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }

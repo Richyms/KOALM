@@ -293,7 +293,7 @@ fun HabitoCardExpandible(
                             text = { Text("Editar") },
                             onClick = {
                                 expandedMenu = false
-                                navController.navigate("editahabito/${habito.nombre}")
+                                navController.navigate("configurar_habito_personalizado/${habito.nombre}")
                             }
                         )
                         DropdownMenuItem(

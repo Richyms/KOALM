@@ -63,6 +63,7 @@
     <string name="mensaje_no_habitos">No tienes hábitos personalizados</string>
     <string name="mensaje_no_habitos_subtexto">No busques perfección, solo empieza.\nCada paso cuenta</string>
     <string name="boton_agregar">Agregar</string>
+    <string name="boton_cancelar_modificaciones">Cancelar</string>
 
     <!-- Hábito personalizado -->
     <string name="titulo_config_habito_personalizado">Configurar hábito personalizado</string>

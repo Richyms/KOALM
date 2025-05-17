@@ -55,12 +55,16 @@ import com.example.koalm.ui.screens.habitos.saludMental.HoraField
 import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import java.time.temporal.ChronoUnit
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
+fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nombreHabitoEditar: String? = null) {
     val context = LocalContext.current
+    val idHabitoOriginal = nombreHabitoEditar?.replace(" ", "_")
+    val esEdicion = nombreHabitoEditar != null
 
     var nombreHabito by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
@@ -93,6 +97,80 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
 
     val colorIcono = parseColorFromFirebase(colorSeleccionado.toString(),darken = true)
     var nombreError by remember { mutableStateOf(false)}
+
+    // Si nombreHabito NO es null, editamos y cargamos los datos
+    LaunchedEffect(nombreHabitoEditar) {
+        if (nombreHabitoEditar == null) return@LaunchedEffect
+
+        val habitoExistente = cargarHabitoPorNombre(nombreHabitoEditar)
+
+        if (habitoExistente == null) {
+            Toast.makeText(context, "No se encontró el hábito para editar", Toast.LENGTH_SHORT).show()
+            navController.navigateUp()
+            return@LaunchedEffect
+        }
+
+        // Asignaciones seguras
+        nombreHabito = habitoExistente.nombre
+        descripcion = habitoExistente.descripcion
+        iconoSeleccionado = habitoExistente.iconoEtiqueta
+        colorSeleccionado = parseColorFromFirebase(habitoExistente.colorEtiqueta)
+
+        // Frecuencia (días seleccionados)
+        diasSeleccionados = habitoExistente.frecuencia ?: List(7) { false }
+        frecuenciaActivo = habitoExistente.frecuencia?.any { it } == true
+
+
+        // Recordatorios
+        recordatorioActivo = !habitoExistente.recordatorios?.horas.isNullOrEmpty()
+        horarios.clear()
+        habitoExistente.recordatorios?.horas?.forEach { horaStr ->
+            try {
+                horarios.add(LocalTime.parse(horaStr))
+            } catch (e: Exception) {
+                Log.e("ParseError", "Hora inválida: $horaStr")
+            }
+        }
+
+        // Modo fin y duración
+        modoFecha = habitoExistente.modoFin == "calendario"
+        if (modoFecha) {
+            habitoExistente.fechaFin?.let {
+                try {
+                    fechaSeleccionada = LocalDate.parse(it)
+                } catch (e: Exception) {
+                    Log.e("ParseError", "FechaFin inválida: $it")
+                }
+            }
+        } else {
+            diasDuracion = if (!habitoExistente.fechaInicio.isNullOrBlank() && !habitoExistente.fechaFin.isNullOrBlank()) {
+                try {
+                    val inicio = LocalDate.parse(habitoExistente.fechaInicio)
+                    val fin = LocalDate.parse(habitoExistente.fechaFin)
+                    ChronoUnit.DAYS.between(inicio, fin).toString()
+                } catch (e: Exception) {
+                    Log.e("ParseError", "Error calculando duración")
+                    ""
+                }
+            } else ""
+        }
+
+        // Fecha de inicio (solo si no es modo calendario)
+        if (!modoFecha) {
+            habitoExistente.fechaInicio?.let {
+                try {
+                    fechaSeleccionada = LocalDate.parse(it)
+                } catch (e: Exception) {
+                    Log.e("ParseError", "FechaInicio inválida: $it")
+                }
+            }
+        }
+
+        finalizarActivo = habitoExistente.fechaFin != null && habitoExistente.fechaFin.lowercase()!="null"
+
+        // Repeticiones por día
+        unaVezPorHabito = habitoExistente.unaVezPorHabito.toString()
+    }
 
     Scaffold(
         topBar = {
@@ -144,6 +222,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                         label = { Text(stringResource(R.string.label_nombre_habito)) },
                         isError = nombreError,
                         modifier = Modifier.fillMaxWidth(),
+                        enabled = !esEdicion,
                         supportingText = {
                             if (nombreError) {
                                 Text(
@@ -527,127 +606,186 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Button(
-                    onClick = {
-                        // Validación del campo de nombre
-                        if (nombreHabito.isBlank()) {
-                            Toast.makeText(context, "El nombre del hábito es obligatorio", Toast.LENGTH_SHORT).show()
-                        } else  if (nombreHabito.length >= 20) {
-                            Toast.makeText(context, "El nombre del hábito no debe tener más de 20 caracteres.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // Obtener la referencia al usuario actual en Firebase Authentication
-                            val userEmail = FirebaseAuth.getInstance().currentUser?.email
-                            val db = FirebaseFirestore.getInstance()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
-                            // Asegurarnos de que el correo del usuario no sea nulo
-                            if (userEmail != null) {
-                                // Referencia a la colección de hábitos del usuario
-                                val userHabitsRef = db.collection("habitos").document(userEmail)
-                                    .collection("personalizados")
-
-                                // Crear el objeto HabitoPersonalizado
-                                val habitoPersonalizado = HabitoPersonalizado(
-                                    nombre = nombreHabito,
-                                    colorEtiqueta = colorSeleccionado.toString(),
-                                    iconoEtiqueta = iconoSeleccionado.toString(),
-                                    descripcion = descripcion,
-                                    frecuencia = diasSeleccionados, // Ejemplo: ["lunes", "miércoles"]
-                                    recordatorios = Recordatorios(
-                                        tipo = if (modoPersonalizado) "personalizado" else "automatico",
-                                        horas = if (modoPersonalizado)
-                                            horarios.map { it.format(DateTimeFormatter.ofPattern("HH:mm")) }
-                                        else
-                                            HabitoPersonalizado.generarHorasAutomaticas()
-                                    ),
-                                    fechaInicio = HabitoPersonalizado.calcularFechaInicio(),
-                                    fechaFin = HabitoPersonalizado.calcularFechaFin(
-                                        modoFecha,
-                                        fechaSeleccionada.toString(), diasDuracion
-                                    ),
-                                    modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
-                                    unaVezPorHabito = if (!recordatorioActivo) 1 else 0,
-                                    rachaActual = 0,  // Inicialmente 0, la racha se actualizará después
-                                    rachaMaxima = 0,  // Inicialmente 0, la racha máxima se actualizará después
-                                    ultimoDiaCompletado = null,  // Inicialmente no hay último día completado
-                                )
-
-                                // Convertir el objeto a un mapa
-                                val habitoMap = habitoPersonalizado.toMap()
-
-                                // Usar el nombre del hábito como ID, reemplazando espacios por guiones bajos
-                                val habitoId = nombreHabito.replace(" ", "_")
-
-                                // Guardar el hábito en Firestore bajo la subcolección "personalizados" del usuario
-                                userHabitsRef.document(habitoId)  // Usando el nombre del hábito como ID
-                                    .set(habitoMap)
-                                    .addOnSuccessListener {
-                                        Toast.makeText(
-                                            context,
-                                            "Hábito guardado con éxito",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        navController.navigateUp()
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Toast.makeText(
-                                            context,
-                                            "Error al guardar el hábito: ${e.message}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.navigateUp()
-                                    }
-
-                                // Crear el objeto de progreso
-                                val progreso = ProgresoDiario(
-                                    realizados = 0,
-                                    completado = false,
-                                    totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3
-                                )
-
-                                // Referenciar al documento de progreso usando la fecha actual como ID
-                                val progresoRef = userHabitsRef.document(habitoId)
-                                    .collection("progreso")
-                                    .document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-
-                                // Guardar en Firestore usando el .toMap()
-                                progresoRef.set(progreso.toMap())
-                                    .addOnSuccessListener {
-                                        Toast.makeText(
-                                            context,
-                                            "Progreso diario guardado",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.navigateUp()
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Toast.makeText(
-                                            context,
-                                            "Error al guardar el progreso: ${e.message}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.navigateUp()
-                                    }
-
-                            } else {
+                    Button(
+                        onClick = {
+                            // Validación del campo de nombre
+                            if (nombreHabito.isBlank()) {
                                 Toast.makeText(
                                     context,
-                                    "Usuario no autenticado",
-                                    Toast.LENGTH_LONG
+                                    "El nombre del hábito es obligatorio",
+                                    Toast.LENGTH_SHORT
                                 ).show()
-                                navController.navigateUp()
+                            } else if (nombreHabito.length >= 20) {
+                                Toast.makeText(
+                                    context,
+                                    "El nombre del hábito no debe tener más de 20 caracteres.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                // Obtener la referencia al usuario actual en Firebase Authentication
+                                val userEmail = FirebaseAuth.getInstance().currentUser?.email
+                                val db = FirebaseFirestore.getInstance()
+
+                                // Asegurarnos de que el correo del usuario no sea nulo
+                                if (userEmail != null) {
+                                    // Referencia a la colección de hábitos del usuario
+                                    val userHabitsRef = db.collection("habitos").document(userEmail)
+                                        .collection("personalizados")
+
+                                    // Crear el objeto HabitoPersonalizado
+                                    val habitoPersonalizado = HabitoPersonalizado(
+                                        nombre = nombreHabito,
+                                        colorEtiqueta = colorSeleccionado.toString(),
+                                        iconoEtiqueta = iconoSeleccionado.toString(),
+                                        descripcion = descripcion,
+                                        frecuencia = diasSeleccionados, // Ejemplo: ["lunes", "miércoles"]
+                                        recordatorios = Recordatorios(
+                                            tipo = if (modoPersonalizado) "personalizado" else "automatico",
+                                            horas = if (modoPersonalizado)
+                                                horarios.map {
+                                                    it.format(
+                                                        DateTimeFormatter.ofPattern(
+                                                            "HH:mm"
+                                                        )
+                                                    )
+                                                }
+                                            else
+                                                HabitoPersonalizado.generarHorasAutomaticas()
+                                        ),
+                                        fechaInicio = HabitoPersonalizado.calcularFechaInicio(),
+                                        fechaFin = HabitoPersonalizado.calcularFechaFin(
+                                            modoFecha,
+                                            fechaSeleccionada.toString(), diasDuracion
+                                        ),
+                                        modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
+                                        unaVezPorHabito = if (!recordatorioActivo) 1 else 0,
+                                        rachaActual = 0,  // Inicialmente 0, la racha se actualizará después
+                                        rachaMaxima = 0,  // Inicialmente 0, la racha máxima se actualizará después
+                                        ultimoDiaCompletado = null,  // Inicialmente no hay último día completado
+                                    )
+
+                                    // Convertir el objeto a un mapa
+                                    val habitoMap = habitoPersonalizado.toMap()
+
+                                    // Usar el nombre del hábito como ID, reemplazando espacios por guiones bajos
+                                    val habitoId = if (idHabitoOriginal != null) {
+                                        // Si estamos editando, usamos el nombre original como ID
+                                        idHabitoOriginal
+                                    } else {
+                                        // Si estamos creando, usamos el nombre nuevo
+                                        nombreHabito.replace(" ", "_")
+                                    }
+
+                                    // Guardar el hábito en Firestore bajo la subcolección "personalizados" del usuario
+                                    userHabitsRef.document(habitoId)  // Usando el nombre del hábito como ID
+                                        .set(habitoMap)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(
+                                                context,
+                                                "Hábito guardado con éxito",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            navController.navigateUp()
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(
+                                                context,
+                                                "Error al guardar el hábito: ${e.message}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            navController.navigateUp()
+                                        }
+
+                                    // Crear el objeto de progreso
+                                    val progreso = ProgresoDiario(
+                                        realizados = 0,
+                                        completado = false,
+                                        totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3
+                                    )
+
+                                    // Referenciar al documento de progreso usando la fecha actual como ID
+                                    val progresoRef = userHabitsRef.document(habitoId)
+                                        .collection("progreso")
+                                        .document(
+                                            LocalDate.now()
+                                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                        )
+
+                                    // Guardar en Firestore usando el .toMap()
+                                    progresoRef.set(progreso.toMap())
+                                        .addOnSuccessListener {
+                                            Toast.makeText(
+                                                context,
+                                                "Progreso diario guardado",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            navController.navigateUp()
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(
+                                                context,
+                                                "Error al guardar el progreso: ${e.message}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            navController.navigateUp()
+                                        }
+
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Usuario no autenticado",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigateUp()
+                                }
                             }
+                        },
+                        modifier = Modifier
+                            .width(200.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        if (!esEdicion) {
+                            Text(
+                                stringResource(R.string.boton_guardar),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                stringResource(R.string.boton_guardar),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
-                    },
-                    modifier = Modifier
-                        .width(200.dp)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(
-                        stringResource(R.string.boton_guardar),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+
+                    }
+                    if (esEdicion) {
+                        // Boton de Cancelar
+                        Button(
+                            onClick = {
+                                navController.navigateUp()
+                            },
+                            modifier = Modifier
+                                .width(200.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                        ) {
+                            Text(
+                                stringResource(R.string.boton_cancelar_modificaciones),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+
+                        }
+                    }
                 }
             }
         }
@@ -806,6 +944,30 @@ fun Context.withLocale(locale: Locale): Context {
     val config = resources.configuration
     config.setLocale(locale)
     return createConfigurationContext(config)
+}
+
+suspend fun cargarHabitoPorNombre(nombreHabito: String): HabitoPersonalizado? {
+    val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email ?: return null
+    val idDocumento = nombreHabito.replace(" ", "_")
+    val db = FirebaseFirestore.getInstance()
+
+    return try {
+        val snapshot = db.collection("habitos")
+            .document(usuarioEmail)
+            .collection("personalizados")
+            .document(idDocumento)
+            .get()
+            .await()
+
+        if (snapshot.exists()) {
+            snapshot.toObject(HabitoPersonalizado::class.java)
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error cargando hábito: ${e.message}")
+        null
+    }
 }
 
 @Composable
