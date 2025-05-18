@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.ui.theme.*
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +31,11 @@ fun PantallaObjetivosPeso(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* guardar cambios */ }) {
+                        Icon(Icons.Default.Check, contentDescription = "Guardar")
                     }
                 }
             )
@@ -104,3 +112,9 @@ val datosMockPeso = DatosPeso(
     pesoActual = 72f,
     pesoObjetivo = 69f
 )
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun VistaPreviaPantallaObjetivosPeso() {
+    PantallaObjetivosPeso(navController = rememberNavController())
+}

@@ -25,11 +25,12 @@ import com.example.koalm.R
 @Composable
 fun PantallaControlPeso(
     navController: NavHostController,
-    pesoActual: Float,
-    pesoObjetivo: Float
+    pesoActual: Float ?= 72f,
+    pesoObjetivo: Float ?= 69f
 ) {
-    val pesoInicial = pesoActual + (pesoActual - pesoObjetivo)
-    val pesoPerdido = pesoActual - pesoObjetivo
+    val pesoA = pesoActual ?: 72f
+    val pesoO = pesoObjetivo ?: 69f
+    val pesoPerdido = pesoA - pesoO
 
     Scaffold(
         topBar = {
@@ -38,11 +39,6 @@ fun PantallaControlPeso(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* guardar cambios */ }) {
-                        Icon(Icons.Default.Check, contentDescription = "Guardar")
                     }
                 }
             )
@@ -58,16 +54,15 @@ fun PantallaControlPeso(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // 🐨 Koala + progreso
+            Spacer(modifier = Modifier.height(4.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Imagen central
                 Image(
                     painter = painterResource(id = R.drawable.weightcontrol),
                     contentDescription = "Koala",
@@ -76,29 +71,10 @@ fun PantallaControlPeso(
                         .align(Alignment.TopCenter)
                 )
 
-                // Peso Inicial (izquierda)
-                Text(
-                    text = String.format("%.1f", pesoInicial),
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = 65.dp, top = 170.dp)
-                )
-
-                // Peso Objetivo (derecha)
-                Text(
-                    text = String.format("%.1f", pesoObjetivo),
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = 65.dp, top = 170.dp)
-                )
-
-                // Texto debajo del koala (centrado más abajo)
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(top = 210.dp), // 🔧 esto lo empuja para abajo, debajo del koala
+                        .padding(top = 210.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -106,24 +82,19 @@ fun PantallaControlPeso(
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                    Text(
-                        text = "Actual: ${pesoActual.toInt()} kg",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
                 }
             }
 
-
             Spacer(modifier = Modifier.height(26.dp))
 
-            // 📊 Progreso
-            Text("Progreso", fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            Text("Progreso", fontSize = 23.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
 
             Text("Peso actual", fontSize = 14.sp)
             Text("$pesoActual kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            TextButton(onClick = { /* actualizar peso */ }) {
+            TextButton(onClick = {
+                navController.navigate("actualizar-peso")
+            }) {
                 Text("Actualizar peso", color = VerdePrincipal)
             }
 
@@ -132,17 +103,19 @@ fun PantallaControlPeso(
             Text("Objetivo", fontSize = 14.sp)
 
             Text("$pesoObjetivo kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            TextButton(onClick = { /* actualizar objetivo */ }) {
+            TextButton(onClick = {
+                navController.navigate("objetivos-peso")
+            }) {
                 Text("Actualizar objetivo", color = VerdePrincipal)
             }
         }
     }
 }
 
-@Preview(showSystemUi = true)
+@Preview(showSystemUi = true, showBackground = true)
 @Composable
-fun VistaPreviaControlPeso() {
-    val navController = rememberNavController()
-    navController.navigate("objetivos/74.5/01%20de%20febrero%20del%202025/72/69")
-    PantallaControlPeso(navController = navController, pesoActual = 72f, pesoObjetivo = 69f)
+fun VistaPreviaPantallaControlPeso() {
+    PantallaControlPeso(
+        navController = rememberNavController(),
+    )
 }

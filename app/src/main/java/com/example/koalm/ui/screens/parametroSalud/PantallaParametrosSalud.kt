@@ -126,7 +126,7 @@ fun PantallaParametrosSalud(
                 navController.navigate("nivel-de-estres")
             }
             InfoCard("Peso", "-2.5 kg", Icons.Default.MonitorWeight, 0.5f) {
-                navController.navigate("objetivos-peso")
+                navController.navigate("control-peso")
             }
             InfoCard("Actividad diaria", "Completada", Icons.AutoMirrored.Filled.DirectionsRun) {
                 navController.navigate("actividad-diaria")
