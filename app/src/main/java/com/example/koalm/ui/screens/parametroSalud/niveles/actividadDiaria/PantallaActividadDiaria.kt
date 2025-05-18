@@ -3,21 +3,19 @@ package com.example.koalm.ui.screens.parametroSalud.niveles.actividadDiaria
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import com.example.koalm.ui.components.BarraNavegacionInferior
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.ui.theme.*
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
 
 data class ActividadDiaria(
     val tipo: String,
@@ -36,7 +35,7 @@ data class ActividadDiaria(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaActividadDiaria(navController: NavController) {
+fun PantallaActividadDiaria(navController: NavHostController) {
     val tipos = listOf("Pasos", "Calorías quemadas", "Tiempo activo")
     var actividades by remember { mutableStateOf<List<ActividadDiaria>>(emptyList()) }
 
@@ -84,11 +83,7 @@ fun PantallaActividadDiaria(navController: NavController) {
             )
         },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") }, label = { Text("Inicio") }, selected = true, onClick = {})
-                NavigationBarItem(icon = { Icon(Icons.Default.Star, contentDescription = "Hábitos") }, label = { Text("Hábitos") }, selected = false, onClick = {})
-                NavigationBarItem(icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") }, label = { Text("Perfil") }, selected = false, onClick = {})
-            }
+            BarraNavegacionInferior(navController, "inicio")
         }
     ) { innerPadding ->
         Column(
@@ -100,7 +95,6 @@ fun PantallaActividadDiaria(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Días
             val letrasDias = listOf("L", "M", "X", "J", "V", "S", "D")
             val numerosDias = listOf("6", "7", "8", "9", "10", "11", "12")
             Row(
@@ -132,7 +126,6 @@ fun PantallaActividadDiaria(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Selector
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -222,79 +215,120 @@ fun PantallaActividadDiaria(navController: NavController) {
 
 @Composable
 fun GraficadorActividad(actividad: ActividadDiaria) {
-    val lineColors = mapOf(
-        "Pasos" to MarronKoala,
-        "Calorías quemadas" to GrisOscuro,
-        "Tiempo activo" to VerdePrincipal
-    )
-    val labelsX = listOf("L", "M", "X", "J", "V", "S", "D")
-    val maxY = actividad.meta
     val datos = actividad.datos
+    val meta = actividad.meta
+    val normalizados = datos.map { it / meta }
 
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(220.dp)
-            .background(GrisCard, shape = RoundedCornerShape(12.dp))
-            .padding(start = 43.dp, end = 16.dp, top = 14.dp, bottom = 34.dp)
+    val colores = normalizados.map {
+        when {
+            it > 0.8f -> MarronKoala
+            it > 0.5f -> GrisMedio
+            else -> VerdePrincipal
+        }
+    }
 
+    val diasSemana = listOf("L", "M", "X", "J", "V", "S", "D")
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = GrisCard)
     ) {
-        val stepX = size.width / (labelsX.size - 1)
-        val stepY = size.height / maxY
+        Column(Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(170.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .fillMaxHeight()
+                        .width(30.dp)
+                ) {
+                    val pasos = 5
+                    val nivelesY = List(pasos) { i ->
+                        val valor = meta * (pasos - i) / pasos
+                        val proporcion = (pasos - i).toFloat() / pasos
+                        valor to proporcion
+                    }
+                    nivelesY.forEach { (valor, y) ->
+                        Text(
+                            text = valor.toInt().toString(),
+                            fontSize = 11.sp,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(y = -(y * 160).dp)
+                        )
+                    }
+                }
 
-        val paintY = android.graphics.Paint().apply {
-            textAlign = android.graphics.Paint.Align.RIGHT
-            textSize = 24f
-            color = android.graphics.Color.GRAY
-            isAntiAlias = true
-        }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val heightPx = size.height
+                        val widthPx = size.width
 
-        drawIntoCanvas { canvas ->
-            for (i in 0..4) {
-                val yVal = i * (maxY / 4)
-                val y = size.height - yVal * stepY
-                canvas.nativeCanvas.drawText(
-                    "${yVal.toInt()}",
-                    -30f,
-                    y + 10f,
-                    paintY
-                )
-                drawLine(
-                    color = Color.LightGray.copy(alpha = 0.3f),
-                    start = Offset(0f, y),
-                    end = Offset(size.width, y),
-                    strokeWidth = 1f
-                )
+                        val lineY = listOf(0.2f, 0.4f, 0.6f, 0.8f, 1f)
+                        val dash = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+
+                        lineY.forEach { y ->
+                            val yPos = heightPx * (1 - y)
+                            drawLine(
+                                color = Color.LightGray.copy(alpha = 0.5f),
+                                start = Offset(0f, yPos),
+                                end = Offset(widthPx, yPos),
+                                strokeWidth = 2f,
+                                pathEffect = dash
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        normalizados.forEachIndexed { index, valor ->
+                            Box(
+                                modifier = Modifier
+                                    .width(8.dp)
+                                    .height((valor * 160).dp)
+                                    .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
+                                    .background(colores[index])
+                            )
+                        }
+                    }
+                }
             }
-        }
 
-        val path = Path()
-        val color = lineColors[actividad.tipo] ?: Color.Black
-        val strokeWidth = 6f
+            Spacer(modifier = Modifier.height(8.dp))
 
-        datos.forEachIndexed { j, value ->
-            val x = j * stepX
-            val y = size.height - (value * stepY)
-            if (j == 0) path.moveTo(x, y) else path.lineTo(x, y)
-            drawCircle(color = color, radius = 6f, center = Offset(x, y))
-        }
-
-        drawPath(path, color = color, style = Stroke(width = strokeWidth))
-
-        val paintX = android.graphics.Paint().apply {
-            textAlign = android.graphics.Paint.Align.CENTER
-            textSize = 28f
-            setColor(android.graphics.Color.DKGRAY)
-            isAntiAlias = true
-        }
-
-        drawIntoCanvas { canvas ->
-            labelsX.forEachIndexed { j, label ->
-                canvas.nativeCanvas.drawText(label, j * stepX, size.height + 70f, paintX)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 41.dp, end = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                normalizados.forEachIndexed { index, _ ->
+                    Box(
+                        modifier = Modifier.width(22.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = diasSemana[index],
+                            fontSize = 10.sp
+                        )
+                    }
+                }
             }
         }
     }
 }
+
 
 @Preview(showSystemUi = true)
 @Composable
