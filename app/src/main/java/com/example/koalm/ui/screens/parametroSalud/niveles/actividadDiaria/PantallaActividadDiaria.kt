@@ -148,29 +148,41 @@ fun PantallaActividadDiaria(navController: NavController) {
 
                 Box(
                     modifier = Modifier
-                        .height(50.dp)
+                        .height(90.dp)
                         .weight(1f)
                         .padding(start = 8.dp)
                 ) {
                     LazyColumn(
                         state = listState,
                         flingBehavior = flingBehavior,
-                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         items(100000) { index ->
-                            val text = tipos[index % tipos.size]
+                            val actualIndex = index % tipos.size
+                            val isSelected = actualIndex == selectedIndex
+
+                            val alpha = if (isSelected) 1f else 0.4f
+                            val fontSize = if (isSelected) 18.sp else 14.sp
+                            val itemHeight = if (isSelected) 40.dp else 30.dp
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(40.dp),
+                                    .height(itemHeight),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = text, fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                                Text(
+                                    text = tipos[actualIndex],
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    fontSize = fontSize,
+                                    color = Color.Black.copy(alpha = alpha)
+                                )
                             }
                         }
                     }
+
                     Box(
                         modifier = Modifier
                             .matchParentSize()
