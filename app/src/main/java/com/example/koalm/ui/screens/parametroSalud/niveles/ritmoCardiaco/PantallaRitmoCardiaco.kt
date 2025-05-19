@@ -137,10 +137,3 @@ fun PantallaRitmoCardiaco(
         }
     }
 }
-
-val datosMockRitmo = DatosRitmoCardiaco(
-    ritmo = 135,
-    fechaUltimaInfo = "23/04/25",
-    datos = listOf(180f, 60f, 140f, 90f, 88f, 112f, 50f, 145f, 160f, 190f)
-)
-
