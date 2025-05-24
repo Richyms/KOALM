@@ -17,6 +17,15 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.MutableState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +33,10 @@ fun PantallaObjetivosPeso(
     navController: NavHostController,
     datos: DatosPeso = datosMockPeso
 ) {
+    val pesoInicial = remember { mutableStateOf(datos.pesoInicial) }
+
+    val pesoObjetivo = remember { mutableStateOf(datos.pesoObjetivo) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -51,48 +64,71 @@ fun PantallaObjetivosPeso(
                 .fillMaxSize(),
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            ComponenteInputs("Peso inicial", pesoInicial, datos.fechaInicial)
+            ComponenteInputs("Peso objetivo", pesoObjetivo)
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        }
+    }
+}
+
+@Composable
+fun ComponenteInputs(
+    textoLabel: String,
+    dato: MutableState<Float>,
+    fecha: String? = null
+) {
+    val texto = remember { mutableStateOf(dato.value.toFloat().toString()) }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(textoLabel, fontWeight = FontWeight.SemiBold)
+
+        val cajaTexto = @Composable {
+            Box(
+                modifier = Modifier
+                    .width(60.dp)
+                    .border(1.dp, VerdePrincipal, shape = RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text("Peso inicial", fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "${datos.pesoInicial} kg el ${datos.fechaInicial}",
+                BasicTextField(
+                    value = texto.value,
+                    onValueChange = {
+                        texto.value = it
+                        dato.value = it.toFloatOrNull() ?: dato.value
+                    },
+                    textStyle = LocalTextStyle.current.copy(
                         color = VerdePrincipal,
                         fontSize = 16.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        tint = VerdePrincipal,
-                        modifier = Modifier.size(17.dp)
-                    )
-                }
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Peso actual", fontWeight = FontWeight.SemiBold)
-                Text("${datos.pesoActual} kg", color = VerdePrincipal, fontSize = 16.sp)
+        if (fecha != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                cajaTexto()
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("kg el $fecha", color = VerdePrincipal, fontSize = 16.sp)
+                Spacer(modifier = Modifier.width(2.dp))
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = VerdePrincipal,
+                    modifier = Modifier.size(17.dp)
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Peso objetivo", fontWeight = FontWeight.SemiBold)
-                Text("${datos.pesoObjetivo} kg", color = VerdePrincipal, fontSize = 16.sp)
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                cajaTexto()
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("kg", color = VerdePrincipal, fontSize = 16.sp)
             }
         }
     }
