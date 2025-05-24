@@ -27,20 +27,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import com.google.firebase.auth.FirebaseAuth
+import com.example.koalm.utils.TimeUtils
 
 private const val TAG = "PantallaSaludMental"
 
 private val diasSemana = listOf("L", "M", "X", "J", "V", "S", "D")
-
-private fun formatearDuracion(minutos: Int): String {
-    return if (minutos < 60) {
-        "${minutos}min"
-    } else {
-        val horas = minutos / 60
-        val mins = minutos % 60
-        if (mins == 0) "${horas}h" else "${horas}h ${mins}min"
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -425,9 +416,9 @@ private fun HabitoActivoCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = formatearDuracion(habito.duracionMinutos),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        text = TimeUtils.formatearDuracion(habito.duracionMinutos),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

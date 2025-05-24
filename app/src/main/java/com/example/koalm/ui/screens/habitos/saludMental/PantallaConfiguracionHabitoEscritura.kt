@@ -64,6 +64,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import com.example.koalm.utils.TimeUtils
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -227,7 +228,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Etiqueta(stringResource(R.string.label_duracion_escritura))
                         Text(
-                            text  = formatearDuracion(duracionMin.roundToInt()),
+                            text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -661,13 +662,6 @@ fun TimePickerDialog(
 }
 
 /* ────────────────────────────  HELPERS  ─────────────────────────────────── */
-
-private fun formatearDuracion(min: Int): String = when {
-    min  < 60      -> "$min min"
-    min == 60      -> "1 hora"
-    min % 60 == 0  -> "${min / 60} h"
-    else           -> "${min / 60} h ${min % 60} min"
-}
 
 /**
  * Programa la notificación y navega atrás si todo salió bien.

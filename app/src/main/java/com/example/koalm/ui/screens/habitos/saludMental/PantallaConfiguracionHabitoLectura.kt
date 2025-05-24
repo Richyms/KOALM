@@ -46,6 +46,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+import com.example.koalm.utils.TimeUtils
 
 private const val TAG = "PantallaConfiguracionHabitoLectura"
 
@@ -256,7 +257,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = formatearDuracion(duracionMin.roundToInt()),
+                            text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -500,13 +501,6 @@ fun TimePickerDialogLectura(
             TimePicker(state = state, modifier = Modifier.fillMaxWidth())
         }
     )
-}
-
-private fun formatearDuracion(min: Int): String = when {
-    min < 60           -> "$min minutos"
-    min == 60          -> "1 hora"
-    min % 60 == 0      -> "${min/60} horas"
-    else               -> "${min/60} horas ${min%60} min"
 }
 
 

@@ -50,6 +50,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
+import com.example.koalm.utils.TimeUtils
 
 private const val TAG = "PantallaConfiguracionDesconexion"
 
@@ -245,7 +246,7 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Etiqueta("Duración de la desconexión:")
                         Text(
-                            text = formatearDuracion(duracionMin.roundToInt()),
+                            text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -499,10 +500,3 @@ private fun TimePickerDialogDesconexion(
 }
 
 /* ────────────────────────────  HELPERS  ─────────────────────────────────── */
-
-private fun formatearDuracion(min: Int): String = when {
-    min < 60 -> "$min min"
-    min == 60 -> "1 hora"
-    min % 60 == 0 -> "${min / 60} h"
-    else -> "${min / 60} h ${min % 60} min"
-}

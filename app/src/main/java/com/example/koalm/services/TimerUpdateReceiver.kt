@@ -18,8 +18,9 @@ class TimerUpdateReceiver : BroadcastReceiver() {
             val remainingTime = intent.getLongExtra(NotificationConstants.EXTRA_REMAINING_TIME, 0)
             Log.d(TAG, "Tiempo restante: $remainingTime ms")
             
-            // Reenviar la actualización localmente
-            val localIntent = Intent(NotificationConstants.TIMER_UPDATE_ACTION).apply {
+            // Reenviar la actualización localmente usando un Intent explícito
+            val localIntent = Intent(context, TimerUpdateReceiver::class.java).apply {
+                action = NotificationConstants.TIMER_UPDATE_ACTION
                 putExtra(NotificationConstants.EXTRA_REMAINING_TIME, remainingTime)
             }
             context?.sendBroadcast(localIntent)

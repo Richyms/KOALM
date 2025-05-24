@@ -156,11 +156,11 @@ fun BotonEnviarCorreo(
                 } else {
                     // Si no existe, mostrar mensaje de error
                     mostrarMensajeError = true
-                        Toast.makeText(
-                            context,
-                            "No existe una cuenta asociada a este correo.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                    Toast.makeText(
+                        context,
+                        "No existe una cuenta asociada a este correo.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             .addOnFailureListener {

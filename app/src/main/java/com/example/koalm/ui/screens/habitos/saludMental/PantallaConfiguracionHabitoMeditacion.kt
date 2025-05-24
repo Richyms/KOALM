@@ -26,6 +26,7 @@ import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
+import com.example.koalm.utils.TimeUtils
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -85,10 +86,6 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
     var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
     val rangoDuracion = 1f..180f
 
-    /* Switch */
-    var sonidoshambHabilitados by remember { mutableStateOf(false) }
-    var ejerciciorespiracionHabilitados by remember { mutableStateOf(false)}
-
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -144,8 +141,8 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             "is_reading" to false,
                             "is_digital_disconnect" to false,
                             "notas_habilitadas" to false,
-                            "sonidos_habilitados" to sonidoshambHabilitados,
-                            "ejercicio_respiracion" to ejerciciorespiracionHabilitados
+                            "sonidos_habilitados" to false,
+                            "ejercicio_respiracion" to false
                         )
                     )
                     // Obtener la referencia al usuario actual en Firebase Authentication
@@ -294,7 +291,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = formatearDuracion(duracionMin.roundToInt()),
+                            text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -311,31 +308,6 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    /*  Switch sonidos ambientales*/
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        Arrangement.SpaceBetween,
-                        Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.label_sonidos))
-                        Switch(
-                            checked = sonidoshambHabilitados,
-                            onCheckedChange = { sonidoshambHabilitados = it }
-                        )
-                    }
-
-                    /*  Switch Ejercicio de respiración*/
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        Arrangement.SpaceBetween,
-                        Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.label_respiracion))
-                        Switch(
-                            checked = ejerciciorespiracionHabilitados,
-                            onCheckedChange = { ejerciciorespiracionHabilitados = it }
-                        )
-                    }
                 }
             }
 
@@ -345,7 +317,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                     .fillMaxWidth()
                     .clickable { 
                         try {
-                            navController.navigate("temporizador_meditacion") {
+                            navController.navigate("temporizador_meditacion/${duracionMin.roundToInt()}") {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
@@ -418,9 +390,3 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
 }
 
 /*──────────────────────────  HELPERS  ─────────────────────────────────────*/
-private fun formatearDuracion(min: Int): String = when {
-    min < 60           -> "$min min"
-    min == 60          -> "1 hora"
-    min % 60 == 0      -> "${min/60} h"
-    else               -> "${min/60} h ${min%60} min"
-}

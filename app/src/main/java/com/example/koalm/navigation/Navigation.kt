@@ -71,7 +71,6 @@ fun AppNavigation(
                 onGoogleSignInClick = onGoogleSignInClick
             )
         }
-
         screenWithSlide("recuperar") { PantallaRecuperarContrasena(navController) }
         screenWithSlide("restablecer") { PantallaRestablecerContrasena(navController) }
         screenWithSlide("recuperarCodigo") { PantallaCodigoRecuperarContrasena(navController) }
@@ -108,7 +107,6 @@ fun AppNavigation(
         screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
-        screenWithSlide("temporizador_meditacion") { PantallaTemporizadorMeditacion(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }
         screenWithSlide("sueño-de-anoche") { PantallaSueno(navController) }
         screenWithSlide("nivel-de-estres") { PantallaEstres(navController) }
@@ -119,6 +117,17 @@ fun AppNavigation(
         screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
         screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
+        
+        composable(
+            route = "temporizador_meditacion/{duracion}",
+            arguments = listOf(navArgument("duracion") {
+                type = NavType.IntType
+                defaultValue = 15
+            })
+        ) { backStackEntry ->
+            val duracion = backStackEntry.arguments?.getInt("duracion") ?: 15
+            PantallaTemporizadorMeditacion(navController, duracion)
+        }
     }
 }
 

@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -23,6 +24,7 @@ fun BarraNavegacionInferior(
         listOf(
             Triple("Inicio", Icons.Default.Home, "menu"),
             Triple("Hábitos", Icons.AutoMirrored.Filled.List, "tipos_habitos"),
+            Triple("Salud", Icons.Default.Favorite, "estadisticas"),
             Triple("Perfil", Icons.Default.Person, "personalizar")
         ).forEach { (label, icon, route) ->
             NavigationBarItem(
