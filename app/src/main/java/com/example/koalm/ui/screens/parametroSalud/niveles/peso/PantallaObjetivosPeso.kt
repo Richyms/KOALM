@@ -77,8 +77,6 @@ fun ComponenteInputs(
     dato: MutableState<Float>,
     fecha: String? = null
 ) {
-    val texto = remember { mutableStateOf(dato.value.toFloat().toString()) }
-
     Spacer(modifier = Modifier.height(16.dp))
 
     Row(
@@ -88,34 +86,11 @@ fun ComponenteInputs(
     ) {
         Text(textoLabel, fontWeight = FontWeight.SemiBold)
 
-        val cajaTexto = @Composable {
-            Box(
-                modifier = Modifier
-                    .width(60.dp)
-                    .border(1.dp, VerdePrincipal, shape = RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                BasicTextField(
-                    value = texto.value,
-                    onValueChange = {
-                        texto.value = it
-                        dato.value = it.toFloatOrNull() ?: dato.value
-                    },
-                    textStyle = LocalTextStyle.current.copy(
-                        color = VerdePrincipal,
-                        fontSize = 16.sp
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
         if (fecha != null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                cajaTexto()
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("kg el $fecha", color = VerdePrincipal, fontSize = 16.sp)
+                CajaTexto(dato)
+                Spacer(modifier = Modifier.width(3.dp))
+                Text("kg el $fecha", color = VerdePrincipal, fontSize = 15.sp)
                 Spacer(modifier = Modifier.width(2.dp))
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
@@ -126,11 +101,35 @@ fun ComponenteInputs(
             }
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                cajaTexto()
+                CajaTexto(dato)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("kg", color = VerdePrincipal, fontSize = 16.sp)
+                Text("kg", color = VerdePrincipal, fontSize = 15.sp)
             }
         }
+    }
+}
+@Composable
+fun CajaTexto(dato:MutableState<Float>) {
+    val texto = remember { mutableStateOf(dato.value.toFloat().toString()) }
+    Box(
+        modifier = Modifier
+            .width(60.dp)
+            .border(1.dp, VerdePrincipal, shape = RoundedCornerShape(4.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        BasicTextField(
+            value = texto.value,
+            onValueChange = {
+                texto.value = it
+                dato.value = it.toFloatOrNull() ?: dato.value
+            },
+            textStyle = LocalTextStyle.current.copy(
+                color = VerdePrincipal,
+                fontSize = 16.sp
+            ),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -144,7 +143,7 @@ data class DatosPeso(
 
 val datosMockPeso = DatosPeso(
     pesoInicial = 74.5f,
-    fechaInicial = "01/02/2025",
+    fechaInicial = "23 mayo, 2025",
     pesoActual = 72f,
     pesoObjetivo = 69f
 )
