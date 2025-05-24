@@ -1,6 +1,5 @@
 package com.example.koalm.ui.screens.parametroSalud.niveles.peso
 
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import java.util.Locale
@@ -97,7 +95,7 @@ fun PantallaControlPeso(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ComponenteObjetivos("Peso actual", "Agregar peso", pesoActual, navController, "actualizar-peso")
+                    ComponenteObjetivos("Peso actual", "Actualizar peso", pesoActual, navController, "actualizar-peso")
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -124,12 +122,4 @@ fun ComponenteObjetivos(titulo : String, textoBoton: String, valor: Float, navCo
     ) {
         Text(textoBoton)
     }
-}
-
-@Preview(showSystemUi = true, showBackground = true)
-@Composable
-fun VistaPreviaPantallaControlPeso() {
-    PantallaControlPeso(
-        navController = rememberNavController(),
-    )
 }
