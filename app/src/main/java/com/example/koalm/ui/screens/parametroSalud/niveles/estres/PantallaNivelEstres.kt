@@ -1,10 +1,8 @@
 package com.example.koalm.ui.screens.parametroSalud.niveles.estres
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.SentimentNeutral
@@ -12,9 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -128,7 +123,7 @@ fun PantallaEstres(
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(14.dp))
+            /*Spacer(modifier = Modifier.height(14.dp))
 
             Button(
                 onClick = { /* TODO: Agregar acción real */ },
@@ -140,7 +135,7 @@ fun PantallaEstres(
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text("Realizar test", fontSize = 16.sp)
-            }
+            }*/
         }
     }
 }
