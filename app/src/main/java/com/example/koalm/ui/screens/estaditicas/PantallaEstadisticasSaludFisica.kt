@@ -25,8 +25,7 @@ fun PantallaEstadísticasSaludFisica(navController: NavHostController) {
     val habitos = listOf(
         HabitoFisico("Sueño", ""),
         HabitoFisico("Alimentación", ""),
-        HabitoFisico("Hidratación", ""),
-        HabitoFisico("Por ajustar", "")
+        HabitoFisico("Hidratación", "")
     )
 
     Scaffold(
@@ -86,7 +85,13 @@ private fun StatsHabitoFisicoCard(habito: HabitoFisico, navController: NavHostCo
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (habito.titulo == "Sueño") Icons.Default.Bed else if (habito.titulo == "Alimentación") Icons.Default.LocalDining else if (habito.titulo == "Hidratación") Icons.Default.WaterDrop else Icons.Default.DoNotDisturb,
+                imageVector = if (habito.titulo == "Sueño")
+                    Icons.Default.Bed
+                else
+                    if (habito.titulo == "Alimentación")
+                        Icons.Default.LocalDining
+                    else
+                        Icons.Default.WaterDrop,
                 contentDescription = null,
                 tint = Negro,
                 modifier = Modifier.size(24.dp)
