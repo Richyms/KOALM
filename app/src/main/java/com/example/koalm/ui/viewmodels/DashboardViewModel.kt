@@ -36,55 +36,97 @@ class DashboardViewModel : ViewModel() {
 
     fun cargarHabitos(email: String, userId: String) {
         viewModelScope.launch {
-            cargando = true
+            try {
+                Log.d("DashboardViewModel", "Iniciando carga de hábitos para email: $email, userId: $userId")
+                cargando = true
 
-            // Cargar hábitos personalizados
-            val habitosCargados = HabitosRepository.obtenerHabitosPersonalizados(email)
-            habitos = habitosCargados
+                // Cargar hábitos personalizados y sus progresos
+                Log.d("DashboardViewModel", "Cargando hábitos personalizados...")
+                val habitosCargados = HabitosRepository.obtenerHabitosPersonalizados(email)
+                Log.d("DashboardViewModel", "Hábitos personalizados cargados: ${habitosCargados.size}")
+                habitos = habitosCargados
 
-            // Cargar hábitos predeterminados
-            val resultadoHabitosPre = HabitoRepository().obtenerHabitosActivos(userId)
-            if (resultadoHabitosPre.isSuccess) {
-                habitosPre = resultadoHabitosPre.getOrNull() ?: emptyList()
-            } else {
+                Log.d("DashboardViewModel", "Cargando progresos de hábitos personalizados...")
+                cargarProgresos(email, habitosCargados)
+                Log.d("DashboardViewModel", "Progresos de hábitos personalizados cargados")
+
+                // Cargar hábitos predeterminados y sus progresos
+                Log.d("DashboardViewModel", "Cargando hábitos predeterminados...")
+                val resultadoHabitosPre = HabitoRepository().obtenerHabitosActivos(userId)
+                if (resultadoHabitosPre.isSuccess) {
+                    val habitosPreCargados = resultadoHabitosPre.getOrNull() ?: emptyList()
+                    Log.d("DashboardViewModel", "Hábitos predeterminados cargados: ${habitosPreCargados.size}")
+                    habitosPre = habitosPreCargados
+
+                    Log.d("DashboardViewModel", "Cargando progresos de hábitos predeterminados...")
+                    cargarProgresosPre(email, habitosPreCargados)
+                    Log.d("DashboardViewModel", "Progresos de hábitos predeterminados cargados")
+                } else {
+                    Log.e("DashboardViewModel", "Error al obtener hábitos predeterminados: ${resultadoHabitosPre.exceptionOrNull()?.message}")
+                    habitosPre = emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e("DashboardViewModel", "Error al cargar hábitos: ${e.message}", e)
+                Log.e("DashboardViewModel", "Stack trace: ${e.stackTraceToString()}")
+                habitos = emptyList()
                 habitosPre = emptyList()
-                Log.e("DashboardViewModel", "Error al obtener hábitos predeterminados: ${resultadoHabitosPre.exceptionOrNull()?.message}")
+                progresos = emptyMap()
+                progresosPre = emptyMap()
+            } finally {
+                Log.d("DashboardViewModel", "Finalizando carga de hábitos")
+                cargando = false
             }
-
-            // Cargar progresos
-            cargarProgresos(email, habitos)
-            cargarProgresosPre(email, habitosPre)
-
-            cargando = false
         }
     }
 
-
-
     private suspend fun cargarProgresos(email: String, habitos: List<HabitoPersonalizado>) {
-        val progresosMap = mutableMapOf<String, ProgresoDiario>()
-        for (habito in habitos) {
-            val ref = obtenerProgresoRef(email, habito)
-            val progreso = obtenerProgresoDelDia(ref)
-            if (progreso != null) {
-                val habitoId = habito.nombre.replace(" ", "_")
-                progresosMap[habitoId] = progreso
+        try {
+            Log.d("DashboardViewModel", "Iniciando carga de progresos personalizados")
+            val progresosMap = mutableMapOf<String, ProgresoDiario>()
+            for (habito in habitos) {
+                try {
+                    Log.d("DashboardViewModel", "Cargando progreso para hábito: ${habito.nombre}")
+                    val ref = obtenerProgresoRef(email, habito)
+                    val progreso = obtenerProgresoDelDia(ref)
+                    if (progreso != null) {
+                        val habitoId = habito.nombre.replace(" ", "_")
+                        progresosMap[habitoId] = progreso
+                        Log.d("DashboardViewModel", "Progreso cargado para hábito: ${habito.nombre}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("DashboardViewModel", "Error al cargar progreso para hábito ${habito.nombre}: ${e.message}")
+                }
             }
+            progresos = progresosMap
+            Log.d("DashboardViewModel", "Finalizada carga de progresos personalizados")
+        } catch (e: Exception) {
+            Log.e("DashboardViewModel", "Error general al cargar progresos personalizados: ${e.message}")
         }
-        progresos = progresosMap
     }
 
     private suspend fun cargarProgresosPre(email: String, habitos: List<HabitosPredeterminados>) {
-        val progresosMap = mutableMapOf<String, ProgresoDiario>()
-        for (habito in habitos) {
-            val ref = obtenerProgresoRefPre(email, habito)
-            val progreso = obtenerProgresoDelDia(ref)
-            if (progreso != null) {
-                val habitoId = habito.id
-                progresosMap[habitoId] = progreso
+        try {
+            Log.d("DashboardViewModel", "Iniciando carga de progresos predeterminados")
+            val progresosMap = mutableMapOf<String, ProgresoDiario>()
+            for (habito in habitos) {
+                try {
+                    Log.d("DashboardViewModel", "Cargando progreso para hábito predeterminado: ${habito.titulo}")
+                    val ref = obtenerProgresoRefPre(email, habito)
+                    val progreso = obtenerProgresoDelDia(ref)
+                    if (progreso != null) {
+                        val habitoId = habito.id
+                        progresosMap[habitoId] = progreso
+                        Log.d("DashboardViewModel", "Progreso cargado para hábito predeterminado: ${habito.titulo}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("DashboardViewModel", "Error al cargar progreso para hábito predeterminado ${habito.titulo}: ${e.message}")
+                }
             }
+            progresosPre = progresosMap
+            Log.d("DashboardViewModel", "Finalizada carga de progresos predeterminados")
+        } catch (e: Exception) {
+            Log.e("DashboardViewModel", "Error general al cargar progresos predeterminados: ${e.message}")
         }
-        progresosPre = progresosMap
     }
 
     fun incrementarProgreso(email: String, habito: HabitoPersonalizado) {

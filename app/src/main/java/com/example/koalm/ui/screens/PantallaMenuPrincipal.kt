@@ -376,85 +376,90 @@ fun DashboardScreen(
         viewModel.cargarHabitos(usuarioEmail, userId)
     }
 
-        // Filtros de tipo
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(tipos) { tipo ->
-                val isSelected = tipo == tipoSeleccionado
+    // Filtros de tipo
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(tipos) { tipo ->
+            val isSelected = tipo == tipoSeleccionado
 
-                TextButton(
-                    onClick = { tipoSeleccionado = tipo },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) Color(0xFFF6FBF2) else Color.Transparent,
-                        contentColor = if (isSelected) Color.Black else Color.Gray
-                    ),
-                    modifier = Modifier.padding(4.dp)
-                ) {
-                    Text(tipo.replaceFirstChar { it.uppercaseChar() })
-                }
+            TextButton(
+                onClick = { tipoSeleccionado = tipo },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isSelected) Color(0xFFF6FBF2) else Color.Transparent,
+                    contentColor = if (isSelected) Color.Black else Color.Gray
+                ),
+                modifier = Modifier.padding(4.dp)
+            ) {
+                Text(tipo.replaceFirstChar { it.uppercaseChar() })
             }
         }
+    }
 
-        if (cargando) {
-            // Mostrar un indicador de carga mientras se están obteniendo los datos
+    if (cargando) {
+        // Mostrar un indicador de carga mientras se están obteniendo los datos
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
             CircularProgressIndicator()
-        } else {
-            val diaActual = (LocalDate.now().dayOfWeek.value + 6) % 7
-            val tipoFiltrado = tipoSeleccionado.lowercase()
+        }
+    } else {
+        val diaActual = (LocalDate.now().dayOfWeek.value + 6) % 7
+        val tipoFiltrado = tipoSeleccionado.lowercase()
 
-            // Filtrar hábitos personalizados
-            val habitosFiltradosPersonalizados = habitos.filter { habito ->
-                val tipoCoincide = tipoFiltrado == "todos" || habito.clase.name.lowercase() == tipoFiltrado
-                val frecuencia = habito.frecuencia
-                val frecuenciaEsDiaria = frecuencia == null || frecuencia.all { !it }
-                val diaActivo = frecuenciaEsDiaria || frecuencia?.getOrNull(diaActual) == true
+        // Filtrar hábitos personalizados
+        val habitosFiltradosPersonalizados = habitos.filter { habito ->
+            val tipoCoincide = tipoFiltrado == "todos" || habito.clase.name.lowercase() == tipoFiltrado
+            val frecuencia = habito.frecuencia
+            val frecuenciaEsDiaria = frecuencia == null || frecuencia.all { !it }
+            val diaActivo = frecuenciaEsDiaria || frecuencia?.getOrNull(diaActual) == true
 
-                tipoCoincide && diaActivo
-            }
+            tipoCoincide && diaActivo
+        }
 
-            // Filtrar hábitos predeterminados
-            val habitosFiltradosPredeterminados = habitosPre.filter { habito ->
-                val tipoCoincide = tipoFiltrado == "todos" || habito.clase.name.lowercase() == tipoFiltrado
-                val frecuencia = habito.diasSeleccionados
-                val diaActivo = frecuencia.getOrNull(diaActual) == true
+        // Filtrar hábitos predeterminados
+        val habitosFiltradosPredeterminados = habitosPre.filter { habito ->
+            val tipoCoincide = tipoFiltrado == "todos" || habito.clase.name.lowercase() == tipoFiltrado
+            val frecuencia = habito.diasSeleccionados
+            val diaActivo = frecuencia.getOrNull(diaActual) == true
 
-                tipoCoincide && diaActivo
-            }
+            tipoCoincide && diaActivo
+        }
 
-            val hayHabitos = habitosFiltradosPersonalizados.isNotEmpty() || habitosFiltradosPredeterminados.isNotEmpty()
+        val hayHabitos = habitosFiltradosPersonalizados.isNotEmpty() || habitosFiltradosPredeterminados.isNotEmpty()
 
-            if (hayHabitos) {
-                habitosFiltradosPersonalizados.forEach { habito ->
-                    HabitoCardPersonalizado(
-                        habito = habito,
-                        progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
-                        onIncrementar = {
-                            viewModel.incrementarProgreso(usuarioEmail, habito)
-                        }
-                    )
-                }
-
-                habitosFiltradosPredeterminados.forEach { habito ->
-                    HabitoCardPredeterminado(
-                        habito = habito,
-                        progreso = viewModel.progresosPre[habito.id],
-                        onIncrementar = {
-                            viewModel.incrementarProgresoPre(usuarioEmail, habito)
-                        }
-                    )
-                }
-            } else {
-                Text(
-                    text = "No tienes hábitos de tipo ${tipoFiltrado}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+        if (hayHabitos) {
+            habitosFiltradosPersonalizados.forEach { habito ->
+                HabitoCardPersonalizado(
+                    habito = habito,
+                    progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
+                    onIncrementar = {
+                        viewModel.incrementarProgreso(usuarioEmail, habito)
+                    }
                 )
             }
+
+            habitosFiltradosPredeterminados.forEach { habito ->
+                HabitoCardPredeterminado(
+                    habito = habito,
+                    progreso = viewModel.progresosPre[habito.id],
+                    onIncrementar = {
+                        viewModel.incrementarProgresoPre(usuarioEmail, habito)
+                    }
+                )
+            }
+        } else {
+            Text(
+                text = "No tienes hábitos de tipo ${tipoFiltrado}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
         }
+    }
 }
 
 @Composable
@@ -471,13 +476,14 @@ fun HabitoCardPersonalizado(
     val progresoPorcentaje = if (habito.unaVezPorHabito == 1) {
         if (completado) 1f else 0f
     } else {
-        realizados.toFloat() / (habito.recordatorios?.horas?.size ?: 1)
+        val total = (habito.recordatorios?.horas?.size ?: 1).coerceAtLeast(1)
+        (realizados.toFloat() / total).coerceIn(0f, 1f)
     }
 
-    var progresoAnimado by remember { mutableFloatStateOf(progresoPorcentaje) }
+    var progresoAnimado by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(progresoPorcentaje) {
-        progresoAnimado = progresoPorcentaje
+        progresoAnimado = progresoPorcentaje.coerceIn(0f, 1f)
     }
 
     val animatedProgress by animateFloatAsState(
@@ -618,13 +624,14 @@ fun HabitoCardPredeterminado(
     val progresoPorcentaje = if (totalRecordatoriosxDia == 1) {
         if (completado) 1f else 0f
     } else {
-        realizados.toFloat() / totalRecordatoriosxDia
+        val total = totalRecordatoriosxDia.coerceAtLeast(1)
+        (realizados.toFloat() / total).coerceIn(0f, 1f)
     }
 
-    var progresoAnimado by remember { mutableFloatStateOf(progresoPorcentaje) }
+    var progresoAnimado by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(progresoPorcentaje) {
-        progresoAnimado = progresoPorcentaje
+        progresoAnimado = progresoPorcentaje.coerceIn(0f, 1f)
     }
 
     val animatedProgress by animateFloatAsState(
@@ -654,9 +661,9 @@ fun HabitoCardPredeterminado(
                         TipoHabito.LECTURA -> Icons.Default.MenuBook
                         TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
                         TipoHabito.ESCRITURA -> Icons.Default.Edit
-                        TipoHabito.SUEÑO -> TODO()
-                        TipoHabito.ALIMENTACION -> TODO()
-                        TipoHabito.HIDRATACION -> TODO()
+                        TipoHabito.SUEÑO -> Icons.Default.SelfImprovement // Temporalmente usando el mismo ícono
+                        TipoHabito.ALIMENTACION -> Icons.Default.SelfImprovement // Temporalmente usando el mismo ícono
+                        TipoHabito.HIDRATACION -> Icons.Default.SelfImprovement // Temporalmente usando el mismo ícono
                     },
                     contentDescription = "Icono del Hábito",
                     tint = MaterialTheme.colorScheme.primary,
