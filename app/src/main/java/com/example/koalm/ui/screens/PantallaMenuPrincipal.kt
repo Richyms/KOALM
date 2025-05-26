@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.ui.components.obtenerIconoPorNombre
+import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
 import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 
@@ -237,12 +238,22 @@ fun DrawerContenido(navController: NavHostController) {
         HorizontalDivider()
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
+                when(it){
+                    "Salud mental" -> navController.navigate("estadisticas_salud_mental")
+                    "Salud física" -> navController.navigate("estadisticas_salud_fisica")
+                }
+            })
         }
         HorizontalDivider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Recomendaciones de Kool", "Insignias y logros", "Información de la app").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
+                when (it){
+                    "Salud mental" -> navController.navigate("estadisticas_salud_mental")
+                    "Salud física" -> navController.navigate("estadisticas_salud_fisica")
+                }
+            })
         }
     }
 }
