@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import com.example.koalm.MainActivity
 import com.example.koalm.R
-import com.example.koalm.services.NotificationReceiver
+import com.example.koalm.services.timers.NotificationReceiver
 import com.example.koalm.services.timers.WritingTimerService
 import java.time.DayOfWeek
 import java.time.LocalDateTime

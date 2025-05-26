@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.androidx.animation.core)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.runtime)
+    implementation(libs.firebase.dataconnect)
 
     // — Testing
     testImplementation(libs.junit)

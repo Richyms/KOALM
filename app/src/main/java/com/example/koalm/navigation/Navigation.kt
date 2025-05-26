@@ -19,8 +19,11 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludFisica
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
+import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
+import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
+import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
+
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoAlimentacion
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfiguracionHabitoEscritura
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoHidratacion
@@ -33,8 +36,7 @@ import com.example.koalm.ui.screens.habitos.PantallaHabitos
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaLibros
 import com.example.koalm.ui.screens.PantallaMenuPrincipal
 import com.example.koalm.ui.screens.habitos.racha.PantallaRachaHabitos
-import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
-import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
+import com.example.koalm.ui.screens.habitos.saludMental.*
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaTemporizadorMeditacion
 import com.example.koalm.ui.screens.parametroSalud.niveles.actividadDiaria.PantallaActividadDiaria
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaActualizarPeso
@@ -104,7 +106,7 @@ fun AppNavigation(
         }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
         screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }
+        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }

@@ -16,17 +16,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.koalm.ui.theme.*
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.screens.habitos.saludFisica.HabitoFisico
-
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.model.ClaseHabito
+import com.example.koalm.model.Habito
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaEstadísticasSaludFisica(navController: NavHostController) {
-    val habitos = listOf(
-        HabitoFisico("Sueño", ""),
-        HabitoFisico("Alimentación", ""),
-        HabitoFisico("Hidratación", ""),
-        HabitoFisico("Por ajustar", "")
+fun PantallaEstadisticasSaludFisica(navController: NavHostController) {
+    // Filtramos solo los hábitos físicos usando tu enum ClaseHabito
+    val habitosFisicos = listOf(
+        Habito(titulo = "Sueño", clase = ClaseHabito.FISICO, tipo = TipoHabito.SUEÑO),
+        Habito(titulo = "Alimentación", clase = ClaseHabito.FISICO, tipo = TipoHabito.ALIMENTACION),
+        Habito(titulo = "Hidratación", clase = ClaseHabito.FISICO, tipo = TipoHabito.HIDRATACION),
+        Habito(titulo = "Actividad Física", clase = ClaseHabito.FISICO)
     )
 
     Scaffold(
@@ -57,21 +59,26 @@ fun PantallaEstadísticasSaludFisica(navController: NavHostController) {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-
-            habitos.forEach { habito ->
-                StatsHabitoFisicoCard(habito, navController)
+        ){
+            habitosFisicos.forEach { habito ->
+                StatsHabitoCard(habito, navController)
             }
         }
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StatsHabitoFisicoCard(habito: HabitoFisico, navController: NavHostController) {
+private fun StatsHabitoCard(habito: Habito, navController: NavHostController) {
+    val icono = when(habito.tipo) {
+        TipoHabito.SUEÑO -> Icons.Default.Bedtime
+        TipoHabito.ALIMENTACION -> Icons.Default.Restaurant
+        TipoHabito.HIDRATACION -> Icons.Default.WaterDrop
+        else -> Icons.Default.FitnessCenter
+    }
+
     Card(
-        onClick = {},
+        onClick = { /* Navegar a detalles del hábito */ },
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp)),
@@ -86,7 +93,7 @@ private fun StatsHabitoFisicoCard(habito: HabitoFisico, navController: NavHostCo
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (habito.titulo == "Sueño") Icons.Default.Bed else if (habito.titulo == "Alimentación") Icons.Default.LocalDining else if (habito.titulo == "Hidratación") Icons.Default.WaterDrop else Icons.Default.DoNotDisturb,
+                imageVector = icono,
                 contentDescription = null,
                 tint = Negro,
                 modifier = Modifier.size(24.dp)
@@ -100,6 +107,7 @@ private fun StatsHabitoFisicoCard(habito: HabitoFisico, navController: NavHostCo
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
+                // Puedes añadir más información aquí como progreso, etc.
             }
         }
     }

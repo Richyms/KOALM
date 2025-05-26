@@ -1,13 +1,19 @@
 package com.example.koalm.model
 
-data class HabitosPredeterminados(
+
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+data class Habito(
+
     val id: String = "",
     val titulo: String = "",
     val descripcion: String = "",
     val clase: ClaseHabito = ClaseHabito.MENTAL,
     val tipo: TipoHabito = TipoHabito.ESCRITURA,
     val diasSeleccionados: List<Boolean> = List(7) { false },
-    val hora: String = "", // Formato "HH:mm"
+    val hora: String = "", // Hora principal (formato "HH:mm a")
+    val horarios: List<String> = emptyList(), // Para hábitos con múltiples horarios como alimentación
     val duracionMinutos: Int = 15,
     val notasHabilitadas: Boolean = false,
     val userId: String? = null,
@@ -25,6 +31,7 @@ data class HabitosPredeterminados(
         "tipo" to tipo.name,
         "diasSeleccionados" to diasSeleccionados,
         "hora" to hora,
+        "horarios" to horarios,
         "duracionMinutos" to duracionMinutos,
         "notasHabilitadas" to notasHabilitadas,
         "userId" to userId,
@@ -34,6 +41,28 @@ data class HabitosPredeterminados(
         "rachaMaxima" to rachaMaxima,
         "ultimoDiaCompletado" to ultimoDiaCompletado
     )
+
+    companion object {
+        fun crearNuevoHabitoAlimentacion(
+            userId: String,
+            descripcion: String,
+            horarios: List<String>
+        ): Habito {
+            return Habito(
+                titulo = "Alimentación",
+                descripcion = descripcion,
+                clase = ClaseHabito.FISICO,
+                tipo = TipoHabito.ALIMENTACION,
+                horarios = horarios,
+                hora = horarios.firstOrNull() ?: "",
+                diasSeleccionados = List(7) { true }, // Todos los días por defecto
+                duracionMinutos = 30, // 30 minutos por comida
+                userId = userId,
+                fechaCreacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
+                fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+            )
+        }
+    }
 }
 
 enum class ClaseHabito {
@@ -50,7 +79,9 @@ enum class TipoHabito {
     SUEÑO,
     ALIMENTACION,
     HIDRATACION
+
 }
+
 
 
 

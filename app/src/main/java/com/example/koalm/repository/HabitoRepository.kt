@@ -5,11 +5,10 @@ import android.content.Context
 import android.util.Log
 import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.HabitoPersonalizado
-import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
-import com.example.koalm.services.NotificationService
+import com.example.koalm.services.timers.ReadingTimerService
 import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.ReadingNotificationService
@@ -27,13 +26,12 @@ import java.time.format.DateTimeFormatter
 class HabitoRepository {
     private val TAG = "HabitoRepository"
     private val db = FirebaseFirestore.getInstance()
+    private val habitosCollection = db.collection("habitos")
 
     private val userEmail = FirebaseAuth.getInstance().currentUser?.email
         ?: throw IllegalStateException("Usuario no autenticado")
 
-    private val habitosCollection = db.collection("habitos").document(userEmail).collection("predeterminados")
-
-    suspend fun crearHabito(habito: HabitosPredeterminados): Result<String> = try {
+    suspend fun crearHabito(habito: Habito): Result<String> = try {
         Log.d(TAG, "Iniciando creación de hábito: ${habito.titulo}")
         Log.d(TAG, "Datos del hábito: userId=${habito.userId}, tipo=${habito.tipo}, clase=${habito.clase}")
 
@@ -52,23 +50,23 @@ class HabitoRepository {
         Result.failure(e)
     }
 
-    suspend fun obtenerHabitosActivos(userId: String): Result<List<HabitosPredeterminados>> = try {
+    suspend fun obtenerHabitosActivos(userId: String): Result<List<Habito>> = try {
         Log.d(TAG, "Iniciando búsqueda de hábitos para userId: $userId")
-        
+
         val query = habitosCollection
             .whereEqualTo("userId", userId)
-        
+
         Log.d(TAG, "Ejecutando query: ${query.toString()}")
-        
+
         val snapshot = query.get().await()
         Log.d(TAG, "Query completada. Documentos encontrados: ${snapshot.documents.size}")
-        
+
         val habitos = snapshot.documents.mapNotNull { doc ->
             try {
                 val data = doc.data
                 if (data != null) {
                     Log.d(TAG, "Procesando documento ${doc.id}: $data")
-                    HabitosPredeterminados(
+                    Habito(
                         id = doc.id,
                         titulo = data["titulo"] as? String ?: "",
                         descripcion = data["descripcion"] as? String ?: "",
@@ -101,14 +99,77 @@ class HabitoRepository {
                 null
             }
         }
-        
+
         val habitosOrdenados = habitos.sortedByDescending { it.fechaCreacion }
-        
+
         Log.d(TAG, "Procesamiento completado. Hábitos válidos: ${habitosOrdenados.size}")
         Result.success(habitosOrdenados)
     } catch (e: Exception) {
         Log.e(TAG, "Error al obtener hábitos: ${e.message}", e)
         Result.failure(e)
+    }
+    suspend fun obtenerHabitosMentales(userId: String): Result<List<Habito>> {
+        return obtenerHabitosPorClase(userId, ClaseHabito.MENTAL)
+    }
+
+    suspend fun obtenerHabitosFisicos(userId: String): Result<List<Habito>> {
+        return obtenerHabitosPorClase(userId, ClaseHabito.FISICO)
+    }
+
+    private suspend fun obtenerHabitosPorClase(userId: String, clase: ClaseHabito): Result<List<Habito>> {
+        return try {
+            Log.d(TAG, "Buscando hábitos de clase ${clase.name} para userId: $userId")
+
+            val query = habitosCollection
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("clase", clase.name)
+
+            Log.d(TAG, "Ejecutando query filtrada: ${query.toString()}")
+
+            val snapshot = query.get().await()
+            Log.d(TAG, "Query completada. Documentos encontrados: ${snapshot.documents.size}")
+
+            val habitos = snapshot.documents.mapNotNull { doc ->
+                try {
+                    val data = doc.data ?: return@mapNotNull null
+                    Log.d(TAG, "Procesando documento ${doc.id}: $data")
+
+                    Habito(
+                        id = doc.id,
+                        titulo = data["titulo"] as? String ?: "",
+                        descripcion = data["descripcion"] as? String ?: "",
+                        clase = clase, // Ya sabemos que es de esta clase
+                        tipo = try {
+                            TipoHabito.valueOf(data["tipo"] as? String ?: throw Exception("Tipo no especificado"))
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error al convertir tipo: ${data["tipo"]}", e)
+                            when(clase) {
+                                ClaseHabito.MENTAL -> TipoHabito.ESCRITURA
+                                ClaseHabito.FISICO -> TipoHabito.SUEÑO
+                                else -> TipoHabito.ESCRITURA
+                            }
+                        },
+                        diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
+                        hora = data["hora"] as? String ?: "",
+                        duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
+                        notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
+                        userId = data["userId"] as? String,
+                        fechaCreacion = data["fechaCreacion"] as? String,
+                        fechaModificacion = data["fechaModificacion"] as? String
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al procesar documento ${doc.id}: ${e.message}", e)
+                    null
+                }
+            }
+
+            val habitosOrdenados = habitos.sortedByDescending { it.fechaCreacion }
+            Log.d(TAG, "Procesamiento completado. Hábitos ${clase.name} válidos: ${habitosOrdenados.size}")
+            Result.success(habitosOrdenados)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al obtener hábitos ${clase.name}: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     suspend fun eliminarHabito(habitoId: String): Result<Unit> = try {
@@ -121,7 +182,7 @@ class HabitoRepository {
         Result.failure(e)
     }
 
-    suspend fun actualizarHabito(habito: HabitosPredeterminados): Result<Unit> = try {
+    suspend fun actualizarHabito(habito: Habito): Result<Unit> = try {
         Log.d(TAG, "Actualizando hábito ${habito.id}")
         val habitoActualizado = habito.copy(
             fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
@@ -136,23 +197,23 @@ class HabitoRepository {
         Result.failure(e)
     }
 
-    suspend fun obtenerHabito(habitoId: String): Result<HabitosPredeterminados> {
+    suspend fun obtenerHabito(habitoId: String): Result<Habito> {
         return try {
             Log.d(TAG, "Obteniendo hábito con ID: $habitoId")
             val doc = habitosCollection.document(habitoId).get().await()
-            
+
             if (!doc.exists()) {
                 Log.e(TAG, "Hábito no encontrado: $habitoId")
                 return Result.failure(Exception("Hábito no encontrado"))
             }
-            
+
             val data = doc.data
             if (data == null) {
                 Log.e(TAG, "Datos del hábito son nulos: $habitoId")
                 return Result.failure(Exception("Datos del hábito son nulos"))
             }
             
-            val habito = HabitosPredeterminados(
+            val habito = Habito(
                 id = doc.id,
                 titulo = data["titulo"] as? String ?: "",
                 descripcion = data["descripcion"] as? String ?: "",
@@ -176,7 +237,7 @@ class HabitoRepository {
                 fechaCreacion = data["fechaCreacion"] as? String,
                 fechaModificacion = data["fechaModificacion"] as? String
             )
-            
+
             Log.d(TAG, "Hábito obtenido exitosamente: ${habito.titulo}")
             Result.success(habito)
         } catch (e: Exception) {
@@ -189,7 +250,7 @@ class HabitoRepository {
         @SuppressLint("StaticFieldLeak")
         val db = FirebaseFirestore.getInstance()
         // Incrementar el progreso de un hábito
-        suspend fun incrementarProgresoHabito(email: String, habito: HabitosPredeterminados) {
+        suspend fun incrementarProgresoHabito(email: String, habito: Habito) {
             val progresoRef = db.collection("habitos")
                 .document(email)
                 .collection("predeterminados")
@@ -233,7 +294,7 @@ class HabitoRepository {
         }
 
         // Actualizar racha del hábito
-        private fun actualizarRacha(habito: HabitosPredeterminados, progreso: ProgresoDiario) {
+        private fun actualizarRacha(habito: Habito, progreso: ProgresoDiario) {
             val hoy = LocalDate.now()
             val ultimoDia = habito.ultimoDiaCompletado?.let { LocalDate.parse(it) }
 
@@ -251,4 +312,4 @@ class HabitoRepository {
         }
     }
 
-} 
+}

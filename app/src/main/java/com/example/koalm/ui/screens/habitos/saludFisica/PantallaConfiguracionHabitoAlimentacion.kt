@@ -1,6 +1,11 @@
 package com.example.koalm.ui.screens.habitos.saludFisica
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,7 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
+import android.Manifest
 import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
@@ -29,16 +36,188 @@ import com.example.koalm.ui.theme.VerdeContenedor
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+import com.google.firebase.auth.FirebaseAuth
+import com.example.koalm.model.ClaseHabito
+import com.example.koalm.model.Habito
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.services.timers.NotificationService
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalDateTime
+private const val TAG = "PantallaConfigAlimentacion" // Unique tag for this file
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaConfiguracionHabitoAlimentacion(navController: NavHostController) {
     val context = LocalContext.current
-    val horarios = remember { mutableStateListOf("09:00 AM", "03:00 PM", "08:00 PM") }
+    val horarios = remember { mutableStateListOf("09:00 AM", "12:00 PM", "07:00 PM") }
     var descripcion by remember { mutableStateOf("") }
     var mostrarTimePicker by remember { mutableStateOf(false) }
-    var horaRecordatorio by remember { mutableStateOf(LocalTime.of(22, 0)) }
-    var selectedIndex by remember { mutableIntStateOf(-1) } // Para saber qué horario editar
+    var horaSeleccionada by remember { mutableStateOf(LocalTime.of(12, 0)) }
+    var selectedIndex by remember { mutableIntStateOf(-1) }
+    val diasSemana = listOf("L-D")
+    var horaRecordatorio by remember {
+        mutableStateOf(
+            LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
+        )
+    }
+
+    // Firebase
+    val auth = FirebaseAuth.getInstance()
+    val habitosRepository = remember { HabitoRepository() }
+    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+
+    /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            scope.launch {
+                val currentUser = auth.currentUser
+                if (currentUser == null) {
+                    Log.e(TAG, "No hay usuario autenticado")
+                    Toast.makeText(
+                        context,
+                        "Debes iniciar sesión para crear un hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+
+                // Crear el hábito en Firebase
+                val habito = Habito(
+                    titulo = "Alimentacion",
+                    descripcion = descripcion.ifEmpty { context.getString(R.string.titulo_config_sueno) },
+                    clase = ClaseHabito.FISICO,
+                    tipo = TipoHabito.ALIMENTACION,
+                    hora = horaSeleccionada.format(DateTimeFormatter.ofPattern("HH:mm")),
+                    userId = currentUser.uid
+                )
+
+                habitosRepository.crearHabito(habito).onSuccess { habitoId ->
+                    Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
+                    Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+
+                    // Programar notificación con el ID real del hábito
+                    val notificationService = NotificationService()
+                    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                    Log.d(TAG, "Iniciando servicio de notificaciones")
+                    context.startService(Intent(context, NotificationService::class.java))
+
+                    notificationService.scheduleNotification(
+                        context = context,
+                        habitoId = habitoId,
+                        diasSeleccionados = List(7) { true },
+                        hora = notificationTime,
+                        descripcion = descripcion.ifEmpty {
+                            context.getString(R.string.sleeping_notification_default_text)
+                        },
+                        durationMinutes = 0,
+                        isAlimentation = false,
+                        isSleeping = true,
+                        isHidratation = false
+                    )
+
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.success_notifications_scheduled),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navController.navigateUp()
+                }.onFailure { error ->
+                    Log.e(TAG, "Error al crear el hábito: ${error.message}")
+                    Toast.makeText(
+                        context,
+                        "Error al crear el hábito",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(R.string.error_notification_permission),
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    fun guardarHabitoAlimentacion() {
+        if (horarios.isEmpty()) {
+            Toast.makeText(context, "Debes agregar al menos un horario", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isLoading = true
+        scope.launch {
+            try {
+                val userId = auth.currentUser?.uid
+                    ?: throw Exception("Usuario no autenticado")
+
+                val nuevoHabito = Habito(
+                    titulo = "Alimentación",
+                    descripcion = descripcion.ifEmpty { "Recordatorios de comidas" },
+                    clase = ClaseHabito.FISICO,
+                    tipo = TipoHabito.ALIMENTACION,
+                    diasSeleccionados = List(7) { true }, // Todos los días por defecto
+                    hora = horarios.first(), // Hora principal
+                    horarios = horarios.toList(), // Lista completa de horarios
+                    duracionMinutos = 30, // Duración estimada por comida
+                    userId = userId
+                )
+
+                // Guardar en Firebase
+                habitosRepository.crearHabito(nuevoHabito).onSuccess { habitoId ->
+                    // Programar notificaciones para cada horario
+                    val notificationService = NotificationService()
+                    context.startService(Intent(context, NotificationService::class.java))
+
+                    horarios.forEachIndexed { index, horaStr ->
+                        val hora = LocalTime.parse(horaStr, DateTimeFormatter.ofPattern("hh:mm a"))
+                        val notificationTime = LocalDateTime.of(LocalDate.now(), hora)
+
+                        notificationService.scheduleNotification(
+                            context = context,
+                            habitoId = "$habitoId-$index", // ID único para cada notificación
+                            diasSeleccionados = nuevoHabito.diasSeleccionados,
+                            hora = notificationTime,
+                            descripcion = "Es hora de tu comida",
+                            durationMinutes = 0,
+                            isAlimentation = true,
+                            isSleeping = false,
+                            isHidratation = false
+                        )
+                    }
+
+                    Toast.makeText(
+                        context,
+                        "Hábito de alimentación guardado con ${horarios.size} recordatorios",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    navController.popBackStack()
+                }.onFailure { e ->
+                    Toast.makeText(
+                        context,
+                        "Error al guardar: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    "Error: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                isLoading = false
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -62,10 +241,10 @@ fun PantallaConfiguracionHabitoAlimentacion(navController: NavHostController) {
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape   = RoundedCornerShape(16.dp),
-                border  = BorderStroke(1.dp, VerdeBorde),
-                colors  = CardDefaults.cardColors(containerColor = VerdeContenedor)
-            ){
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(1.dp, VerdeBorde),
+                colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
+            ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -101,30 +280,31 @@ fun PantallaConfiguracionHabitoAlimentacion(navController: NavHostController) {
                                 // Muestra el item con la hora
                                 Box(modifier = Modifier.weight(1f)) {
                                     // Aquí usamos HoraField para mostrar y editar el horario
-                                HorarioComidaItem(
-                                    hora = hora,
-                                    onEditar = {
-                                        selectedIndex = index // Establece el índice para saber qué editar
-                                        mostrarTimePicker = true
-                                    }
-                                  )
+                                    HorarioComidaItem(
+                                        hora = hora,
+                                        onEditar = {
+                                            selectedIndex =
+                                                index // Establece el índice para saber qué editar
+                                            mostrarTimePicker = true
+                                        }
+                                    )
                                 }
 
                                 // Botón de eliminar
                                 if (horarios.size > 1) { // Solo permite eliminar si hay más de un horario
-                                IconButton(
-                                    onClick = {
-                                        if (horarios.size > 1) { // Verifica que haya más de un elemento antes de eliminar
-                                            horarios.removeAt(index) // Elimina el horario
+                                    IconButton(
+                                        onClick = {
+                                            if (horarios.size > 1) { // Verifica que haya más de un elemento antes de eliminar
+                                                horarios.removeAt(index) // Elimina el horario
+                                            }
                                         }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete, // Icono de eliminar
+                                            contentDescription = "Eliminar horario",
+                                            tint = Color.Red // Puedes cambiar a tu color personalizado, por ejemplo, RojoClaro
+                                        )
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Delete, // Icono de eliminar
-                                        contentDescription = "Eliminar horario",
-                                        tint = Color.Red // Puedes cambiar a tu color personalizado, por ejemplo, RojoClaro
-                                    )
-                                  }
                                 }
                             }
                         }
@@ -155,48 +335,55 @@ fun PantallaConfiguracionHabitoAlimentacion(navController: NavHostController) {
             ) {
                 Button(
                     onClick = {
-                        Toast.makeText(
-                            context,
-                            "Configuración de alimentación guardada",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        navController.navigateUp()
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            guardarHabitoAlimentacion()
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                     },
                     modifier = Modifier
-                        .width(200.dp)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    enabled = !isLoading && horarios.isNotEmpty()
                 ) {
-                    Text(
-                        stringResource(R.string.boton_guardar),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text("Guardar hábito")
+                    }
                 }
             }
         }
-    }
-    if (mostrarTimePicker) {
-        TimePickerDialogAlimentacion(
-            initialTime = horaRecordatorio,
-            onTimePicked = { selectedTime ->
-                horaRecordatorio = selectedTime // Actualizamos la hora seleccionada
-                if (selectedIndex >= 0) {
-                    // Si estamos editando un horario, lo actualizamos
-                    horarios[selectedIndex] = selectedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))
-                } else {
-                    // Si no estamos editando, agregamos un nuevo horario
-                    horarios.add(selectedTime.format(DateTimeFormatter.ofPattern("hh:mm a")))
+        if (mostrarTimePicker) {
+            TimePickerDialogAlimentacion(
+                initialTime = horaRecordatorio,
+                onTimePicked = { selectedTime ->
+                    horaRecordatorio = selectedTime // Actualizamos la hora seleccionada
+                    if (selectedIndex >= 0) {
+                        // Si estamos editando un horario, lo actualizamos
+                        horarios[selectedIndex] =
+                            selectedTime.format(DateTimeFormatter.ofPattern("hh:mm a"))
+                    } else {
+                        // Si no estamos editando, agregamos un nuevo horario
+                        horarios.add(selectedTime.format(DateTimeFormatter.ofPattern("hh:mm a")))
+                    }
+                    // Restablecer selectedIndex a -1 para futuras inserciones
+                    selectedIndex = -1
+                    mostrarTimePicker = false // Cerramos el TimePicker
+                },
+                onDismiss = {
+                    mostrarTimePicker = false // Cerrar el TimePicker sin hacer nada
+                    selectedIndex = -1 // Restablecer selectedIndex cuando se descarta el TimePicker
                 }
-                // Restablecer selectedIndex a -1 para futuras inserciones
-                selectedIndex = -1
-                mostrarTimePicker = false // Cerramos el TimePicker
-            },
-            onDismiss = {
-                mostrarTimePicker = false // Cerrar el TimePicker sin hacer nada
-                selectedIndex = -1 // Restablecer selectedIndex cuando se descarta el TimePicker
-            }
-        )
+            )
+        }
     }
 
 

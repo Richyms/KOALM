@@ -22,8 +22,14 @@ object NotificationConstants {
     const val READING_CHANNEL_ID = "lectura_timer"
     const val MEDITATION_CHANNEL_ID = "meditacion_timer"
     const val DIGITAL_DISCONNECT_CHANNEL_ID = "desconexion_timer"
+    const val SLEEP_CHANNEL_ID = "sueño_habito"
+    const val ALIMENTATION_CHANNEL_ID= "sueño_habito"
     
     // IDs de notificaciones
     const val NOTIFICATION_ID = 1
+
+    const val EXTRA_TITULO = "extra_titulo"
+    const val EXTRA_DESCRIPCION = "extra_descripcion"
+    const val EXTRA_ID = "extra_id"
 } 
 

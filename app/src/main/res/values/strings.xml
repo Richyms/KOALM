@@ -28,10 +28,18 @@
     <!-- Sueño -->
     <string name="titulo_config_sueno">Configurar hábito de sueño</string>
     <string name="placeholder_descripcion_sueno">Dormir bien transforma tu energía, tu salud y tu bienestar mental.</string>
+    <string name="sleeping_notification_channel_name">Canal notificacion de sueno</string>
+    <string name="sleeping_notification_channel_description">Canal notificacion de sueno</string>
+    <string name="sleeping_notification_title">Notificacion de sueno</string>
+    <string name="sleeping_notification_default_text">Notificacion de sueno</string>
 
     <!-- Alimentación -->
     <string name="titulo_config_alimentacion">Configurar hábito de alimentación</string>
     <string name="placeholder_descripcion_alimentacion">Kool estará observando... así que come bien, o podrías descubrir de lo que es capaz.</string>
+    <string name="alimentation_notification_channel_name">Canal notificacion de alimentacion</string>
+    <string name="alimentation_notification_channel_description">Canal notificacion de alimentacion</string>
+    <string name="alimentation_notification_title">Notificacion de alimentacion</string>
+    <string name="alimentation_notification_default_text">Notificacion de alimentacion</string>
 
     <!-- Hidratación -->
     <string name="titulo_config_hidratacion">Configurar hábito de hidratación</string>

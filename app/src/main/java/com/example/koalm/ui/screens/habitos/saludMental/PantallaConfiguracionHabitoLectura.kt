@@ -30,11 +30,11 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
-import com.example.koalm.services.NotificationService
+import com.example.koalm.services.timers.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
@@ -75,7 +75,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
     }
     var mostrarTimePicker by remember { mutableStateOf(false) }
 
-    fun scheduleNotification(habito: HabitosPredeterminados) {
+    fun scheduleNotification(habito: Habito) {
         Log.d(TAG, "Programando notificación para hábito de lectura")
         Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
         
@@ -115,7 +115,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                 }
 
                 // Crear el hábito en Firebase
-                val habito = HabitosPredeterminados(
+                val habito = Habito(
                     titulo = "Lectura",
                     descripcion = descripcion.ifEmpty { context.getString(R.string.reading_notification_default_text) },
                     clase = ClaseHabito.MENTAL,
@@ -354,7 +354,7 @@ fun PantallaConfiguracionHabitoLectura(navController: NavHostController) {
                                 }
 
                                 // Crear el hábito en Firebase
-                                val habito = HabitosPredeterminados(
+                                val habito = Habito(
                                     titulo = "Lectura",
                                     descripcion = descripcion.ifEmpty { context.getString(R.string.reading_notification_default_text) },
                                     clase = ClaseHabito.MENTAL,

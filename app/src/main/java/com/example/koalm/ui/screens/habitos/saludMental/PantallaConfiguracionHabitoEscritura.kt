@@ -47,24 +47,24 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
-import com.example.koalm.services.NotificationService
-import com.example.koalm.services.notifications.NotificationConstants
-import com.example.koalm.services.notifications.WritingNotificationService
-import com.example.koalm.ui.components.*
-import com.example.koalm.ui.theme.*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.launch
+import com.example.koalm.services.timers.NotificationService
+import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.theme.VerdeBorde
+import com.example.koalm.ui.theme.VerdeContenedor
 import java.time.LocalDate
+
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import com.example.koalm.utils.TimeUtils
+import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+
+import com.google.firebase.firestore.FirebaseFirestore
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -122,7 +122,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 }
 
                 // Crear el hábito en Firebase
-                val habito = HabitosPredeterminados(
+                val habito = Habito(
                     titulo = "Escritura",
                     descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
                     clase = ClaseHabito.MENTAL,
@@ -228,7 +228,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Etiqueta(stringResource(R.string.label_duracion_escritura))
                         Text(
-                            text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
+                            text  = formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -320,7 +320,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                             Toast.makeText(context, "Selecciona al menos un día", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        
+
                         if (duracionMin <= 0) {
                             Toast.makeText(context, "La duración debe ser mayor a 0 minutos", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -362,7 +362,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 context.startService(Intent(context, NotificationService::class.java))
 
                                 // Crear el hábito en Firebase
-                                val habito = HabitosPredeterminados(
+                                val habito = Habito(
                                     titulo = "Escritura",
                                     descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
                                     clase = ClaseHabito.MENTAL,
@@ -380,7 +380,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                         putLong("writing_timer_duration", (duracionMin * 60 * 1000).toLong()) // Guardar en milisegundos
                                         apply()
                                     }
-                                    
+
                                     // Programar notificación
                                     notificationService.scheduleNotification(
                                         context = context,
@@ -663,6 +663,13 @@ fun TimePickerDialog(
 
 /* ────────────────────────────  HELPERS  ─────────────────────────────────── */
 
+private fun formatearDuracion(min: Int): String = when {
+    min  < 60      -> "$min min"
+    min == 60      -> "1 hora"
+    min % 60 == 0  -> "${min / 60} h"
+    else           -> "${min / 60} h ${min % 60} min"
+}
+
 /**
  * Programa la notificación y navega atrás si todo salió bien.
  */
@@ -696,7 +703,7 @@ private fun programarNotificacion(
     context.startService(Intent(context, NotificationService::class.java))
 
     // Crear el hábito en Firebase
-    val habito = HabitosPredeterminados(
+    val habito = Habito(
         titulo = "Escritura",
         descripcion = descripcion.ifEmpty { context.getString(R.string.notification_default_text) },
         clase = ClaseHabito.MENTAL,
