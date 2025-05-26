@@ -241,14 +241,19 @@ fun DrawerContenido(navController: NavHostController) {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
                 when(it){
                     "Salud mental" -> navController.navigate("estadisticas_salud_mental")
-                    "Salud fisica" -> navController.navigate("estadisticas_salud_fisica")
+                    "Salud física" -> navController.navigate("estadisticas_salud_fisica")
                 }
             })
         }
         HorizontalDivider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Recomendaciones de Kool", "Insignias y logros", "Información de la app").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
+                when (it){
+                    "Salud mental" -> navController.navigate("estadisticas_salud_mental")
+                    "Salud física" -> navController.navigate("estadisticas_salud_fisica")
+                }
+            })
         }
     }
 }
