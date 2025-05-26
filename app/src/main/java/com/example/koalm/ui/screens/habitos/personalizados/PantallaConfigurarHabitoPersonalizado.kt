@@ -90,7 +90,8 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     val horarios = remember { mutableStateListOf<LocalTime>()}
     var horaAEditarIndex by remember { mutableStateOf<Int?>(null) }
     var unaVezPorHabito by remember { mutableStateOf("") }
-
+    val habitoOriginal = remember { mutableStateOf<HabitoPersonalizado?>(null) }
+    val progresoHabitoOriginal = remember { mutableStateOf<ProgresoDiario?>(null) }
 
     var modoAutomatico by remember { mutableStateOf(true) }
     var modoPersonalizado by remember { mutableStateOf(true) }
@@ -103,12 +104,16 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
         if (nombreHabitoEditar == null) return@LaunchedEffect
 
         val habitoExistente = cargarHabitoPorNombre(nombreHabitoEditar)
+        val progresoHabitoExistente = cargarProgresoHabitoPorNombre(nombreHabitoEditar)
 
         if (habitoExistente == null) {
             Toast.makeText(context, "No se encontró el hábito para editar", Toast.LENGTH_SHORT).show()
             navController.navigateUp()
             return@LaunchedEffect
         }
+
+        habitoOriginal.value = habitoExistente
+        progresoHabitoOriginal.value = progresoHabitoExistente
 
         // Asignaciones seguras
         nombreHabito = habitoExistente.nombre
@@ -209,16 +214,24 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                     OutlinedTextField(
                         value = nombreHabito,
-                        onValueChange = {
+                        onValueChange = { nuevoValor ->
                             val regex = Regex("^[a-zA-Z0-9][a-zA-Z0-9 ]*\$")
 
-                            if (it.length <= 20 && (it.isEmpty() || regex.matches(it))) {
-                                nombreHabito = it
-                                nombreError = false
-                            } else if (it.length > 20) {
-                                nombreError = true
-                            }
+                            // Detectamos si intentó poner más de 20 caracteres
+                            val sobrepasaLongitud = nuevoValor.length > 20
+
+                            // Cortamos el texto a máximo 20 caracteres
+                            val valorFiltrado = if (sobrepasaLongitud) nuevoValor.take(20) else nuevoValor
+
+                            nombreHabito = valorFiltrado
+
+                            // Validamos si está vacío o cumple regex
+                            val esValidoRegex = valorFiltrado.isEmpty() || regex.matches(valorFiltrado)
+
+                            // Mostramos error si sobrepasa longitud o regex inválido
+                            nombreError = sobrepasaLongitud || !esValidoRegex
                         },
+
                         label = { Text(stringResource(R.string.label_nombre_habito)) },
                         isError = nombreError,
                         modifier = Modifier.fillMaxWidth(),
@@ -646,7 +659,10 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                         colorEtiqueta = colorSeleccionado.toString(),
                                         iconoEtiqueta = iconoSeleccionado.toString(),
                                         descripcion = descripcion,
-                                        frecuencia = diasSeleccionados, // Ejemplo: ["lunes", "miércoles"]
+                                        frecuencia = if (frecuenciaActivo) { diasSeleccionados
+                                        } else {
+                                            List(7) { true } // Todos los días activos
+                                        },
                                         recordatorios = Recordatorios(
                                             tipo = if (modoPersonalizado) "personalizado" else "automatico",
                                             horas = if (modoPersonalizado)
@@ -660,16 +676,19 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                             else
                                                 HabitoPersonalizado.generarHorasAutomaticas()
                                         ),
-                                        fechaInicio = HabitoPersonalizado.calcularFechaInicio(),
+                                        fechaInicio = if (esEdicion) habitoOriginal.value?.fechaInicio else HabitoPersonalizado.calcularFechaInicio(),
                                         fechaFin = HabitoPersonalizado.calcularFechaFin(
                                             modoFecha,
                                             fechaSeleccionada.toString(), diasDuracion
                                         ),
                                         modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
                                         unaVezPorHabito = if (!recordatorioActivo) 1 else 0,
-                                        rachaActual = 0,  // Inicialmente 0, la racha se actualizará después
-                                        rachaMaxima = 0,  // Inicialmente 0, la racha máxima se actualizará después
-                                        ultimoDiaCompletado = null,  // Inicialmente no hay último día completado
+                                        rachaActual = if (esEdicion) habitoOriginal.value?.rachaActual
+                                            ?: 0 else 0,
+                                        rachaMaxima = if (esEdicion) habitoOriginal.value?.rachaMaxima
+                                            ?: 0 else 0,
+                                        ultimoDiaCompletado = if (esEdicion) habitoOriginal.value?.ultimoDiaCompletado else null
+
                                     )
 
                                     // Convertir el objeto a un mapa
@@ -704,40 +723,46 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                             navController.navigateUp()
                                         }
 
-                                    // Crear el objeto de progreso
-                                    val progreso = ProgresoDiario(
-                                        realizados = 0,
-                                        completado = false,
-                                        totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3
-                                    )
-
-                                    // Referenciar al documento de progreso usando la fecha actual como ID
-                                    val progresoRef = userHabitsRef.document(habitoId)
-                                        .collection("progreso")
-                                        .document(
-                                            LocalDate.now()
-                                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                        // Crear el objeto de progreso
+                                        val progreso = ProgresoDiario(
+                                            realizados = if (esEdicion) progresoHabitoOriginal.value?.realizados ?: 0 else 0,
+                                            completado = if (esEdicion) progresoHabitoOriginal.value?.completado ?: false else false,
+                                            totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3,
+                                            fecha = if (esEdicion) progresoHabitoOriginal.value?.fecha ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                            else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                                            frecuencia = if (frecuenciaActivo) {
+                                               diasSeleccionados
+                                            } else {
+                                                List(7) { true } // Todos los días activos
+                                            }
                                         )
 
-                                    // Guardar en Firestore usando el .toMap()
-                                    progresoRef.set(progreso.toMap())
-                                        .addOnSuccessListener {
-                                            Toast.makeText(
-                                                context,
-                                                "Progreso diario guardado",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            navController.navigateUp()
-                                        }
-                                        .addOnFailureListener { e ->
-                                            Toast.makeText(
-                                                context,
-                                                "Error al guardar el progreso: ${e.message}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            navController.navigateUp()
-                                        }
+                                        // Referenciar al documento de progreso usando la fecha actual como ID
+                                        val progresoRef = userHabitsRef.document(habitoId)
+                                            .collection("progreso")
+                                            .document(
+                                                LocalDate.now()
+                                                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                            )
 
+                                        // Guardar en Firestore usando el .toMap()
+                                        progresoRef.set(progreso.toMap())
+                                            .addOnSuccessListener {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Progreso diario guardado",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                navController.navigateUp()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(
+                                                    context,
+                                                    "Error al guardar el progreso: ${e.message}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                navController.navigateUp()
+                                            }
                                 } else {
                                     Toast.makeText(
                                         context,
@@ -749,7 +774,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             }
                         },
                         modifier = Modifier
-                            .width(200.dp)
+                            .width(180.dp)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
@@ -774,7 +799,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                 navController.navigateUp()
                             },
                             modifier = Modifier
-                                .width(200.dp)
+                                .width(180.dp)
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
@@ -966,6 +991,29 @@ suspend fun cargarHabitoPorNombre(nombreHabito: String): HabitoPersonalizado? {
         }
     } catch (e: Exception) {
         Log.e("Firestore", "Error cargando hábito: ${e.message}")
+        null
+    }
+}
+
+suspend fun cargarProgresoHabitoPorNombre(nombreHabito: String): ProgresoDiario? {
+    val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email ?: return null
+    val idDocumento = nombreHabito.replace(" ", "_")
+    val db = FirebaseFirestore.getInstance()
+    val fechaHoy = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+
+    return try {
+        val progresoSnapshot = db.collection("habitos")
+            .document(usuarioEmail)
+            .collection("personalizados")
+            .document(idDocumento)
+            .collection("progreso")
+            .document(fechaHoy)
+            .get()
+            .await()
+
+        progresoSnapshot.toObject(ProgresoDiario::class.java)
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error cargando progreso del hábito: ${e.message}")
         null
     }
 }

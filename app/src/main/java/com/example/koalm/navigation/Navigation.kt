@@ -21,6 +21,7 @@ import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludFisica
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
+import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoAlimentacion
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfiguracionHabitoEscritura
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoHidratacion
@@ -117,7 +118,9 @@ fun AppNavigation(
         screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
         screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
-        
+        screenWithSlide("estadisticas_habito_perzonalizado") { PantallaEstadisticasHabitoPersonalizado(navController)}
+
+
         composable(
             route = "temporizador_meditacion/{duracion}",
             arguments = listOf(navArgument("duracion") {
