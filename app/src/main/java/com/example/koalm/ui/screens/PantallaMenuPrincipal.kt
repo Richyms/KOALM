@@ -58,7 +58,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.koalm.data.HabitosRepository
-import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.ui.components.obtenerIconoPorNombre
@@ -611,7 +611,7 @@ fun HabitoCardPersonalizado(
 
 @Composable
 fun HabitoCardPredeterminado(
-    habito: HabitosPredeterminados,
+    habito: Habito,
     progreso: ProgresoDiario?,
     onIncrementar: () -> Unit
 ) {

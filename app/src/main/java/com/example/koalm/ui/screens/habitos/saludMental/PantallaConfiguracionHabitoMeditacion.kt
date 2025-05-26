@@ -43,7 +43,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.example.koalm.model.ClaseHabito
-import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.Habito
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.notifications.MeditationNotificationService
@@ -104,7 +104,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                 }
 
                 // Crear el hábito en Firebase
-                val habito = HabitosPredeterminados(
+                val habito = Habito(
                     titulo = "Meditación",
                     descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
                     clase = ClaseHabito.MENTAL,

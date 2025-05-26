@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.HabitoPersonalizado
-import com.example.koalm.model.HabitosPredeterminados
+import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.repository.HabitoRepository
 import com.google.firebase.firestore.DocumentReference
@@ -22,7 +22,7 @@ class DashboardViewModel : ViewModel() {
     var habitos by mutableStateOf<List<HabitoPersonalizado>>(emptyList())
         private set
     //Para hábitos predeterminados
-    var habitosPre by mutableStateOf<List<HabitosPredeterminados>>(emptyList())
+    var habitosPre by mutableStateOf<List<Habito>>(emptyList())
         private set
 
     var progresos by mutableStateOf<Map<String, ProgresoDiario>>(emptyMap())
@@ -104,7 +104,7 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    private suspend fun cargarProgresosPre(email: String, habitos: List<HabitosPredeterminados>) {
+    private suspend fun cargarProgresosPre(email: String, habitos: List<Habito>) {
         try {
             Log.d("DashboardViewModel", "Iniciando carga de progresos predeterminados")
             val progresosMap = mutableMapOf<String, ProgresoDiario>()
@@ -140,7 +140,7 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    fun incrementarProgresoPre(email: String, habito: HabitosPredeterminados) {
+    fun incrementarProgresoPre(email: String, habito: Habito) {
         viewModelScope.launch {
             try {
                 HabitoRepository.incrementarProgresoHabito(email, habito)
@@ -161,7 +161,7 @@ class DashboardViewModel : ViewModel() {
             .document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
     }
 
-    private fun obtenerProgresoRefPre(email: String, habito: HabitosPredeterminados): DocumentReference {
+    private fun obtenerProgresoRefPre(email: String, habito: Habito): DocumentReference {
         return FirebaseFirestore.getInstance()
             .collection("habitos")
             .document(email)

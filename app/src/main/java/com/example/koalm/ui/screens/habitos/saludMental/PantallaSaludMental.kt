@@ -82,7 +82,15 @@ fun PantallaSaludMental(navController: NavHostController) {
                         habitos.forEach { habito ->
                             Log.d(TAG, "Hábito: id=${habito.id}, titulo=${habito.titulo}")
                         }
-                        habitosActivos = habitos
+                        // Filtrar solo los hábitos mentales
+                        habitosActivos = habitos.filter {
+                            it.tipo in listOf(
+                                TipoHabito.MEDITACION,
+                                TipoHabito.LECTURA,
+                                TipoHabito.DESCONEXION_DIGITAL,
+                                TipoHabito.ESCRITURA
+                            )
+                        }
                         isLoading = false
                     },
                     onFailure = { error ->
@@ -189,7 +197,7 @@ fun PantallaSaludMental(navController: NavHostController) {
 
                     habitosActivos.forEach { habito ->
                         Log.d(TAG, "Renderizando hábito activo: ${habito.titulo}")
-                        HabitoActivoCard(
+                        HabitoActivoCardMental(
                             habito = habito,
                             navController = navController,
                             onHabitDeleted = { cargarHabitos() }
@@ -300,7 +308,7 @@ private fun HabitoPlantillaCard(habito: Habito, navController: NavHostController
 }
 
 @Composable
-private fun HabitoActivoCard(
+private fun HabitoActivoCardMental(
     habito: Habito, 
     navController: NavHostController,
     onHabitDeleted: () -> Unit
