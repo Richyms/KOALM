@@ -93,6 +93,8 @@
     <string name="label_respiracion">Recordatorio de ejercicios de respiración previos.</string>
     <!-- Modificar Meditación -->
     <string name="titulo_modificacion_meditacion">Modificar hábito de Meditación</string>
+    <!--Modificar Escritura-->
+    <string name="titulo_mod_escritura">Modificar hábito de escritura</string>
 
     <!-- Lectura -->
     <string name="titulo_config_lectura">Configurar hábito de lectura</string>
