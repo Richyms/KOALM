@@ -309,6 +309,28 @@ fun HabitoActivoCardFisico(
     var showMenu by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
 
+    // Calcular la hora de despertar para hábitos de sueño
+    val horaDespertar = if (habito.tipo == TipoHabito.SUEÑO) {
+        val horaDormir = habito.hora.split(":").let {
+            (it[0].toInt() to it[1].toInt())
+        }
+        val duracionHoras = habito.duracionMinutos / 60
+        val duracionMinutos = habito.duracionMinutos % 60
+        
+        var horaFinal = horaDormir.first + duracionHoras
+        var minutosFinal = horaDormir.second + duracionMinutos
+        
+        if (minutosFinal >= 60) {
+            horaFinal += 1
+            minutosFinal -= 60
+        }
+        if (horaFinal >= 24) {
+            horaFinal -= 24
+        }
+        
+        String.format("%02d:%02d", horaFinal, minutosFinal)
+    } else null
+
     Card(
         onClick = {
             try {
@@ -385,19 +407,38 @@ fun HabitoActivoCardFisico(
                     modifier = Modifier.padding(top = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = habito.hora,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    // Mostrar horario
+                    if (habito.tipo == TipoHabito.SUEÑO) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${habito.hora} - $horaDespertar",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = habito.hora,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
                     Spacer(modifier = Modifier.width(8.dp))
+
+                    // Mostrar días
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = null,
@@ -416,24 +457,23 @@ fun HabitoActivoCardFisico(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = when (habito.tipo) {
-                            TipoHabito.ALIMENTACION -> {
-                                ""
-                            }
-                            else -> habito.hora // Para otros hábitos, muestra la hora normal
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+
+                    // Mostrar duración para hábitos de sueño
+                    if (habito.tipo == TipoHabito.SUEÑO) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Timer,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${habito.duracionMinutos / 60}h",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 

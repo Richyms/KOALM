@@ -63,6 +63,8 @@ import com.example.koalm.ui.theme.GrisMedio
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 private const val TAG = "PantallaConfiguracionHabitoSueno"
 
@@ -80,7 +82,25 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
 
     var duracionHoras by remember { mutableStateOf(8f) }
     val rangoHoras = 1f..12f
-    val horaDespertarCalculada = horaDormir.plusHours(duracionHoras.toLong())
+
+    // Calcular hora de despertar teniendo en cuenta el cambio de día
+    val horaDespertarCalculada = remember(horaDormir, duracionHoras) {
+        val duracionMinutos = (duracionHoras * 60).toInt()
+        var horaFinal = horaDormir
+        var minutosRestantes = duracionMinutos
+        
+        while (minutosRestantes > 0) {
+            if (minutosRestantes >= 60) {
+                horaFinal = horaFinal.plusHours(1)
+                minutosRestantes -= 60
+            } else {
+                horaFinal = horaFinal.plusMinutes(minutosRestantes.toLong())
+                minutosRestantes = 0
+            }
+        }
+        
+        horaFinal
+    }
 
     val scope = rememberCoroutineScope()
     val habitosRepository = remember { HabitoRepository() }
@@ -211,6 +231,91 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
         }
     }
 
+    // Función para validar si hay conflicto con otros hábitos de sueño
+    suspend fun validarConflictoHorario(): Boolean {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return false
+        val db = FirebaseFirestore.getInstance()
+        
+        try {
+            val habitosExistentes = db.collection("habitos")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("tipo", "SUEÑO")
+                .get()
+                .await()
+
+            val minutosInicio = horaDormir.hour * 60 + horaDormir.minute
+            var minutosFinNuevo = minutosInicio + (duracionHoras * 60).toInt()
+            if (minutosFinNuevo >= 24 * 60) {
+                minutosFinNuevo -= 24 * 60
+            }
+
+            for (documento in habitosExistentes.documents) {
+                val horaExistente = documento.getString("hora")?.let { 
+                    LocalTime.parse(it, DateTimeFormatter.ofPattern("HH:mm"))
+                } ?: continue
+                
+                val duracionExistente = (documento.getLong("duracionMinutos") ?: 0).toInt()
+                val diasHabitoExistente = (documento.get("diasSeleccionados") as? List<*>)?.map { 
+                    it as? Boolean ?: false 
+                } ?: List(7) { false }
+
+                // Verificar si hay días que se solapan
+                val diasSolapados = diasSeleccionados.zip(diasHabitoExistente)
+                    .mapIndexed { index, (diaNuevo, diaExistente) -> 
+                        index to (diaNuevo && diaExistente)
+                    }
+                    .filter { (_, solapa) -> solapa }
+                    .map { (index, _) -> index }
+
+                // Si no hay días solapados, no hay conflicto con este hábito
+                if (diasSolapados.isEmpty()) {
+                    continue
+                }
+                
+                val minutosInicioExistente = horaExistente.hour * 60 + horaExistente.minute
+                var minutosFinExistente = minutosInicioExistente + duracionExistente
+                if (minutosFinExistente >= 24 * 60) {
+                    minutosFinExistente -= 24 * 60
+                }
+                
+                // Comprobar solapamiento de horarios
+                val hayConflicto = if (minutosFinNuevo < minutosInicio) {
+                    // El nuevo período cruza la medianoche
+                    !(minutosFinNuevo < minutosInicioExistente && minutosInicio > minutosFinExistente)
+                } else if (minutosFinExistente < minutosInicioExistente) {
+                    // El período existente cruza la medianoche
+                    !(minutosFinExistente < minutosInicio && minutosInicioExistente > minutosFinNuevo)
+                } else {
+                    // Ninguno cruza la medianoche
+                    !(minutosFinNuevo < minutosInicioExistente || minutosInicio > minutosFinExistente)
+                }
+                
+                if (hayConflicto) {
+                    // Si hay conflicto de horarios en algún día solapado, mostrar mensaje específico
+                    val diasConflicto = diasSolapados.map { 
+                        when (it) {
+                            0 -> "Lunes"
+                            1 -> "Martes"
+                            2 -> "Miércoles"
+                            3 -> "Jueves"
+                            4 -> "Viernes"
+                            5 -> "Sábado"
+                            else -> "Domingo"
+                        }
+                    }
+                    Toast.makeText(
+                        context,
+                        "Ya existe un hábito de sueño programado para los días: ${diasConflicto.joinToString(", ")}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return true
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al validar conflicto horario: ${e.message}")
+        }
+        return false
+    }
 
     Scaffold(
         topBar = {
@@ -305,7 +410,7 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                         Slider(
                             value = duracionHoras,
                             onValueChange = {
-                                duracionHoras = it
+                                duracionHoras = it.roundToInt().toFloat()
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             },
                             valueRange = rangoHoras,
@@ -317,12 +422,30 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                                 inactiveTrackColor = inactiveColor
                             )
                         )
-                        Text(
-                            text = "$mensajeSueño\n${duracionHoras.roundToInt()} horas",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = activeColor,
+                        Column(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
+                        ) {
+                            Text(
+                                text = mensajeSueño,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = activeColor
+                            )
+                            Text(
+                                text = "${duracionHoras.toInt()} horas",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = activeColor
+                            )
+                            val horaDespertarFormateada = if (horaDespertarCalculada.hour >= 24) {
+                                horaDespertarCalculada.minusHours(24)
+                            } else {
+                                horaDespertarCalculada
+                            }
+                            Text(
+                                text = "${horaDormir.format(DateTimeFormatter.ofPattern("HH:mm"))} - ${horaDespertarFormateada.format(DateTimeFormatter.ofPattern("HH:mm"))}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = activeColor
+                            )
+                        }
                     }
 
                     Text("Selecciona los recordatorios que deseas antes de dormir (opcional):")
@@ -365,11 +488,16 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                         return@Button
                     }
 
-                    if (ContextCompat.checkSelfPermission(
-                            context, Manifest.permission.POST_NOTIFICATIONS
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        scope.launch {
+                    scope.launch {
+                        // Validar conflicto horario
+                        if (validarConflictoHorario()) {
+                            return@launch
+                        }
+
+                        if (ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
                             val currentUser = auth.currentUser
                             if (currentUser == null) {
                                 Log.e(TAG, "No hay usuario autenticado")
@@ -432,9 +560,9 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
-                    } else {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 },
                 modifier = Modifier
