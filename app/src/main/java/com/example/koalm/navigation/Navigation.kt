@@ -19,7 +19,6 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludFisica
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
