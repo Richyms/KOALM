@@ -106,9 +106,13 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { DrawerContenido(navController) }
+        drawerContent = {
+            if (usuarioEmail != null) {
+                DrawerContenido(navController, usuarioEmail)
+            }
+        }
     ) {
-        Scaffold(
+    Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text("¡Hola, $username! 🐨✨") },
@@ -235,7 +239,8 @@ fun EstadisticasCard() {
 
 
 @Composable
-fun DrawerContenido(navController: NavHostController) {
+fun DrawerContenido(navController: NavHostController, userEmail: String) {
+    val scope = rememberCoroutineScope()
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider()
@@ -250,9 +255,31 @@ fun DrawerContenido(navController: NavHostController) {
             })
         }
         HorizontalDivider()
-        Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
+        Text("Estadísticas de Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
+                when (it) {
+                    //"Salud física" -> navController.navigate("saludfisica")
+                    //"Salud mental" -> navController.navigate("saludmental")
+                    "Personalizados" -> {
+                        scope.launch {
+                            val db = FirebaseFirestore.getInstance()
+                            val snapshot = db.collection("habitos")
+                                .document(userEmail)
+                                .collection("personalizados")
+                                .get()
+                                .await()
+
+                            if (snapshot.isEmpty) {
+                                navController.navigate("gestion_habitos_personalizados")
+                            } else {
+                                navController.navigate("estadisticas_habito_perzonalizado")
+                            }
+                        }
+                    }
+
+                }
+            })
         }
         HorizontalDivider()
         Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)

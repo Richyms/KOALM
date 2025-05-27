@@ -25,6 +25,7 @@ firebaseDataconnect = "16.0.2"
 [libraries]
 # Core & Lifecycle
 androidx-core-ktx                = { group="androidx.core",           name="core-ktx",               version.ref="coreKtx" }
+androidx-foundation-pager = { module = "androidx.compose.foundation:foundation-pager" }
 androidx-lifecycle-runtime-ktx  = { group="androidx.lifecycle",      name="lifecycle-runtime-ktx", version.ref="lifecycleRuntimeKtx" }
 androidx-activity-compose       = { group="androidx.activity",       name="activity-compose",      version.ref="activityCompose" }
 
