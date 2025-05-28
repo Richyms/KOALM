@@ -244,13 +244,13 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider()
-        listOf("Inicio", "Racha", "Parametros de salud", "Test de emociones").forEach {
+        listOf("Inicio", "Racha", "Parametros de salud", "Test de ansiedad").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
                     //"Inicio" -> navController.navigate("inicio")
                     "Racha" -> navController.navigate("racha_habitos")
                     "Parametros de salud" -> navController.navigate("estadisticas")
-                    //"Test de emociones" -> navController.navigate("test_emociones")
+                    "Test de ansiedad" -> navController.navigate("test_de_ansiedad")
                 }
             })
         }
@@ -259,8 +259,8 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
                 when (it) {
-                    //"Salud física" -> navController.navigate("saludfisica")
-                    //"Salud mental" -> navController.navigate("saludmental")
+                    //"Salud física" -> navController.navigate("estadisticas_salud_fisica")
+                    //"Salud mental" -> navController.navigate("estadisticas_salud_mental")
                     "Personalizados" -> {
                         scope.launch {
                             val db = FirebaseFirestore.getInstance()
