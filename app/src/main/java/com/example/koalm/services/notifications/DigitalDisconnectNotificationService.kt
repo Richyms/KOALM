@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.example.koalm.R
-import com.example.koalm.services.NotificationReceiver
+import com.example.koalm.services.timers.NotificationReceiver
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId

@@ -1,25 +1,179 @@
 package com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarViewDay
+import androidx.compose.material.icons.filled.CalendarViewWeek
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.*
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import androidx.compose.ui.draw.clip
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
+import java.io.File
+import android.widget.Toast
+
+@Serializable
+data class DetailedMeasurement(
+    val timestamp: String,
+    val value: Double
+)
+
+@Serializable
+data class Measurement(
+    val avg: Double,
+    val count: Int,
+    val detailedMeasurements: List<DetailedMeasurement>,
+    val endTime: String,
+    val max: Double,
+    val min: Double,
+    val startTime: String
+)
+
+@Serializable
+data class DayData(
+    val date: String,
+    val measurements: List<Measurement>
+)
+
+data class DatosRitmoCardiaco(
+    val ritmo: Int,
+    val fechaUltimaInfo: String,
+    val datos: List<Float>,
+    val etiquetasX: List<String> = emptyList(),
+    val minValue: Float = 0f,
+    val maxValue: Float = 200f
+)
+
+enum class TipoVista {
+    DIARIA,
+    SEMANAL
+}
+
+private fun processHeartRateData(heartRateData: List<DayData>, tipo: TipoVista): DatosRitmoCardiaco {
+    return when (tipo) {
+        TipoVista.DIARIA -> {
+            // Procesamos los datos del día más reciente
+            val latestDay = heartRateData.maxByOrNull { it.date }
+            if (latestDay != null) {
+                // Obtenemos todas las mediciones detalladas del día
+                val allDetailedMeasurements = latestDay.measurements.flatMap { it.detailedMeasurements }
+                    .sortedBy { it.timestamp }
+
+                // Calculamos el promedio general del día
+                val avgHeartRate = allDetailedMeasurements.map { it.value }.average().toInt()
+
+                // Agrupamos las mediciones por hora para reducir la densidad de puntos
+                val measurementsByHour = allDetailedMeasurements.groupBy { 
+                    it.timestamp.split(":")[0].toInt() 
+                }.mapValues { (_, values) ->
+                    values.map { it.value }.average()
+                }
+
+                // Creamos una lista ordenada de horas y valores
+                val sortedHourlyData = (0..23)
+                    .map { hour ->
+                        hour to (measurementsByHour[hour] ?: 0.0)
+                    }
+                    .filter { it.second > 0 } // Eliminamos las horas sin datos
+
+                DatosRitmoCardiaco(
+                    ritmo = avgHeartRate,
+                    fechaUltimaInfo = latestDay.date,
+                    datos = sortedHourlyData.map { it.second.toFloat() },
+                    etiquetasX = sortedHourlyData.map { "${it.first}:00" },
+                    minValue = 50f, // Base fija en 50
+                    maxValue = maxOf(allDetailedMeasurements.maxOf { it.value }.toFloat(), 120f) // Aseguramos un máximo razonable
+                )
+            } else {
+                DatosRitmoCardiaco(0, "", emptyList(), emptyList())
+            }
+        }
+        TipoVista.SEMANAL -> {
+            // Para la vista semanal, usamos los promedios diarios
+            val avgHeartRate = heartRateData.flatMap { day -> 
+                day.measurements.flatMap { it.detailedMeasurements }
+            }.map { it.value }.average().toInt()
+
+            // Calculamos el promedio por día
+            val dailyAverages = heartRateData.map { day ->
+                val dayMeasurements = day.measurements.flatMap { it.detailedMeasurements }
+                dayMeasurements.map { it.value }.average().toFloat()
+            }
+
+            // Formateamos las fechas para mostrar solo el día
+            val fechasFormateadas = heartRateData.map { it.date.split("/")[0] }
+
+            DatosRitmoCardiaco(
+                ritmo = avgHeartRate,
+                fechaUltimaInfo = "Promedio semanal",
+                datos = dailyAverages,
+                etiquetasX = fechasFormateadas,
+                minValue = 50f, // Base fija en 50
+                maxValue = maxOf(dailyAverages.maxOrNull() ?: 120f, 120f) // Aseguramos un máximo razonable
+            )
+        }
+    }
+}
+
+private suspend fun readHeartRateData(
+    context: android.content.Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    tipo: TipoVista,
+    onDataLoaded: (DatosRitmoCardiaco) -> Unit
+) {
+    try {
+        withContext(Dispatchers.IO) {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(downloadsDir, "heart_rate_data.json")
+            
+            if (file.exists()) {
+                val jsonString = file.readText()
+                val heartRateData = Json.decodeFromString<List<DayData>>(jsonString)
+                val processedData = processHeartRateData(heartRateData, tipo)
+                withContext(Dispatchers.Main) {
+                    onDataLoaded(processedData)
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Archivo no encontrado", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    } catch (e: Exception) {
+        withContext(Dispatchers.Main) {
+            Toast.makeText(context, "Error al leer el archivo: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +181,67 @@ fun PantallaRitmoCardiaco(
     navController: NavHostController,
     datos: DatosRitmoCardiaco = datosMockRitmo
 ) {
+    val context = LocalContext.current
+    var datosState by remember { mutableStateOf(datos) }
+    var tipoVista by remember { mutableStateOf(TipoVista.DIARIA) }
+    val scope = rememberCoroutineScope()
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            scope.launch {
+                readHeartRateData(context, scope, tipoVista) { newData ->
+                    datosState = newData
+                }
+            }
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                context.startActivity(intent)
+            } else {
+                Toast.makeText(
+                    context,
+                    "Se necesita permiso para acceder a los archivos",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    fun checkAndRequestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                scope.launch {
+                    readHeartRateData(context, scope, tipoVista) { newData ->
+                        datosState = newData
+                    }
+                }
+            } else {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                context.startActivity(intent)
+            }
+        } else {
+            val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+            when {
+                ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED -> {
+                    scope.launch {
+                        readHeartRateData(context, scope, tipoVista) { newData ->
+                            datosState = newData
+                        }
+                    }
+                }
+                else -> {
+                    permissionLauncher.launch(permission)
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -34,6 +249,23 @@ fun PantallaRitmoCardiaco(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { 
+                            tipoVista = if (tipoVista == TipoVista.DIARIA) TipoVista.SEMANAL else TipoVista.DIARIA
+                            scope.launch {
+                                readHeartRateData(context, scope, tipoVista) { newData ->
+                                    datosState = newData
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            if (tipoVista == TipoVista.DIARIA) Icons.Default.CalendarViewWeek else Icons.Default.CalendarViewDay,
+                            contentDescription = "Cambiar vista"
+                        )
                     }
                 }
             )
@@ -59,11 +291,14 @@ fun PantallaRitmoCardiaco(
                     modifier = Modifier.size(50.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("${datos.ritmo} LPM", fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                Text("${datosState.ritmo} LPM", fontSize = 36.sp, fontWeight = FontWeight.Bold)
             }
 
             Text(
-                "Este dato es de la última información registrada, ${datos.fechaUltimaInfo}",
+                if (tipoVista == TipoVista.DIARIA) 
+                    "Datos del día ${datosState.fechaUltimaInfo}" 
+                else 
+                    "Promedio general",
                 fontSize = 11.sp,
                 color = Color.Gray
             )
@@ -81,14 +316,17 @@ fun PantallaRitmoCardiaco(
                             .fillMaxWidth()
                             .height(180.dp)
                             .padding(start = 40.dp)
-
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
-                            val stepX = size.width / (datos.datos.size - 1)
-                            val stepY = size.height / 200f
+                            val stepX = size.width / (datosState.datos.size - 1)
+                            val valueRange = datosState.maxValue - datosState.minValue
+                            val stepY = size.height / valueRange
 
-                            val puntos = datos.datos.mapIndexed { i, v ->
-                                Offset(x = i * stepX, y = size.height - v * stepY)
+                            val puntos = datosState.datos.mapIndexed { i, v ->
+                                Offset(
+                                    x = i * stepX,
+                                    y = size.height - ((v - datosState.minValue) * stepY)
+                                )
                             }
 
                             val path = Path().apply {
@@ -112,7 +350,7 @@ fun PantallaRitmoCardiaco(
                                 )
                             }
 
-                            datos.datos.forEachIndexed { index, valor ->
+                            datosState.datos.forEachIndexed { index, valor ->
                                 drawCircle(
                                     color = colorZona(valor),
                                     radius = 4.dp.toPx(),
@@ -120,9 +358,10 @@ fun PantallaRitmoCardiaco(
                                 )
                             }
 
-                            val etiquetasTextoY = listOf(56, 84, 112, 140, 196)
+                            // Etiquetas del eje Y con valores fijos y distribuidos
+                            val etiquetasTextoY = listOf(50, 70, 90, 110, datosState.maxValue.toInt())
                             etiquetasTextoY.forEach { valor ->
-                                val posY = size.height - (valor * stepY)
+                                val posY = size.height - ((valor - datosState.minValue) * stepY)
                                 drawContext.canvas.nativeCanvas.drawText(
                                     valor.toString(),
                                     -82f,
@@ -134,21 +373,27 @@ fun PantallaRitmoCardiaco(
                                 )
                             }
                         }
-
-
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val etiquetasX = listOf("0", "3", "6", "12", "15", "18", "21", "24")
+                    // Etiquetas del eje X
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = 36.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        etiquetasX.forEach {
-                            Text(text = it, fontSize = 10.sp, color = GrisMedio)
+                        datosState.etiquetasX.forEach { etiqueta ->
+                            Text(
+                                text = if (tipoVista == TipoVista.DIARIA) {
+                                    etiqueta.split(":")[0] + "h"
+                                } else {
+                                    etiqueta
+                                },
+                                fontSize = 10.sp,
+                                color = GrisMedio
+                            )
                         }
                     }
                 }
@@ -157,11 +402,11 @@ fun PantallaRitmoCardiaco(
             Spacer(modifier = Modifier.height(28.dp))
 
             val zonasFormateadas = listOf(
-                Triple("Ligero", "00:02:11", AzulLigero),
-                Triple("Intensivo", "00:03:52", AmarilloIntensivo),
-                Triple("VO Máx", "00:01:23", RojoVOMAx),
-                Triple("Aeróbico", "00:17:01", VerdeAerobico),
-                Triple("Anaeróbico", "00:08:59", NaranjaAnaerobico)
+                Pair("Ligero", AzulLigero),
+                Pair("Aeróbico", VerdeAerobico),
+                Pair("Intensivo", AmarilloIntensivo),
+                Pair("Anaeróbico", NaranjaAnaerobico),
+                Pair("VO Máx", RojoVOMAx)
             )
 
             Column(
@@ -169,46 +414,40 @@ fun PantallaRitmoCardiaco(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Primera fila
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    zonasFormateadas.take(3).forEach { (zona, tiempo, color) ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .clip(CircleShape)
-                                        .background(color)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(tiempo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(zona, fontSize = 12.sp, color = GrisMedio)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(64.dp)) {
-                    zonasFormateadas.drop(3).forEach { (zona, tiempo, color) ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .clip(CircleShape)
-                                        .background(color)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(tiempo, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    zonasFormateadas.forEach { (zona, color) ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(color)
+                            )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(zona, fontSize = 12.sp, color = GrisMedio)
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { checkAndRequestPermission() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Text("Recuperar datos")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -222,12 +461,6 @@ fun colorZona(valor: Float): Color {
         else -> RojoVOMAx // VO Máx
     }
 }
-
-data class DatosRitmoCardiaco(
-    val ritmo: Int,
-    val fechaUltimaInfo: String,
-    val datos: List<Float>
-)
 
 val datosMockRitmo = DatosRitmoCardiaco(
     ritmo = 135,

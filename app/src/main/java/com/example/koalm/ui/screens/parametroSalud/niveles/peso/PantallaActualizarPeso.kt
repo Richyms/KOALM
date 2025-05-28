@@ -3,31 +3,32 @@ package com.example.koalm.ui.screens.parametroSalud.niveles.peso
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.VerdePrincipal
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+
 
 // ✅ Renombrada la clase para evitar conflictos
 data class DatosActualizarPeso(
     val pesoActual: Float,
-    val fecha: String
 )
 
 val datosMockActualizarPeso = DatosActualizarPeso(
     pesoActual = 72f,
-    fecha = "6 abril, 2025"
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,11 @@ fun PantallaActualizarPeso(
     datos: DatosActualizarPeso = datosMockActualizarPeso,
     onGuardar: () -> Unit = {}
 ) {
+    val pesoActual = remember { mutableStateOf(datos.pesoActual) }
+    val fechaHoy = LocalDate.now().format(
+        DateTimeFormatter.ofPattern("d MMMM, yyyy", Locale("es", "MX"))
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,34 +75,16 @@ fun PantallaActualizarPeso(
             // Peso
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Peso (kg)", fontWeight = FontWeight.SemiBold)
-                Text(datos.pesoActual.toString(), color = VerdePrincipal)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Fecha
-            Row(
-                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Fecha", fontWeight = FontWeight.SemiBold)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = datos.fecha,
-                        color = VerdePrincipal,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = VerdePrincipal)
-                }
+                ComponenteInputs("Peso", pesoActual, fechaHoy)
             }
         }
     }
 }
+
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

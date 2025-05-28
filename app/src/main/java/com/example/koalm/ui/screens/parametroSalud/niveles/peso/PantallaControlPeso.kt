@@ -1,36 +1,31 @@
 package com.example.koalm.ui.screens.parametroSalud.niveles.peso
 
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.ui.theme.*
+import java.util.Locale
 import com.example.koalm.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlPeso(
     navController: NavHostController,
-    pesoActual: Float,
-    pesoObjetivo: Float
+    pesoActual: Float = 73f,
+    pesoObjetivo: Float = 72f
 ) {
-    val pesoInicial = pesoActual + (pesoActual - pesoObjetivo)
-    val pesoPerdido = pesoActual - pesoObjetivo
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -38,11 +33,6 @@ fun PantallaControlPeso(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* guardar cambios */ }) {
-                        Icon(Icons.Default.Check, contentDescription = "Guardar")
                     }
                 }
             )
@@ -58,16 +48,15 @@ fun PantallaControlPeso(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // 🐨 Koala + progreso
+            Spacer(modifier = Modifier.height(4.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Imagen central
                 Image(
                     painter = painterResource(id = R.drawable.weightcontrol),
                     contentDescription = "Koala",
@@ -76,73 +65,61 @@ fun PantallaControlPeso(
                         .align(Alignment.TopCenter)
                 )
 
-                // Peso Inicial (izquierda)
-                Text(
-                    text = String.format("%.1f", pesoInicial),
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = 65.dp, top = 170.dp)
-                )
-
-                // Peso Objetivo (derecha)
-                Text(
-                    text = String.format("%.1f", pesoObjetivo),
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = 65.dp, top = 170.dp)
-                )
-
-                // Texto debajo del koala (centrado más abajo)
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(top = 210.dp), // 🔧 esto lo empuja para abajo, debajo del koala
+                        .padding(top = 210.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${String.format("%.1f", pesoPerdido)} kg perdidos",
+                        text = if (pesoObjetivo > pesoActual) {
+                            String.format(Locale.getDefault(), "Debes ganar %.1f kg", kotlin.math.abs(pesoObjetivo - pesoActual))
+                        } else if (pesoObjetivo < pesoActual) {
+                            String.format(Locale.getDefault(), "Debes perder %.1f kg", kotlin.math.abs(pesoObjetivo - pesoActual))
+                        } else {
+                            "No hay cambio de peso"
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-                    Text(
-                        text = "Actual: ${pesoActual.toInt()} kg",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+
                 }
             }
 
-
             Spacer(modifier = Modifier.height(26.dp))
 
-            // 📊 Progreso
-            Text("Progreso", fontSize = 26.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Peso actual", fontSize = 14.sp)
-            Text("$pesoActual kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            TextButton(onClick = { /* actualizar peso */ }) {
-                Text("Actualizar peso", color = VerdePrincipal)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ComponenteObjetivos("Peso actual", "Actualizar peso", pesoActual, navController, "actualizar-peso")
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ComponenteObjetivos("Objetivo", "Editar objetivo", pesoObjetivo, navController, "objetivos-peso")
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Objetivo", fontSize = 14.sp)
-
-            Text("$pesoObjetivo kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            TextButton(onClick = { /* actualizar objetivo */ }) {
-                Text("Actualizar objetivo", color = VerdePrincipal)
-            }
         }
     }
 }
 
-@Preview(showSystemUi = true)
 @Composable
-fun VistaPreviaControlPeso() {
-    val navController = rememberNavController()
-    navController.navigate("objetivos/74.5/01%20de%20febrero%20del%202025/72/69")
-    PantallaControlPeso(navController = navController, pesoActual = 72f, pesoObjetivo = 69f)
+fun ComponenteObjetivos(titulo : String, textoBoton: String, valor: Float, navController: NavHostController, ruta: String) {
+    Text(titulo, fontSize = 14.sp)
+    Spacer(modifier = Modifier.height(6.dp))
+    Text("$valor kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+    Spacer(modifier = Modifier.height(12.dp))
+    Button(
+        onClick = { navController.navigate(ruta) },
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+    ) {
+        Text(textoBoton)
+    }
 }

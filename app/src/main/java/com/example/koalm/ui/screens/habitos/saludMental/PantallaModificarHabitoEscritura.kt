@@ -1,15 +1,9 @@
-/*  PantallaConfiguracionHabitoEscritura.kt
- *  Pantalla para configurar el hábito de escritura diaria.
- *  Programa notificaciones recurrentes según los días, la hora y la duración especificados.
- */
+/*PantallaModificarHabitoEscritura.kt*/
 package com.example.koalm.ui.screens.habitos.saludMental
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -26,7 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -48,15 +41,12 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
-import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.timers.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
-import java.time.LocalDate
-
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -64,18 +54,15 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 
-import com.google.firebase.firestore.FirebaseFirestore
-
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
+fun PantallaModificarHabitoEscritura(navController: NavHostController) {
     val context = LocalContext.current
     val TAG = "PantallaConfiguracionHabito"
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
-    val userEmail = FirebaseAuth.getInstance().currentUser?.email
 
     /* -----------------------------  State  ------------------------------ */
     var descripcion by remember { mutableStateOf("") }
@@ -89,18 +76,11 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     var duracionMin by remember { mutableStateOf(15f) }      // 1-180 min
     val rangoDuracion = 1f..180f
 
-    // Cargar la duración guardada del temporizador
-    val sharedPreferences = context.getSharedPreferences("AppPreferences", MODE_PRIVATE)
-    LaunchedEffect(Unit) {
-        val defaultDuration = 15L * 60 * 1000 // 15 minutos en milisegundos
-        duracionMin = (sharedPreferences.getLong("writing_timer_duration", defaultDuration) / (60 * 1000)).toFloat()
-    }
-
     //  Hora de notificación
-    var hora by remember { 
+    var hora by remember {
         mutableStateOf(
             LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
-        ) 
+        )
     }
     var mostrarTimePicker by remember { mutableStateOf(false) }
 
@@ -161,7 +141,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.titulo_config_escritura)) },
+                title = { Text(stringResource(R.string.titulo_mod_escritura)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -261,52 +241,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                 }
             }
 
-            /* ----------------------------  Card de Notas  --------------------------- */
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { 
-                        try {
-                            navController.navigate("notas") {
-                                launchSingleTop = true
-                                restoreState = true
-                                popUpTo("salud_mental") {
-                                    saveState = true
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error al navegar a notas: ${e.message}", e)
-                            Toast.makeText(
-                                context,
-                                "Error al abrir las notas: ${e.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, VerdeBorde),
-                colors = CardDefaults.cardColors(containerColor = VerdeContenedor)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.titulo_notas),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
             Spacer(Modifier.weight(1f))
 
             /* ----------------------------  Guardar  --------------------------- */
@@ -316,13 +250,12 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
             ) {
                 Button(
                     onClick = {
-                        if (!diasSeleccionados.contains(true)) {
-                            Toast.makeText(context, "Selecciona al menos un día", Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
-
-                        if (duracionMin <= 0) {
-                            Toast.makeText(context, "La duración debe ser mayor a 0 minutos", Toast.LENGTH_SHORT).show()
+                        if (!diasSeleccionados.any { it }) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_no_days_selected),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             return@Button
                         }
 
@@ -375,12 +308,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                 )
 
                                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-                                    // Guardar la duración en SharedPreferences
-                                    with(sharedPreferences.edit()) {
-                                        putLong("writing_timer_duration", (duracionMin * 60 * 1000).toLong()) // Guardar en milisegundos
-                                        apply()
-                                    }
-
                                     // Programar notificación
                                     notificationService.scheduleNotification(
                                         context = context,
@@ -394,42 +321,6 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                         isReading = false,
                                         isDigitalDisconnect = false
                                     )
-                                    // Obtener la referencia al usuario actual en Firebase Authentication
-                                    val db = FirebaseFirestore.getInstance()
-                                    val userHabitsRef = userEmail?.let {
-                                        db.collection("habitos").document(it)
-                                            .collection("predeterminados")
-                                    }
-
-                                    // Crear el objeto de progreso
-                                    val progreso = ProgresoDiario(
-                                        realizados = 0,
-                                        completado = false,
-                                        totalRecordatoriosPorDia = 1
-                                    )
-
-                                    // Referenciar al documento de progreso usando la fecha actual como ID
-                                    val progresoRef = userHabitsRef?.document(habitoId)
-                                        ?.collection("progreso")
-                                        ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-
-                                    // Guardar en Firestore usando el .toMap()
-                                    progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
-                                        Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
-                                        Toast.makeText(
-                                            context,
-                                            "Progreso diario guardado",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.navigateUp()
-                                    }?.addOnFailureListener { e ->
-                                        Toast.makeText(
-                                            context,
-                                            "Error al guardar el progreso: ${e.message}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                        navController.navigateUp()
-                                    }
 
                                     Toast.makeText(
                                         context,
@@ -480,186 +371,6 @@ private fun Etiqueta(texto: String) = Text(
     style = MaterialTheme.typography.titleMedium,
     fontWeight = FontWeight.Medium
 )
-
-/**
- * Muestra un día en forma de círculo seleccionable.
- */
-@Composable
-fun DiaCircle(label: String, selected: Boolean, onClick: () -> Unit) {
-    val bg          = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-    val textColor   = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Box(
-        Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .border(1.dp, borderColor, CircleShape)
-            .background(bg)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(label, color = textColor, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
-/**
- * Campo que muestra la hora elegida y abre el `TimePickerDialog`.
- */
-@Composable
-fun HoraField(hora: LocalTime, onClick: () -> Unit) {
-    Surface(
-        tonalElevation = 0.dp,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text  = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.Default.Schedule, contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-/* ──────────────────────────  SLIDER «PIXEL STYLE»  ─────────────────────────── */
-
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@Composable
-fun DurationSlider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float>,
-    tickEvery: Int,
-    modifier: Modifier = Modifier,
-    trackHeight: Dp = 16.dp,
-    thumbWidth: Dp = 4.dp,
-) {
-    val density = LocalDensity.current
-    val haptics = LocalHapticFeedback.current
-
-    BoxWithConstraints(modifier = modifier) {
-        val maxWidthPx = with(density) { maxWidth.toPx() }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(trackHeight + 24.dp)
-        ) {
-            // Track
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(trackHeight)
-                    .clip(RoundedCornerShape(trackHeight / 2))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.Center)
-            )
-
-            // Ticks
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(trackHeight)
-                    .align(Alignment.Center),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment     = Alignment.CenterVertically
-            ) {
-                val tickCount =
-                    ((valueRange.endInclusive - valueRange.start) / tickEvery).toInt() + 1
-                repeat(tickCount) {
-                    Box(
-                        Modifier
-                            .size(trackHeight * 0.3f)
-                            .clip(CircleShape)
-                            .background(
-                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                            )
-                    )
-                }
-            }
-
-            // Slider "real" (transparente, continuo)
-            Slider(
-                value = value,
-                onValueChange = {
-                    onValueChange(it)
-                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                },
-                valueRange = valueRange,
-                steps = 0, // continuo
-                colors = SliderDefaults.colors(
-                    activeTrackColor   = Color.Transparent,
-                    inactiveTrackColor = Color.Transparent,
-                    activeTickColor    = Color.Transparent,
-                    inactiveTickColor  = Color.Transparent,
-                    thumbColor         = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxSize()
-            )
-
-            // Thumb visual ligado a la posición actual
-            val progress     = (value - valueRange.start) /
-                    (valueRange.endInclusive - valueRange.start)
-            val thumbOffset  = with(density) { (progress * maxWidthPx).toDp() }
-
-            Box(
-                Modifier
-                    .width(thumbWidth)
-                    .height(trackHeight + 24.dp)
-                    .align(Alignment.CenterStart)
-                    .offset(x = thumbOffset)
-                    .clip(RoundedCornerShape(thumbWidth))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        }
-    }
-}
-
-/* ────────────────────────────  TIME PICKER  ──────────────────────────────── */
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePickerDialog(
-    initialTime : LocalTime,
-    onTimePicked: (LocalTime) -> Unit,
-    onDismiss   : () -> Unit,
-) {
-    val state = rememberTimePickerState(
-        initialTime.hour, initialTime.minute, is24Hour = false
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                onTimePicked(LocalTime.of(state.hour, state.minute))
-                onDismiss()
-            }) { Text(stringResource(android.R.string.ok).uppercase()) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel).uppercase())
-            }
-        },
-        text = { TimePicker(state, modifier = Modifier.fillMaxWidth()) }
-    )
-}
 
 /* ────────────────────────────  HELPERS  ─────────────────────────────────── */
 
@@ -717,11 +428,7 @@ private fun programarNotificacion(
 
     kotlinx.coroutines.runBlocking {
         habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-            // Guardar la duración del temporizador en SharedPreferences
-            val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-            sharedPreferences.edit().putLong("writing_timer_duration", (duracionMin * 60 * 1000).toLong()).apply()
-
-            // Programar notificaciones
+            // Programar notificación
             notificationService.scheduleNotification(
                 context = context,
                 habitoId = habitoId,

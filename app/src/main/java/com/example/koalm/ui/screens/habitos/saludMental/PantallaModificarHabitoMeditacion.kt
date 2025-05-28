@@ -1,4 +1,4 @@
-/*  PantallaConfiguracionHabitoMeditación.kt  */
+/*  PantallaMeditacionHabitoMeditación.kt  */
 package com.example.koalm.ui.screens.habitos.saludMental
 
 import androidx.compose.foundation.BorderStroke
@@ -26,7 +26,6 @@ import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
-import com.example.koalm.utils.TimeUtils
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -53,38 +52,38 @@ import kotlinx.coroutines.launch
 /* foundation */
 // import androidx.compose.foundation.Canvas          // ←  dibujar el track
 import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
-import com.example.koalm.model.ProgresoDiario
-import com.google.firebase.firestore.FirebaseFirestore
-import java.time.LocalDate
 
 //@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
+fun PantallaModificarHabitoMeditacion(navController: NavHostController) {
     val context = LocalContext.current
     val TAG = "PantallaConfiguracionHabitoMeditacion"
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
-    val userEmail = FirebaseAuth.getInstance().currentUser?.email
-    
+
     //------------------------------ Estados -------------------------------------
     var descripcion         by remember { mutableStateOf("") }
     val diasSemana          = listOf("L","M","M","J","V","S","D")
     var diasSeleccionados   by remember { mutableStateOf(List(7){false})}
 
     /* Hora */
-    var horaRecordatorio by remember { 
+    var horaRecordatorio by remember {
         mutableStateOf(
             LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
-        ) 
+        )
     }
     var mostrarTimePicker    by remember { mutableStateOf(false) }
 
     /* Duración */
     var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
     val rangoDuracion = 1f..180f
+
+    /* Switch */
+    var sonidoshambHabilitados by remember { mutableStateOf(false) }
+    var ejerciciorespiracionHabilitados by remember { mutableStateOf(false)}
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -119,7 +118,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
                     Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
                     Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
-                    
+
                     // Programar notificación con el ID real del hábito
                     val notificationService = MeditationNotificationService()
                     val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
@@ -141,46 +140,10 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             "is_reading" to false,
                             "is_digital_disconnect" to false,
                             "notas_habilitadas" to false,
-                            "sonidos_habilitados" to false,
-                            "ejercicio_respiracion" to false
+                            "sonidos_habilitados" to sonidoshambHabilitados,
+                            "ejercicio_respiracion" to ejerciciorespiracionHabilitados
                         )
                     )
-                    // Obtener la referencia al usuario actual en Firebase Authentication
-                    val db = FirebaseFirestore.getInstance()
-                    val userHabitsRef = userEmail?.let {
-                        db.collection("habitos").document(it)
-                            .collection("predeterminados")
-                    }
-
-                    // Crear el objeto de progreso
-                    val progreso = ProgresoDiario(
-                        realizados = 0,
-                        completado = false,
-                        totalRecordatoriosPorDia = 1
-                    )
-
-                    // Referenciar al documento de progreso usando la fecha actual como ID
-                    val progresoRef = userHabitsRef?.document(habitoId)
-                        ?.collection("progreso")
-                        ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-
-                    // Guardar en Firestore usando el .toMap()
-                    progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
-                        Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
-                        Toast.makeText(
-                            context,
-                            "Progreso diario guardado",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        navController.navigateUp()
-                    }?.addOnFailureListener { e ->
-                        Toast.makeText(
-                            context,
-                            "Error al guardar el progreso: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        navController.navigateUp()
-                    }
 
                     Toast.makeText(
                         context,
@@ -210,7 +173,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.titulo_config_meditacion)) },
+                title = { Text(stringResource(R.string.titulo_modificacion_meditacion)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -291,7 +254,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
+                            text = formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -308,6 +271,31 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    /*  Switch sonidos ambientales*/
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        Arrangement.SpaceBetween,
+                        Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.label_sonidos))
+                        Switch(
+                            checked = sonidoshambHabilitados,
+                            onCheckedChange = { sonidoshambHabilitados = it }
+                        )
+                    }
+
+                    /*  Switch Ejercicio de respiración*/
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        Arrangement.SpaceBetween,
+                        Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.label_respiracion))
+                        Switch(
+                            checked = ejerciciorespiracionHabilitados,
+                            onCheckedChange = { ejerciciorespiracionHabilitados = it }
+                        )
+                    }
                 }
             }
 
@@ -315,9 +303,9 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { 
+                    .clickable {
                         try {
-                            navController.navigate("temporizador_meditacion/${duracionMin.roundToInt()}") {
+                            navController.navigate("temporizador_meditacion") {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
@@ -388,5 +376,9 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
         )
     }
 }
-
-/*──────────────────────────  HELPERS  ─────────────────────────────────────*/
+private fun formatearDuracion(min: Int): String = when {
+    min < 60           -> "$min min"
+    min == 60          -> "1 hora"
+    min % 60 == 0      -> "${min/60} h"
+    else               -> "${min/60} h ${min%60} min"
+}

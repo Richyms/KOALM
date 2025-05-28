@@ -19,9 +19,14 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludFisica
+/* Quitar comentario cuando se reemplacen las pantallas
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
+import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
+ */
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
+import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
+import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
+
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoAlimentacion
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfiguracionHabitoEscritura
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoHidratacion
@@ -34,8 +39,7 @@ import com.example.koalm.ui.screens.habitos.PantallaHabitos
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaLibros
 import com.example.koalm.ui.screens.PantallaMenuPrincipal
 import com.example.koalm.ui.screens.habitos.racha.PantallaRachaHabitos
-import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
-import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
+import com.example.koalm.ui.screens.habitos.saludMental.*
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaTemporizadorMeditacion
 import com.example.koalm.ui.screens.parametroSalud.niveles.actividadDiaria.PantallaActividadDiaria
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaActualizarPeso
@@ -46,8 +50,10 @@ import com.example.koalm.ui.screens.parametroSalud.niveles.actividadDiaria.Panta
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaNotas
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaObjetivosPeso
 import com.example.koalm.ui.screens.parametroSalud.PantallaParametrosSalud
+import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaControlPeso
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
+import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -104,8 +110,8 @@ fun AppNavigation(
                 )
         }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
-        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }
+       // screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
+        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }
@@ -113,11 +119,14 @@ fun AppNavigation(
         screenWithSlide("nivel-de-estres") { PantallaEstres(navController) }
         screenWithSlide("objetivos-peso") { PantallaObjetivosPeso(navController) }
         screenWithSlide("actividad-diaria") { PantallaActividadDiaria(navController) }
+        screenWithSlide("objetivos-peso") { PantallaObjetivosPeso(navController) }
+        screenWithSlide("control-peso") { PantallaControlPeso(navController) }
         screenWithSlide("actualizar-peso") { PantallaActualizarPeso(navController) }
         screenWithSlide("meta-diaria-pasos") { PantallaMetaPasos(navController) }
         screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
         screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
+        screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
         screenWithSlide("estadisticas_habito_perzonalizado") { PantallaEstadisticasHabitoPersonalizado(navController)}
 
 

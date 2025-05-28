@@ -12,55 +12,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.koalm.ui.components.*
 import com.example.koalm.ui.theme.*
-
-val datosMockSueño = DatosSueno(
-    puntos = 87,
-    fecha = "2024-05-02",
-    horas = 7,
-    minutos = 15,
-    sueñoLigero = 3.2f,
-    sueñoProfundo = 3.8f,
-    tiempoDespierto = 0.5f,
-    historialSemanal = listOf(
-        DiaSueno(3.0f, 3.5f, 0.5f),
-        DiaSueno(3.2f, 3.6f, 0.3f),
-        DiaSueno(3.1f, 3.4f, 0.5f),
-        DiaSueno(3.4f, 3.2f, 0.4f),
-        DiaSueno(3.0f, 4.0f, 0.2f),
-        DiaSueno(2.5f, 3.0f, 0.7f),
-        DiaSueno(2.0f, 2.5f, 1.0f)
-    )
-)
 
 data class DatosSueno(
     val puntos: Int,
     val fecha: String,
     val horas: Int,
     val minutos: Int,
-    val sueñoLigero: Float,
-    val sueñoProfundo: Float,
-    val tiempoDespierto: Float,
+    val duracionHoras: Float,
     val historialSemanal: List<DiaSueno>
 )
 
 data class DiaSueno(
-    val ligero: Float,
-    val profundo: Float,
-    val despierto: Float
+    val duracionHoras: Float
 )
 
 @Composable
-fun BarraSueno(
-    suenoLigero: Float,
-    suenoProfundo: Float,
-    despierto: Float
-) {
-    val total = suenoLigero + suenoProfundo + despierto
-    val ligeroRatio = suenoLigero / total
-    val profundoRatio = suenoProfundo / total
-    val despiertoRatio = despierto / total
+fun BarraSueno(duracionHoras: Float) {
+    val color = when {
+        duracionHoras >= 8f -> VerdePrincipal // Buen sueño (8-12 horas)
+        duracionHoras >= 7f -> Color(0xFFFFC107) // Regular (7-8 horas)
+        else -> Color(0xFFE57373) // Mal sueño (1-6 horas)
+    }
 
     Box(
         modifier = Modifier
@@ -76,20 +49,8 @@ fun BarraSueno(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(despiertoRatio)
-                    .background(MarronKoala)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(profundoRatio)
-                    .background(VerdePrincipal)
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(ligeroRatio)
-                    .background(GrisMedio)
+                    .fillMaxHeight(duracionHoras / 12f) // Normalizar a 12 horas máximo
+                    .background(color)
             )
         }
     }

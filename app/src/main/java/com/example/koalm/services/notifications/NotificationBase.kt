@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.example.koalm.services.NotificationReceiver
+import com.example.koalm.services.timers.NotificationReceiver
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -170,6 +170,7 @@ abstract class NotificationBase {
         }
     }
 
+
     protected open fun createNotificationIntent(
         context: Context,
         descripcion: String,
@@ -186,6 +187,7 @@ abstract class NotificationBase {
             putExtra("is_reading", false)
             putExtra("is_digital_disconnect", false)
             putExtra("notas_habilitadas", false)
+            putExtra("is_alimentation", false)
         }
     }
 } 

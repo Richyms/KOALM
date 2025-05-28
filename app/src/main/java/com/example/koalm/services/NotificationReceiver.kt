@@ -1,4 +1,4 @@
-package com.example.koalm.services
+package com.example.koalm.services.timers
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -34,19 +34,38 @@ class NotificationReceiver : BroadcastReceiver() {
         when (intent.action) {
             NotificationConstants.START_TIMER_ACTION -> {
                 val duration = intent.getLongExtra("duration_minutes", 0)
+                val isAlimentation= intent.getBooleanExtra("is_alimentation",false)
                 val isReading = intent.getBooleanExtra("is_reading", false)
                 val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-                
-                Log.d(TAG, "Starting timer with duration: $duration, isReading: $isReading, isMeditation: $isMeditation, isDigitalDisconnect: $isDigitalDisconnect")
-                
+                val isSleeping = intent.getBooleanExtra("is_sleeping", false)
+                val descripcion = intent.getStringExtra("descripcion") ?: ""
+                val diaSemana = intent.getIntExtra("dia_semana", 0)
+                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+                val durationMinutes = intent.getLongExtra("duration_minutes", 0)
                 when {
-                    isReading -> startReadingTimer(context, duration)
-                    isMeditation -> startMeditationTimer(context, duration)
-                    isDigitalDisconnect -> startDigitalDisconnectTimer(context, duration)
-                    else -> startWritingTimer(context, duration)
+                    isSleeping -> showSleepNotification(context, descripcion, diaSemana)
+                    isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
+                    isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
+                    isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
+                    isAlimentation -> showAlimentationNotification(context,descripcion)
+                    else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
                 }
+
+
+                Log.d(TAG, "Starting timer with duration: $duration, isReading: $isReading, isMeditation: $isMeditation, isDigitalDisconnect: $isDigitalDisconnect")
+
+                if (!isSleeping) {
+                    when {
+                        isReading -> startReadingTimer(context, duration)
+                        isMeditation -> startMeditationTimer(context, duration)
+                        isDigitalDisconnect -> startDigitalDisconnectTimer(context, duration)
+                        else -> startWritingTimer(context, duration)
+                    }
+                }
+
             }
+
             NotificationConstants.OPEN_NOTES_ACTION -> {
                 Log.d(TAG, "Opening notes")
                 val intent = Intent(context, MainActivity::class.java).apply {
@@ -63,6 +82,8 @@ class NotificationReceiver : BroadcastReceiver() {
                 val isReading = intent.getBooleanExtra("is_reading", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
                 val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+                val isAlimentation = intent.getBooleanExtra("is_alimentation",false)
+                val isSleeping = intent.getBooleanExtra("is_sleeping", false)
 
                 Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
 
@@ -70,6 +91,8 @@ class NotificationReceiver : BroadcastReceiver() {
                     isMeditation -> "meditación"
                     isReading -> "lectura"
                     isDigitalDisconnect -> "desconexión digital"
+                    isSleeping->"sueno"
+                    isAlimentation->"alimentation"
                     else -> "escritura"
                 }
                 Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
@@ -78,12 +101,89 @@ class NotificationReceiver : BroadcastReceiver() {
                     isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
                     isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
                     isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
+                    isSleeping->showSleepNotification(context,descripcion,diaSemana)
                     else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
                 }
             }
         }
     }
+    private fun showAlimentationNotification(
+        context: Context,
+        descripcion: String
+    ) {
+        Log.d(TAG, "Mostrando notificación de alimentación")
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        val channelId = "alimentation_habito"
+        val channelName = "Recordatorio de alimentación"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificaciones para hábitos de alimentación"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "alimentation")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+
+        val openPendingIntent = PendingIntent.getActivity(
+            context,
+            16,  // ID arbitrario para alimentación
+            openIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Hora de alimentarse")
+            .setContentText(descripcion)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(openPendingIntent)
+            .build()
+
+        notificationManager.notify(900, notification)
+    }
+
+    private fun showSleepNotification(
+        context: Context,
+        descripcion: String,
+        diaSemana: Int
+    ) {
+        Log.d(TAG, "Mostrando notificación de sueño")
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "sueño_habito",  // Usar el mismo channelId que definiste en sueñoNotificationService
+                "Recordatorio de sueño",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificaciones para hábitos de sueño"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(context, "sueño_habito")
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Es hora de dormir")
+            .setContentText(descripcion)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(8 + diaSemana, notification)  // Usar el mismo ID base que en sueñoNotificationService
+    }
     private fun showMeditationNotification(
         context: Context,
         descripcion: String,
