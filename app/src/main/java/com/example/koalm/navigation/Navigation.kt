@@ -109,8 +109,8 @@ fun AppNavigation(
                 )
         }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
-        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
+       // screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
+        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }
