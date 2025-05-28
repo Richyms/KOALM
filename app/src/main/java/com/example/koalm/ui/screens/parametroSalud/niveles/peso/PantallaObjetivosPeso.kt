@@ -66,7 +66,6 @@ fun PantallaObjetivosPeso(
         ) {
             ComponenteInputs("Peso inicial", pesoInicial, datos.fechaInicial)
             ComponenteInputs("Peso objetivo", pesoObjetivo)
-
         }
     }
 }
