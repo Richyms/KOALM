@@ -17,8 +17,9 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludFisica
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
+//Quitar comentario cuando se reemplacen las pantallas
+//import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludFisica
+//import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoAlimentacion
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfiguracionHabitoEscritura
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoHidratacion
@@ -46,6 +47,7 @@ import com.example.koalm.ui.screens.parametroSalud.PantallaParametrosSalud
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaControlPeso
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
+import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -90,8 +92,10 @@ fun AppNavigation(
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
+        /* Borrar cuando se coloquen las nuevas pantallas
         screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
         screenWithSlide("estadisticas_salud_fisica") { PantallaEstadísticasSaludFisica(navController) }
+         */
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("temporizador_meditacion") { PantallaTemporizadorMeditacion(navController) }
@@ -106,6 +110,7 @@ fun AppNavigation(
         screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
         screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
+        screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
     }
 }
 
