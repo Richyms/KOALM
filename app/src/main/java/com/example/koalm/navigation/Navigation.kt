@@ -19,9 +19,11 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
+/* Quitar comentario cuando se reemplacen las pantallas
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
+ */
+import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
 
@@ -50,6 +52,7 @@ import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaObjetivo
 import com.example.koalm.ui.screens.parametroSalud.PantallaParametrosSalud
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
+import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -120,6 +123,7 @@ fun AppNavigation(
         screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
         screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
+        screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
         screenWithSlide("estadisticas_habito_perzonalizado") { PantallaEstadisticasHabitoPersonalizado(navController)}
 
 

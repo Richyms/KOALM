@@ -1,4 +1,4 @@
-# KOALM - Aplicación de Seguimiento de Hábitos
+t# KOALM - Aplicación de Seguimiento de Hábitos
 
 KOALM es una aplicación móvil desarrollada en Kotlin para Android que ayuda a los usuarios a realizar un seguimiento de sus hábitos y rutinas diarias.
 
