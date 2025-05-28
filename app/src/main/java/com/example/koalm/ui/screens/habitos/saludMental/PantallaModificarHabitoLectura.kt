@@ -34,7 +34,7 @@ import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
-import com.example.koalm.services.NotificationService
+import com.example.koalm.services.timers.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
