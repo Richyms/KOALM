@@ -638,4 +638,3 @@ fun HoraFieldCentrada(hora: LocalTime) {
         }
     }
 }
-

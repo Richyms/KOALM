@@ -1,4 +1,4 @@
-/*  PantallaConfiguracionHabitoHidratacion.kt  */
+/*  PantallaModificarHabitoHidratacion.kt  */
 package com.example.koalm.ui.screens.habitos.saludFisica
 
 import androidx.compose.foundation.BorderStroke
@@ -47,7 +47,7 @@ import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
 //@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
+fun PantallaModificarHabitoHidratacion (navController: NavHostController) {
     val context = LocalContext.current
 
     //------------------------------ Estados --------------------------------
@@ -75,7 +75,7 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-            title = { Text(stringResource(R.string.titulo_config_hidratacion)) },
+                title = { Text(stringResource(R.string.titulo_modificacion_hidratación)) },
                 navigationIcon = {
                     IconButton(onClick = navController::navigateUp) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -104,8 +104,8 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
                 colors  = CardDefaults.cardColors(containerColor = VerdeContenedor)
             ){
                 Column(
-                Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     /*  Descripción  */
                     OutlinedTextField(
@@ -304,105 +304,5 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
             onTimePicked = { horaFin = it },
             onDismiss = { mostrarTimePickerFin = false }
         )
-    }
-}
-
-fun formatearLitros(cantidad: Double): String = when {
-    cantidad < 1.0 -> "${(cantidad * 1000).toInt()} ml"
-    cantidad == 1.0 -> "1 litro"
-    cantidad % 1.0 == 0.0 -> "${cantidad.toInt()} litros"
-    else -> "%.1f litros".format(cantidad)
-}
-
-/*Ajustar y eliminar los dos private inferiores en caso de verse necesario y remplazarse por su equivalente
-del codigo PantallaConfiguracionHabitoEscritura.kt*/
-
-/*─────────────────────────────  SLIDER “PIXEL STYLE”  ───────────────────────*/
-@SuppressLint("UnusedBoxWithConstraintsScope")
-@Composable
-fun DurationSliderHidra(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float>,
-    tickEvery: Int,
-    modifier: Modifier = Modifier,
-    trackHeight: Dp = 16.dp,
-    thumbWidth: Dp = 4.dp,
-) {
-    val density = LocalDensity.current
-    val haptics = LocalHapticFeedback.current
-
-    BoxWithConstraints(modifier = modifier) {
-        val maxWidthPx = with(density) { maxWidth.toPx() }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(trackHeight + 24.dp)
-        ) {
-            // Track
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(trackHeight)
-                    .clip(RoundedCornerShape(trackHeight / 2))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.Center)
-            )
-
-            // Ticks
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(trackHeight)
-                    .align(Alignment.Center),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val tickCount = ((valueRange.endInclusive - valueRange.start) / tickEvery).toInt() + 1
-                repeat(tickCount) {
-                    Box(
-                        modifier = Modifier
-                            .size(trackHeight * 0.3f)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f))
-                    )
-                }
-            }
-
-            // Slider real — libre y con haptics
-            Slider(
-                value = value,
-                onValueChange = {
-                    onValueChange(it)
-                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                },
-                valueRange = valueRange,
-                steps = 0, // ← para que sea continuo
-                colors = SliderDefaults.colors(
-                    activeTrackColor = Color.Transparent,
-                    inactiveTrackColor = Color.Transparent,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                    thumbColor = Color.Transparent
-                ),
-                modifier = Modifier
-                    .fillMaxSize()
-            )
-
-            // Thumb visual, atado a la posición actual
-            val progress = (value - valueRange.start) / (valueRange.endInclusive - valueRange.start)
-            val thumbOffset = with(density) { (progress * maxWidthPx).toDp() }
-
-            Box(
-                modifier = Modifier
-                    .width(thumbWidth)
-                    .height(trackHeight + 24.dp) // Aumentado a 24.dp para hacer el thumb más largo
-                    .align(Alignment.CenterStart)
-                    .offset(x = thumbOffset)
-                    .clip(RoundedCornerShape(thumbWidth))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        }
     }
 }
