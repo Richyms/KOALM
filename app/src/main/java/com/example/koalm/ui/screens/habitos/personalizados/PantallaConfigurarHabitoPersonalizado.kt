@@ -40,9 +40,12 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.sp
 import com.example.koalm.ui.theme.VerdePrincipal
 import com.example.koalm.model.HabitoPersonalizado
@@ -56,6 +59,7 @@ import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import java.time.DayOfWeek
 import java.time.temporal.ChronoUnit
 
 
@@ -92,6 +96,9 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     var unaVezPorHabito by remember { mutableStateOf("") }
     val habitoOriginal = remember { mutableStateOf<HabitoPersonalizado?>(null) }
     val progresoHabitoOriginal = remember { mutableStateOf<ProgresoDiario?>(null) }
+    val esLunes = LocalDate.now().dayOfWeek == DayOfWeek.MONDAY
+    val recordatoriosHabilitados = !esEdicion || esLunes
+
 
     var modoAutomatico by remember { mutableStateOf(true) }
     var modoPersonalizado by remember { mutableStateOf(true) }
@@ -314,6 +321,18 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                         fontWeight = FontWeight.Bold
                     )
 
+                    if (esEdicion && !esLunes) {
+                        Text(
+                            text = "La frecuencia y los recordatorios solo se pueden modificar cada lunes para comenzar la semana con nuevos objetivos.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp, bottom = 8.dp),
+                            textAlign = TextAlign.Justify
+                        )
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -324,6 +343,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             fontWeight = FontWeight.Medium
                         )
                         Spacer(modifier = Modifier.weight(1f))
+
                         Switch(
                             checked = frecuenciaActivo,
                             onCheckedChange = {
@@ -332,6 +352,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                     diasSeleccionados = List(7) { false } // Reinicia los días a no seleccionados
                                     }
                             },
+                            enabled = !esEdicion || esLunes,
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -348,7 +369,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             listOf("L", "M", "M", "J", "V", "S", "D").forEachIndexed { index, dia ->
-                                DiaCircle(label = dia, selected = diasSeleccionados[index]) {
+                                DiaCircle(label = dia, selected = diasSeleccionados[index], enabled = !esEdicion || esLunes) {
                                     diasSeleccionados = diasSeleccionados.toMutableList()
                                         .also { it[index] = !it[index] }
                                 }
@@ -375,6 +396,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                     modoPersonalizado = true
                                     }
                             },
+                            enabled = !esEdicion || esLunes,
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -397,27 +419,37 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { modoPersonalizado = true },
-                                border = BorderStroke(1.dp, VerdeBorde),
+                                onClick = { if (recordatoriosHabilitados) modoPersonalizado = true },
+                                border = BorderStroke(1.dp, if (recordatoriosHabilitados) VerdeBorde else Color.LightGray),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (modoPersonalizado) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                    contentColor = if (modoPersonalizado) Color.White else Color.Black
+                                    containerColor = if (modoPersonalizado) {
+                                        if (recordatoriosHabilitados) MaterialTheme.colorScheme.primary else Color.Gray
+                                    } else Color.Transparent,
+                                    contentColor = if (modoPersonalizado) {
+                                        if (recordatoriosHabilitados) Color.White else Color.DarkGray
+                                    } else Color.Black
                                 ),
                                 shape = RoundedCornerShape(50),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                enabled = recordatoriosHabilitados
                             ) {
                                 Text(text = stringResource(R.string.boton_Personalizado))
                             }
 
                             OutlinedButton(
-                                onClick = { modoPersonalizado = false },
-                                border = BorderStroke(1.dp, VerdeBorde),
+                                onClick = { if (recordatoriosHabilitados) modoPersonalizado = false },
+                                border = BorderStroke(1.dp, if (recordatoriosHabilitados) VerdeBorde else Color.LightGray),
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (!modoPersonalizado) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                    contentColor = if (!modoPersonalizado) Color.White else Color.Black
+                                    containerColor = if (!modoPersonalizado) {
+                                        if (recordatoriosHabilitados) MaterialTheme.colorScheme.primary else Color.Gray
+                                    } else Color.Transparent,
+                                    contentColor = if (!modoPersonalizado) {
+                                        if (recordatoriosHabilitados) Color.White else Color.DarkGray
+                                    } else Color.Black
                                 ),
                                 shape = RoundedCornerShape(50),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                enabled = recordatoriosHabilitados
                             ) {
                                 Text(text = stringResource(R.string.boton_Automatico))
                             }
@@ -440,19 +472,24 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Box(modifier = Modifier.width(200.dp)) {
-                                            HoraField(hora = hora) {
-                                                mostrarTimePicker = true
-                                                horaAEditarIndex = index
+                                            HoraField(hora = hora, enabled = recordatoriosHabilitados) {
+                                                if (recordatoriosHabilitados) {
+                                                    mostrarTimePicker = true
+                                                    horaAEditarIndex = index
+                                                }
                                             }
                                         }
 
-                                        IconButton(onClick = {
-                                            horarios.removeAt(index)
-                                        }) {
+                                        IconButton(
+                                            onClick = {
+                                                if (recordatoriosHabilitados) horarios.removeAt(index)
+                                            },
+                                            enabled = recordatoriosHabilitados
+                                        ) {
                                             Icon(
                                                 imageVector = Icons.Default.Delete,
                                                 contentDescription = "Eliminar horario",
-                                                tint = Color.Red
+                                                tint = if (recordatoriosHabilitados) Color.Red else Color.LightGray
                                             )
                                         }
                                     }
@@ -462,14 +499,26 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clickable {
-                                        horarios.add(LocalTime.now())
+                                    .clickable(enabled = recordatoriosHabilitados) {
+                                        if (recordatoriosHabilitados) {
+                                            horarios.add(LocalTime.now())
+                                        } else {
+                                            Toast.makeText(context, "Los recordatorios solo se pueden modificar cada lunes para comenzar la semana con nuevos objetivos.", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                     .padding(top = 8.dp)
                             ) {
-                                Icon(Icons.Default.AddCircle, contentDescription = "Agregar")
+                                Icon(
+                                    Icons.Default.AddCircle,
+                                    contentDescription = "Agregar",
+                                    tint = if (recordatoriosHabilitados) MaterialTheme.colorScheme.primary else Color.LightGray
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = "Agregar hora.", fontSize = 14.sp)
+                                Text(
+                                    text = "Agregar hora.",
+                                    fontSize = 14.sp,
+                                    color = if (recordatoriosHabilitados) Color.Black else Color.Gray
+                                )
                             }
                         }
                     }
@@ -725,13 +774,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                                         // Crear el objeto de progreso
                                         val progreso = ProgresoDiario(
-                                            realizados = if (esEdicion) progresoHabitoOriginal.value?.realizados ?: 0 else 0,
-                                            completado = if (esEdicion) progresoHabitoOriginal.value?.completado ?: false else false,
+                                            //realizados = if (esEdicion) progresoHabitoOriginal.value?.realizados ?: 0 else 0,
+                                            //completado = if (esEdicion) progresoHabitoOriginal.value?.completado ?: false else false,
+                                            realizados = 0,
+                                            completado =  false,
                                             totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3,
                                             fecha = if (esEdicion) progresoHabitoOriginal.value?.fecha ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                                             else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-                                            frecuencia = if (frecuenciaActivo) {
-                                               diasSeleccionados
+                                            frecuencia = if (frecuenciaActivo) { diasSeleccionados
                                             } else {
                                                 List(7) { true } // Todos los días activos
                                             }
@@ -1019,6 +1069,71 @@ suspend fun cargarProgresoHabitoPorNombre(nombreHabito: String): ProgresoDiario?
 }
 
 @Composable
+fun DiaCircle(label: String, selected: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
+
+    val bg = when {
+        !enabled -> Color(0xFFE0E0E0)
+        selected -> MaterialTheme.colorScheme.primary
+        else -> Color.Transparent
+    }
+
+    val borderColor = when {
+        !enabled -> Color(0xFFE0E0E0)
+        selected -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outline
+    }
+
+    val textColor = when {
+        !enabled -> Color.DarkGray
+        selected -> MaterialTheme.colorScheme.onPrimary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Box(
+        Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .border(1.dp, borderColor, CircleShape)
+            .background(bg)
+            .clickable(enabled = enabled) {onClick()},
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, color = textColor, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+fun HoraField(hora: LocalTime, enabled: Boolean = true, onClick: () -> Unit) {
+    Surface(
+        tonalElevation = 0.dp,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text  = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(Modifier.weight(1f))
+            Icon(Icons.Default.Schedule, contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 fun HorarioItem(hora: String, onEditar: () -> Unit) {
     Surface(
         tonalElevation = 0.dp,
@@ -1061,4 +1176,6 @@ fun HorarioItem(hora: String, onEditar: () -> Unit) {
         }
     }
 }
+
+
 

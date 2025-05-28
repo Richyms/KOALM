@@ -151,7 +151,29 @@ fun PantallaEstadisticasHabitoPersonalizado(
             fecha in inicioSemana..finSemana
         }
 
-        val diasPlaneados = habitoActual.frecuencia?.count { it } ?: 7
+        val diasSemana = (0..6).map { inicioSemana.plusDays(it.toLong()) }
+
+        fun frecuenciaParaDia(fecha: LocalDate): List<Boolean>? {
+            // Si hay progreso para ese día, usarlo
+            progresoSemanaActual[fecha]?.frecuencia?.let { return it }
+
+            // Si no, buscar el documento de progreso anterior más reciente
+            val fechasAnteriores = progresoActual.keys.filter { it < fecha }.sortedDescending()
+            for (fechaAnterior in fechasAnteriores) {
+                progresoActual[fechaAnterior]?.frecuencia?.let { return it }
+            }
+            // Si no hay ningún progreso previo, fallback a frecuencia del hábito general
+            return habitoActual.frecuencia
+        }
+
+        val diasPlaneados = diasSemana.count { dia ->
+            val frecuencia = frecuenciaParaDia(dia)
+            if (frecuencia != null) {
+                val diaSemanaIndex = (dia.dayOfWeek.value + 6) % 7
+                frecuencia.getOrNull(diaSemanaIndex) == true
+            } else false
+        }
+
         val diasRegistrados = progresoSemanaActual.count { it.value.completado}
 
         Column(
@@ -297,24 +319,32 @@ fun prepararDatosParaGrafica(
     val inicioSemana = semanaReferencia
     val fechasSemana = (0..6).map { inicioSemana.plusDays(it.toLong()) }
 
-    // Para cada día, busca si hay una frecuencia específica en el progreso, si no, usa la global
     val fechasActivas = fechasSemana.filter { fecha ->
-        val frecuenciaDia = progresoPorDia[fecha]?.frecuencia
-        val index = fecha.dayOfWeek.ordinal // ordinal: Lunes = 0 ... Domingo = 6
-        val activa = frecuenciaDia?.getOrNull(index)
-            ?: frecuenciaPorDefecto?.getOrNull(index)
-            ?: false
-        activa
-    }
+        val index = fecha.dayOfWeek.ordinal
 
-    Log.d("Graficador", "==== FECHAS ACTIVAS PARA GRAFICAR ====")
-    fechasActivas.forEach { Log.d("Graficador", "Fecha activa: $it") }
+        // 1. Progreso del día actual
+        val progresoDelDia = progresoPorDia[fecha]
+
+        // 2. Buscar frecuencia válida
+        val frecuenciaDia: List<Boolean>? = when {
+            progresoDelDia != null -> progresoDelDia.frecuencia
+            else -> {
+                // Buscar el último progreso anterior a esa fecha
+                val frecuenciaAnterior = progresoPorDia
+                    .filterKeys { it.isBefore(fecha) }
+                    .maxByOrNull { it.key }?.value?.frecuencia
+
+                frecuenciaAnterior ?: frecuenciaPorDefecto
+            }
+        }
+
+        frecuenciaDia?.getOrNull(index) == true
+    }
 
     val valores = fechasActivas.map { fecha ->
         val progreso = progresoPorDia[fecha]
         val realizados = progreso?.realizados?.toFloat() ?: 0f
         val total = progreso?.totalRecordatoriosPorDia?.toFloat() ?: 1f
-        Log.d("Graficador", "Fecha: $fecha, Realizados: $realizados, Total: $total")
         Pair(realizados, total)
     }
 
@@ -332,6 +362,7 @@ fun prepararDatosParaGrafica(
 
     return Triple(fechasActivas, valores, etiquetas)
 }
+
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
