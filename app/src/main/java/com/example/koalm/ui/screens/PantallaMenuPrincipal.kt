@@ -231,7 +231,7 @@ fun DrawerContenido(navController: NavHostController) {
                     //"Inicio" -> navController.navigate("inicio")
                     "Racha" -> navController.navigate("racha_habitos")
                     "Parametros de salud" -> navController.navigate("estadisticas")
-                    //"Test de emociones" -> navController.navigate("test_emociones")
+                    "Test de ansiedad" -> navController.navigate("test_de_ansiedad")
                 }
             })
         }
@@ -239,10 +239,11 @@ fun DrawerContenido(navController: NavHostController) {
         Text("Hábitos", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
-                when(it){
+                //Quitar comentario cuando se reemplacen las pantallas
+                /*when(it){
                     "Salud mental" -> navController.navigate("estadisticas_salud_mental")
                     "Salud física" -> navController.navigate("estadisticas_salud_fisica")
-                }
+                }*/
             })
         }
         HorizontalDivider()
