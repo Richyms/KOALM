@@ -44,6 +44,7 @@ import com.example.koalm.ui.screens.parametroSalud.niveles.actividadDiaria.Panta
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaNotas
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaObjetivosPeso
 import com.example.koalm.ui.screens.parametroSalud.PantallaParametrosSalud
+import com.example.koalm.ui.screens.parametroSalud.PantallaProgresoPeso
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaControlPeso
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
@@ -111,6 +112,7 @@ fun AppNavigation(
         screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
         screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
+        screenWithSlide("progreso-peso") { PantallaProgresoPeso(navController) }
     }
 }
 

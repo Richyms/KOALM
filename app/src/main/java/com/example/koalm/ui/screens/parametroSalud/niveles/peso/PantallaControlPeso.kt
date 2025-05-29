@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +64,7 @@ fun PantallaControlPeso(
                     modifier = Modifier
                         .size(200.dp)
                         .align(Alignment.TopCenter)
+                        .clickable { navController.navigate("progreso-peso") }
                 )
 
                 Column(
