@@ -1,16 +1,11 @@
 /*PantallaTyC.kt*/
 package com.example.koalm.ui.screens.ajustes
 
-import android.widget.Toast
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,25 +23,7 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.Usuario
 import com.example.koalm.ui.theme.*
-import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
-import java.util.Calendar
-import java.util.Locale
-import android.net.Uri
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.layout.ContentScale
-import android.util.Base64
-import androidx.activity.compose.rememberLauncherForActivityResult
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.asImageBitmap
-import java.util.TimeZone
-import androidx.compose.foundation.background
-import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
