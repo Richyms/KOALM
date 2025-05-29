@@ -18,14 +18,37 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import java.util.Locale
 import com.example.koalm.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlPeso(
-    navController: NavHostController,
-    pesoActual: Float = 73f,
-    pesoObjetivo: Float = 72f
-) {
+    navController: NavHostController
+) { val correo = FirebaseAuth.getInstance().currentUser?.email
+    var pesoActual by remember { mutableStateOf(0f) }
+    var pesoObjetivo by remember { mutableStateOf(0f) }
+
+    LaunchedEffect(correo) {
+        if (correo != null) {
+            val snapshot = Firebase.firestore.collection("usuarios")
+                .document(correo)
+                .collection("metasSalud")
+                .document("valores")
+                .get()
+                .await()
+
+            pesoActual = snapshot.getDouble("pesoActual")?.toFloat() ?: 0f
+            pesoObjetivo = snapshot.getDouble("pesoObjetivo")?.toFloat() ?: 0f
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
