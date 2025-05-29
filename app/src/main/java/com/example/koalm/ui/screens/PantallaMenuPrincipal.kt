@@ -122,7 +122,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { navController.navigate("cambiar_contrasena") }) {
+                        IconButton(onClick = { navController.navigate("TyC") }) {
                             Icon(Icons.Default.Settings, contentDescription = "Configuración")
                         }
                     },
