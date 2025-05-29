@@ -54,6 +54,7 @@ import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaControlP
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
 import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
+import com.example.koalm.ui.screens.ajustes.PantallaCambiarContrasena
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -128,7 +129,7 @@ fun AppNavigation(
         screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
         screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
         screenWithSlide("estadisticas_habito_perzonalizado") { PantallaEstadisticasHabitoPersonalizado(navController)}
-
+        screenWithSlide("cambiar_contrasena") { PantallaCambiarContrasena(navController)}
 
         composable(
             route = "temporizador_meditacion/{duracion}",
