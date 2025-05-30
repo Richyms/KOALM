@@ -40,7 +40,7 @@ fun PantallaNosotros(navController: NavHostController){
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {Text("Nosotros")},
+                title = {Text("Acerca de Nosotros")},
                 navigationIcon = {
                     IconButton(onClick =  { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
