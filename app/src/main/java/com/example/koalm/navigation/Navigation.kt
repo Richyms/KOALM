@@ -57,6 +57,7 @@ import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
 import com.example.koalm.ui.screens.ajustes.PantallaCambiarContrasena
 import com.example.koalm.ui.screens.ajustes.PantallaTyC
 import com.example.koalm.ui.screens.ajustes.PantallaPrivacidad
+import com.example.koalm.ui.screens.ajustes.PantallaNosotros
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -134,6 +135,7 @@ fun AppNavigation(
         screenWithSlide("cambiar_contrasena") { PantallaCambiarContrasena(navController)}
         screenWithSlide("TyC") { PantallaTyC(navController)}
         screenWithSlide("privacidad") { PantallaPrivacidad(navController)}
+        screenWithSlide("nosotros") { PantallaNosotros(navController)}
 
         composable(
             route = "temporizador_meditacion/{duracion}",

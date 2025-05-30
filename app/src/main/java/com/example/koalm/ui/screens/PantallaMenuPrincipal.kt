@@ -122,7 +122,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { navController.navigate("TyC") }) {
+                        IconButton(onClick = { navController.navigate("nosotros") }) {
                             Icon(Icons.Default.Settings, contentDescription = "Configuración")
                         }
                     },
