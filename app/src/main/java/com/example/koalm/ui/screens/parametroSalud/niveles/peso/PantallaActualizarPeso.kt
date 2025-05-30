@@ -1,58 +1,86 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.example.koalm.ui.screens.parametroSalud.niveles.peso
 
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.GetContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.viewmodels.PesoViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaActualizarPeso(
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: PesoViewModel = viewModel()
 ) {
-    val pesoActual = remember { mutableStateOf(0f) }
-    val fechaHoy = LocalDate
-        .now()
-        .format(DateTimeFormatter.ofPattern("d MMMM, yyyy", Locale("es", "MX")))
+    val peso by viewModel.peso.collectAsState()
+    val fecha by viewModel.fecha.collectAsState()
     val correo = FirebaseAuth.getInstance().currentUser?.email
 
-    // 🔄 Cargar el pesoActual desde Firestore (subdocumento "valores")
-    LaunchedEffect(correo) {
-        if (correo != null) {
-            val snapshot = Firebase
-                .firestore
-                .collection("usuarios")
-                .document(correo)
-                .collection("metasSalud")
-                .document("valores")
-                .get()
-                .await()
+    val firestore = Firebase.firestore
+    val storage   = Firebase.storage
 
-            pesoActual.value = snapshot
-                .getDouble("pesoActual")
-                ?.toFloat()
-                ?: 0f
+    val coroutineScope   = rememberCoroutineScope()
+    var showPhotoCheck by remember { mutableStateOf(false) }
+    var pesoText by remember { mutableStateOf(TextFieldValue(if (peso == 0f) "" else peso.toString())) }
 
-            Log.d("DEBUG_PESO", "Peso cargado de Firestore: ${pesoActual.value}")
+    val imagePicker = rememberLauncherForActivityResult(GetContent()) { uri: Uri? ->
+        uri?.let {
+            coroutineScope.launch {
+                try {
+                    val path = "usuarios/$correo/fotos/${System.currentTimeMillis()}.jpg"
+                    val ref  = storage.reference.child(path)
+                    ref.putFile(it).await()
+                    val url = ref.downloadUrl.await().toString()
+                    firestore.collection("usuarios")
+                        .document(correo!!)
+                        .update("photoUrl", url)
+                        .await()
+                    showPhotoCheck = true
+                } catch(e: Exception) {
+                    Log.e("DEBUG_PESO","Error subiendo foto",e)
+                }
+            }
         }
     }
+
+    val green = Color(0xFF4CAF50)
+    val shape = RoundedCornerShape(8.dp)
 
     Scaffold(
         topBar = {
@@ -60,66 +88,108 @@ fun PantallaActualizarPeso(
                 title = { Text("Actualizar peso") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
                     }
                 },
                 actions = {
                     IconButton(onClick = {
-                        if (correo != null) {
-                            val db = Firebase.firestore
-                            db.collection("usuarios")
-                                .document(correo)
-                                .update("peso", pesoActual.value)
-                            db.collection("usuarios")
-                                .document(correo)
-                                .collection("metasSalud")
-                                .document("valores")
-                                .update("pesoActual", pesoActual.value)
-                        }
-                        navController.navigateUp()
+                        val nuevo = pesoText.text.toFloatOrNull() ?: 0f
+                        viewModel.actualizarPeso(nuevo, fecha) { navController.navigateUp() }
                     }) {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = "Guardar",
-                            tint = Color.Black
-                        )
+                        Icon(Icons.Default.Check, contentDescription = "Guardar")
                     }
                 }
             )
         },
-        bottomBar = {
-            BarraNavegacionInferior(navController, "inicio")
-        }
-    ) { innerPadding ->
+        bottomBar = { BarraNavegacionInferior(navController, "inicio") }
+    ) { inner ->
         Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 10.dp)
+            Modifier
+                .padding(inner)
+                .padding(24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // ←—— Aquí mostramos el pesoActual en grande y centrado
+            // Peso grande centrado
             Text(
-                text = if (pesoActual.value == 0f) "—" else String.format(Locale.getDefault(), "%.1f kg", pesoActual.value),
+                text = if (peso == 0f) "—" else String.format(Locale.getDefault(), "%.1f kg", peso),
                 style = MaterialTheme.typography.headlineMedium.copy(fontSize = 48.sp),
-                color = MaterialTheme.colorScheme.primary
+                color = green
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
 
-            // Campo de entrada con ComponenteInputs
+            // Row: "Peso actual", input recuadro, "kg el ..."
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                ComponenteInputs("Peso deseado", pesoActual, fechaHoy)
+                Text("Peso actual", fontSize = 16.sp, color = Color.Black)
+
+                // recuadro para ingresar peso
+                Box(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .height(30.dp)
+                        .border(BorderStroke(1.dp, green), shape)
+                        .clip(shape)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BasicTextField(
+                        value = pesoText,
+                        onValueChange = {
+                            pesoText = it
+                        },
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 16.sp)
+                    )
+                }
+
+                // Fecha y unidad
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("kg el $fecha", color = green, fontSize = 14.sp)
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Fecha", tint = green)
+                }
+            }
+
+            Spacer(Modifier.height(48.dp))
+
+            // Subir foto
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(shape)
+                    .clickable { imagePicker.launch("image/*") }
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Subir foto", color = green, fontSize = 16.sp)
+                    Icon(Icons.Default.ArrowForward, contentDescription = "Seleccionar imagen", tint = green)
+                }
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            // Animación palomita y mensaje
+            AnimatedVisibility(
+                visible = showPhotoCheck,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.Check, contentDescription = "Listo", tint = green, modifier = Modifier.size(64.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text("Subido correctamente", color = green, fontSize = 16.sp)
+                }
             }
         }
     }

@@ -75,6 +75,15 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    //DataStorage
+    implementation(platform("com.google.firebase:firebase-bom:32.1.1"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+
+
+
 
 
 
