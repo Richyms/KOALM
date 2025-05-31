@@ -82,7 +82,10 @@ fun PantallaParametrosSalud(
             )
         },
         bottomBar = {
-            BarraNavegacionInferior(navController = navController, rutaActual = "perfil")
+            BarraNavegacionInferior(
+                navController = navController,
+                rutaActual = "estadisticas"
+            )
         }
     ) { innerPadding ->
         Column(
