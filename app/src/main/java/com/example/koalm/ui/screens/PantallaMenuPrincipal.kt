@@ -122,7 +122,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { navController.navigate("nosotros") }) {
+                        IconButton(onClick = { navController.navigate("ajustes") }) {
                             Icon(Icons.Default.Settings, contentDescription = "Configuración")
                         }
                     },
@@ -163,47 +163,11 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
 
                 SeccionTitulo("Estadísticas")
                 EstadisticasCard()
-                val context = LocalContext.current
-                Text(
-                    text = "Cerrar sesión (debug)",
-                    color = Color.Gray,
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .clickable {
-                            cerrarSesion(context, navController)
-                        }
-                        .padding(bottom = 24.dp)
-                )
             }
         }
     }
 }
 
-
-@Suppress("DEPRECATION")
-fun cerrarSesion(context: Context, navController: NavHostController) {
-    FirebaseAuth.getInstance().signOut()
-
-    @Suppress("DEPRECATION")
-    Identity.getSignInClient(context)
-        .signOut()
-        .addOnCompleteListener {
-            // …
-        }
-    // 3. Borra SharedPreferences con extensión KTX
-    context.getSharedPreferences(
-        context.getString(R.string.prefs_file),
-        Context.MODE_PRIVATE
-    ).edit {
-        clear()
-    }
-
-    // 4. Redirige a la pantalla de inicio y limpia el back stack
-    navController.navigate("iniciar") {
-        popUpTo("menu") { inclusive = true }
-    }
-}
 @Composable
 fun SeccionTitulo(texto: String) {
     Text(
