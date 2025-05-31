@@ -1,74 +1,88 @@
+// PantallaActividadDiaria.kt
 package com.example.koalm.ui.screens.parametroSalud.niveles.actividadDiaria
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.*
-import com.example.koalm.ui.components.BarraNavegacionInferior
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
-import com.example.koalm.ui.theme.*
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavHostController
+import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.theme.GrisCard
+import com.example.koalm.ui.theme.GrisMedio
+import com.example.koalm.ui.theme.MarronKoala
+import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.viewmodels.ActividadDiariaViewModel
 
+// ---------------------------------------------------------------------
+// Data class ActividadDiaria (si la tienes en otro archivo,
+// quita esta definición y usa el import adecuado)
 data class ActividadDiaria(
     val tipo: String,
     val meta: Float,
     val datos: List<Float>
 )
+// ---------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaActividadDiaria(navController: NavHostController) {
-    val tipos = listOf("Pasos", "Calorías quemadas", "Tiempo activo")
-    var actividades by remember { mutableStateOf<List<ActividadDiaria>>(emptyList()) }
+fun PantallaActividadDiaria(
+    navController: NavHostController,
+    viewModel: ActividadDiariaViewModel = viewModel()
+) {
+    // 1) Recolectamos los datos del ViewModel
+    val actividadesState by viewModel.actividades.collectAsState(initial = emptyList())
 
-    LaunchedEffect(Unit) {
-        actividades = listOf(
-            ActividadDiaria("Pasos", 8000f, listOf(2000f, 4500f, 1200f, 8000f, 7800f, 4000f, 3000f)),
-            ActividadDiaria("Calorías quemadas", 500f, listOf(100f, 200f, 300f, 400f, 350f, 250f, 200f)),
-            ActividadDiaria("Tiempo activo", 180f, listOf(30f, 60f, 90f, 120f, 100f, 70f, 60f))
-        )
+    // 2) Si aún no hay datos, mostramos un indicador de carga
+    if (actividadesState.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
+    // 3) Extraemos los tres tipos (Pasos, Calorías quemadas, Tiempo activo)
+    val tipos = actividadesState.map { it.tipo }
+
+    // 4) Configuramos el LazyColumn "infinito" para seleccionar tipo
     val listState = rememberLazyListState()
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
     val selectedIndex by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
+            // Centro del viewport
             val center = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
+            // Buscamos el ítem más cercano al centro
             layoutInfo.visibleItemsInfo.minByOrNull {
                 kotlin.math.abs((it.offset + it.size / 2) - center)
             }?.index?.rem(tipos.size) ?: 0
         }
     }
 
+    // 5) Scroll inicial a un número alto para simular scroll infinito
     LaunchedEffect(Unit) {
-        listState.scrollToItem(50000)
-    }
-
-    if (actividades.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-        return
+        listState.scrollToItem(50_000)
     }
 
     Scaffold(
@@ -77,7 +91,10 @@ fun PantallaActividadDiaria(navController: NavHostController) {
                 title = { Text("Actividad diaria") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Atrás"
+                        )
                     }
                 }
             )
@@ -95,6 +112,7 @@ fun PantallaActividadDiaria(navController: NavHostController) {
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
+            // --- Encabezado de días (fijos en este ejemplo) ---
             val letrasDias = listOf("L", "M", "X", "J", "V", "S", "D")
             val numerosDias = listOf("6", "7", "8", "9", "10", "11", "12")
             Row(
@@ -126,6 +144,7 @@ fun PantallaActividadDiaria(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // --- Selector de tipo (“Pasos”, “Calorías quemadas”, “Tiempo activo”) ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -152,7 +171,8 @@ fun PantallaActividadDiaria(navController: NavHostController) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(100000) { index ->
+                        // items(count) proviene de androidx.compose.foundation.lazy.items
+                        items(100_000) { index ->
                             val actualIndex = index % tipos.size
                             val isSelected = actualIndex == selectedIndex
 
@@ -176,11 +196,12 @@ fun PantallaActividadDiaria(navController: NavHostController) {
                         }
                     }
 
+                    // Gradiente blanco arriba y abajo (opcional)
                     Box(
                         modifier = Modifier
                             .matchParentSize()
                             .background(
-                                Brush.verticalGradient(
+                                androidx.compose.ui.graphics.Brush.verticalGradient(
                                     colors = listOf(
                                         Color.White,
                                         Color.Transparent,
@@ -195,11 +216,17 @@ fun PantallaActividadDiaria(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            GraficadorActividad(actividad = actividades[selectedIndex])
+            // --- Gráfica de barras sin Canvas, sólo Boxes proporcionales ---
+            GraficadorActividad(actividad = actividadesState[selectedIndex])
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val rutas = listOf("meta-diaria-pasos", "meta-diaria-calorias", "meta-diaria-movimiento")
+            // --- Botón para editar meta según el tipo seleccionado ---
+            val rutas = listOf(
+                "meta-diaria-pasos",
+                "meta-diaria-calorias",
+                "meta-diaria-movimiento"
+            )
             Button(
                 onClick = { navController.navigate(rutas[selectedIndex]) },
                 shape = RoundedCornerShape(12.dp),
@@ -213,122 +240,138 @@ fun PantallaActividadDiaria(navController: NavHostController) {
     }
 }
 
+
 @Composable
 fun GraficadorActividad(actividad: ActividadDiaria) {
     val datos = actividad.datos
     val meta = actividad.meta
-    val normalizados = datos.map { it / meta }
 
+    // 1) Normalizamos cada valor en un rango [0f..1f]
+    val normalizados = datos.map { (it / meta).coerceIn(0f, 1f) }
+
+    // 2) Elegimos un color según el porcentaje
     val colores = normalizados.map {
         when {
             it > 0.8f -> MarronKoala
             it > 0.5f -> GrisMedio
-            else -> VerdePrincipal
+            else       -> VerdePrincipal
         }
     }
 
+    // 3) Etiquetas de días (fijas)
     val diasSemana = listOf("L", "M", "X", "J", "V", "S", "D")
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = GrisCard)
-    ) {
-        Column(Modifier.padding(16.dp)) {
+    // 4) Altura total que usará la “gráfica” (ajústala si quieres más o menos alto)
+    val graficoHeight = 160.dp
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        // ┌───────────────────────────────────────────────────────────────────┐
+        // │    Eje Y: Mostramos 5 etiquetas de valores (“100%”, “75%”, etc.)   │
+        // │    en un Column con Arrangement.SpaceBetween para que queden   │
+        // │    espaciadas uniformemente dentro de graficoHeight.            │
+        // └───────────────────────────────────────────────────────────────────┘
+        Column(
+            modifier = Modifier
+                .width(40.dp)
+                .height(graficoHeight),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Si quieres mostrar valores absolutos en lugar de “%”:
+            // Text(text = meta.toInt().toString(), fontSize = 10.sp, color = Color.Gray)
+            // Text(text = (meta * 0.75f).toInt().toString(), fontSize = 10.sp, color = Color.Gray)
+            // Text(text = (meta * 0.5f).toInt().toString(), fontSize = 10.sp, color = Color.Gray)
+            // Text(text = (meta * 0.25f).toInt().toString(), fontSize = 10.sp, color = Color.Gray)
+            // Text(text = "0", fontSize = 10.sp, color = Color.Gray)
+
+            // O, si prefieres mostrar porcentajes:
+            Text(text = "100%", fontSize = 10.sp, color = Color.Gray)
+            Text(text = "75%",  fontSize = 10.sp, color = Color.Gray)
+            Text(text = "50%",  fontSize = 10.sp, color = Color.Gray)
+            Text(text = "25%",  fontSize = 10.sp, color = Color.Gray)
+            Text(text = "0%",   fontSize = 10.sp, color = Color.Gray)
+        }
+
+        // ┌───────────────────────────────────────────────────────────────────┐
+        // │    Contenedor del “área de la gráfica”:                            │
+        // │    • Dibuja las líneas de grilla (Divider) en background.         │
+        // │    • Encima, coloca un Row con las barras (Boxes)                │
+        // │      cuya altura viene dada por normalizados[index].             │
+        // └───────────────────────────────────────────────────────────────────┘
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(graficoHeight)
+        ) {
+            // a) Column que dibuja 4 Divider + espacios, para que queden 4 líneas
+            Column(modifier = Modifier.fillMaxSize()) {
+                // 4 repeticiones de: 1 Spacer + 1 Divider
+                repeat(4) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    Divider(color = Color.LightGray, thickness = 1.dp)
+                }
+                // Finalmente un Spacer al pie para completar el espacio
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            // b) Row superpuesto (z-index default) para dibujar las 7 barras
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(170.dp)
+                    .fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Bottom
             ) {
-                Box(
-                    modifier = Modifier
-                        .padding(end = 4.dp)
-                        .fillMaxHeight()
-                        .width(30.dp)
-                ) {
-                    val pasos = 5
-                    val nivelesY = List(pasos) { i ->
-                        val valor = meta * (pasos - i) / pasos
-                        val proporcion = (pasos - i).toFloat() / pasos
-                        valor to proporcion
-                    }
-                    nivelesY.forEach { (valor, y) ->
+                normalizados.forEachIndexed { index, proporcion ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        // 4.1) Mostramos el valor crudo por encima de cada barra
                         Text(
-                            text = valor.toInt().toString(),
-                            fontSize = 11.sp,
+                            text = datos[index].toInt().toString(),
+                            fontSize = 10.sp,
+                            color = Color.DarkGray,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+
+                        // 4.2) La “barra” en sí misma (Box) con altura proporcional
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .offset(y = -(y * 160).dp)
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val heightPx = size.height
-                        val widthPx = size.width
-
-                        val lineY = listOf(0.2f, 0.4f, 0.6f, 0.8f, 1f)
-                        val dash = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-
-                        lineY.forEach { y ->
-                            val yPos = heightPx * (1 - y)
-                            drawLine(
-                                color = Color.LightGray.copy(alpha = 0.5f),
-                                start = Offset(0f, yPos),
-                                end = Offset(widthPx, yPos),
-                                strokeWidth = 2f,
-                                pathEffect = dash
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        normalizados.forEachIndexed { index, valor ->
-                            Box(
-                                modifier = Modifier
-                                    .width(8.dp)
-                                    .height((valor * 160).dp)
-                                    .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
-                                    .background(colores[index])
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 41.dp, end = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                normalizados.forEachIndexed { index, _ ->
-                    Box(
-                        modifier = Modifier.width(22.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = diasSemana[index],
-                            fontSize = 10.sp
+                                .width(20.dp)
+                                .fillMaxHeight(proporcion)
+                                .background(
+                                    color = colores[index],
+                                    shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+                                )
                         )
                     }
                 }
             }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // ┌───────────────────────────────────────────────────────────────────┐
+    // │    Etiquetas de los días debajo de cada barra, alineadas al eje  │
+    // │    X. Hacemos un padding izquierdo igual a 40.dp para            │
+    // │    compensar el ancho del eje Y que mostramos arriba.            │
+    // └───────────────────────────────────────────────────────────────────┘
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 40.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        diasSemana.forEach { dia ->
+            Text(
+                text = dia,
+                fontSize = 10.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.width(20.dp)
+            )
         }
     }
 }
-
 
 @Preview(showSystemUi = true)
 @Composable

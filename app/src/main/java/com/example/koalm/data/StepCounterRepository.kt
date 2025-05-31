@@ -21,8 +21,12 @@ object StepCounterRepository {
     val activeSeconds: StateFlow<Int> = _activeSeconds.asStateFlow()
 
     /* ---- Métodos internos para que el Service actualice los valores ---- */
-
     fun addStep() = _steps.update { it + 1 }
-
     fun addSeconds(sec: Int) = _activeSeconds.update { it + sec }
+
+    /** Reinicia el conteo al cambiar de día */
+    fun reset() {
+        _steps.value = 0
+        _activeSeconds.value = 0
+    }
 }
