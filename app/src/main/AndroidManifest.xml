@@ -68,7 +68,7 @@
 
         <!-- Receptor para las notificaciones programadas -->
         <receiver
-            android:name=".services.NotificationReceiver"
+            android:name=".services.timers.NotificationReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

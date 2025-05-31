@@ -4,8 +4,11 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import android.Manifest
+import androidx.core.content.ContextCompat
 import com.example.koalm.services.timers.NotificationReceiver
 import java.time.DayOfWeek
 import java.time.LocalDateTime
@@ -24,6 +27,26 @@ abstract class NotificationBase {
     abstract val defaultText: Int
     abstract val notificationId: Int
 
+    private fun hasNotificationPermission(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun hasExactAlarmPermission(context: Context): Boolean {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true
+        }
+    }
+
     open fun scheduleNotification(
         context: Context,
         diasSeleccionados: List<Boolean>,
@@ -33,6 +56,17 @@ abstract class NotificationBase {
         additionalData: Map<String, Any>
     ) {
         Log.d(TAG, "${javaClass.simpleName}: Iniciando programación de notificación")
+        
+        if (!hasNotificationPermission(context)) {
+            Log.e(TAG, "${javaClass.simpleName}: No hay permiso para mostrar notificaciones")
+            return
+        }
+
+        if (!hasExactAlarmPermission(context)) {
+            Log.e(TAG, "${javaClass.simpleName}: No hay permiso para programar alarmas exactas")
+            return
+        }
+
         Log.d(TAG, "${javaClass.simpleName}: Días seleccionados: ${diasSeleccionados.joinToString()}")
         Log.d(TAG, "${javaClass.simpleName}: Hora programada: ${hora.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))}")
         Log.d(TAG, "${javaClass.simpleName}: Duración: $durationMinutes minutos")
@@ -56,8 +90,8 @@ abstract class NotificationBase {
                     .with(TemporalAdjusters.nextOrSame(dayOfWeek))
                 
                 if (nextNotificationTime.isBefore(now)) {
-                    Log.d(TAG, "${javaClass.simpleName}: La hora ya pasó hoy, programando para mañana")
-                    nextNotificationTime = nextNotificationTime.plusDays(1)
+                    Log.d(TAG, "${javaClass.simpleName}: La hora ya pasó hoy, programando para la próxima semana")
+                    nextNotificationTime = nextNotificationTime.plusWeeks(1)
                 }
                 
                 val notificationTimeMillis = nextNotificationTime
@@ -69,24 +103,37 @@ abstract class NotificationBase {
                 
                 val intent = createNotificationIntent(context, descripcion, index, durationMinutes, additionalData)
                 
-                val pendingIntent = PendingIntent.getBroadcast(
-                    context,
-                    notificationId + index,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
+                val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.getBroadcast(
+                        context,
+                        notificationId + index,
+                        intent,
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                } else {
+                    PendingIntent.getBroadcast(
+                        context,
+                        notificationId + index,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                }
                 
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         if (alarmManager.canScheduleExactAlarms()) {
                             Log.d(TAG, "${javaClass.simpleName}: Programando alarma exacta (Android 12+)")
-                            alarmManager.setExactAndAllowWhileIdle(
+                            alarmManager.setAlarmClock(
+                                AlarmManager.AlarmClockInfo(notificationTimeMillis, pendingIntent),
+                                pendingIntent
+                            )
+                        } else {
+                            Log.d(TAG, "${javaClass.simpleName}: Usando alarma inexacta en Android 12+")
+                            alarmManager.setAndAllowWhileIdle(
                                 AlarmManager.RTC_WAKEUP,
                                 notificationTimeMillis,
                                 pendingIntent
                             )
-                        } else {
-                            Log.e(TAG, "${javaClass.simpleName}: No se pueden programar alarmas exactas en Android 12+")
                         }
                     } else {
                         Log.d(TAG, "${javaClass.simpleName}: Programando alarma exacta (Android < 12)")
