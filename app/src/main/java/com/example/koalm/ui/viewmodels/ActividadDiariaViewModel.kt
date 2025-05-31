@@ -112,7 +112,7 @@ class ActividadDiariaViewModel : ViewModel() {
                 for ((_, doc) in ultimosDocs) {
                     val pasosDoc = doc.getLong("pasos")?.toFloat() ?: 0f
                     val caloriasDoc = doc.getLong("calorias")?.toFloat() ?: 0f
-                    val tiempoDoc = doc.getLong("tiempoActivo")?.toFloat() ?: 0f
+                    val tiempoDoc = doc.getLong("tiempoActividad")?.toFloat() ?: 0f
 
                     listaPasos.add(pasosDoc)
                     listaCalorias.add(caloriasDoc)
