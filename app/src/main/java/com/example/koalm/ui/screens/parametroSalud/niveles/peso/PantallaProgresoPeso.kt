@@ -1,8 +1,6 @@
 package com.example.koalm.ui.screens.parametroSalud
 
 /* ----------  IMPORTS  ---------- */
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,18 +11,28 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.koalm.ui.theme.*
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.components.*
+import com.example.koalm.ui.theme.*
 
 /* ----------  DATA CLASS ---------- */
 data class PesoEntrada(val fecha: String, val peso: String)
+
+/* ----------  MOCK REPOSITORY ---------- */
+class RepositorioPesoMock {
+    fun obtenerEntradasPeso(): List<PesoEntrada> {
+        return listOf(
+            PesoEntrada("Martes, 27 Mayo, 2025", "67.2 kg"),
+            PesoEntrada("Miércoles, 7 Mayo, 2025", "70 kg"),
+            PesoEntrada("Viernes, 20 Abril, 2025", "73 kg")
+        )
+    }
+}
 
 /* ----------  PANTALLA PROGRESO ---------- */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,12 +40,7 @@ data class PesoEntrada(val fecha: String, val peso: String)
 fun PantallaProgresoPeso(
     navController: NavHostController
 ) {
-    // Datos simulados (más adelante conecta con backend)
-    val entradas = listOf(
-        PesoEntrada("Martes, 27 Mayo, 2025", "67.2 kg"),
-        PesoEntrada("Miércoles, 7 Mayo, 2025", "70 kg"),
-        PesoEntrada("Viernes, 20 Abril, 2025", "73 kg")
-    )
+    val entradas = RepositorioPesoMock().obtenerEntradasPeso()
 
     Scaffold(
         topBar = {
@@ -51,7 +54,6 @@ fun PantallaProgresoPeso(
             )
         },
         bottomBar = {
-            // Puedes usar tu BarraNavegacionInferior si quieres
             BarraNavegacionInferior(navController = navController, rutaActual = "progreso-peso")
         }
     ) { paddingValues ->
@@ -61,15 +63,8 @@ fun PantallaProgresoPeso(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Aquí va la gráfica", color = Color.DarkGray)
-            }
+            // ✅ Ya no se pasa ningún dato manualmente
+            GraficaPeso()
 
             Spacer(modifier = Modifier.height(24.dp))
 
