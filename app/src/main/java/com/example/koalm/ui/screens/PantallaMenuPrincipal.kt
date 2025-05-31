@@ -61,8 +61,11 @@ import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.components.LogroDialogoAnimado
 import com.example.koalm.ui.components.obtenerIconoPorNombre
 import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
+import com.example.koalm.ui.viewmodels.LogrosPreferences
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
@@ -388,6 +391,8 @@ fun DashboardScreen(
     userId: String,
     viewModel: DashboardViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val logrosPrefs = remember { LogrosPreferences(context) }
     val habitos = viewModel.habitos
     val habitosPre = viewModel.habitosPre
     val cargando = viewModel.cargando
@@ -464,9 +469,8 @@ fun DashboardScreen(
                 HabitoCardPersonalizado(
                     habito = habito,
                     progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
-                    onIncrementar = {
-                        viewModel.incrementarProgreso(usuarioEmail, habito)
-                    }
+                    onIncrementar = { viewModel.incrementarProgreso(usuarioEmail, habito) },
+                    logrosPrefs = logrosPrefs
                 )
             }
 
@@ -493,11 +497,28 @@ fun DashboardScreen(
 fun HabitoCardPersonalizado(
     habito: HabitoPersonalizado,
     progreso: ProgresoDiario?,
-    onIncrementar: () -> Unit
+    onIncrementar: () -> Unit,
+    logrosPrefs: LogrosPreferences
 ) {
-
     val realizados = progreso?.realizados ?: 0
     val completado = progreso?.completado ?: false
+
+    var mostrarDialogoLogro by remember { mutableStateOf(false) }
+
+    LaunchedEffect(completado) {
+        if (completado && !logrosPrefs.fueMostrado(habito.nombre)) {
+            mostrarDialogoLogro = true
+            logrosPrefs.marcarComoMostrado(habito.nombre)
+        }
+    }
+
+    if (mostrarDialogoLogro) {
+        LogroDialogoAnimado(
+            mensaje = "¡Haz completado el objetivo diario de tu hábito!",
+            onDismiss = { mostrarDialogoLogro = false }
+        )
+    }
+
 
     // Progreso del hábito visualmente
     val total = habito.objetivoDiario
@@ -526,7 +547,6 @@ fun HabitoCardPersonalizado(
         } else {
             "Objetivo por día: $realizados/$total"
         }
-
 
     Column(
         modifier = Modifier

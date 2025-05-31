@@ -129,3 +129,56 @@ fun FalloDialogoGuardadoAnimado(
         }
     }
 }
+
+@Composable
+fun LogroDialogoAnimado(
+    mensaje: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ){
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // DotLottieAnimation
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/6595274c-487a-486a-bd88-faf798070040/EsZBcKokZ3.lottie"),
+                    autoplay = true,
+                    loop = false,
+                    speed = 1.5f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = mensaje,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("¡Genial!")
+                }
+            }
+        }
+    }
+}
