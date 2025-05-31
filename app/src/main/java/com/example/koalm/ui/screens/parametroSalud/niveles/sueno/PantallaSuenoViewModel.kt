@@ -37,8 +37,9 @@ class PantallaSuenoViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val userId = auth.currentUser?.uid
-                Log.d(TAG, "UserID: $userId")
-                if (userId == null) {
+                val userEmail = auth.currentUser?.email
+                Log.d(TAG, "UserID: $userId, Email: $userEmail")
+                if (userId == null || userEmail == null) {
                     Log.e(TAG, "Usuario no autenticado")
                     return@launch
                 }
@@ -55,49 +56,112 @@ class PantallaSuenoViewModel : ViewModel() {
                     .await()
 
                 Log.d(TAG, "Número de hábitos encontrados: ${habitos.documents.size}")
+                if (habitos.documents.isEmpty()) {
+                    Log.d(TAG, "No se encontraron hábitos de sueño")
+                    return@launch
+                }
 
-                // Mapa para almacenar la suma de minutos por día de la semana (0-6)
-                val minutosPorDia = mutableMapOf<Int, Int>()
+                // Mapa para almacenar datos por día
+                val horasObjetivoPorDia = mutableMapOf<Int, Float>()
+                val horaInicioPorDia = mutableMapOf<Int, Int>()
+                val horasRealesPorDia = mutableMapOf<Int, Float>()
                 
-                // Procesar todos los hábitos
+                // Procesar configuración de hábitos
                 for (doc in habitos.documents) {
                     try {
-                        val data = doc.data
-                        Log.d(TAG, "Procesando documento: ${doc.id}")
-                        Log.d(TAG, "Datos del documento: $data")
+                        val data = doc.data ?: continue
+                        Log.d(TAG, "Procesando hábito con ID: ${doc.id}")
+                        Log.d(TAG, "Datos del hábito: $data")
+                        
+                        val diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as? Boolean ?: false } ?: continue
+                        val horaStr = data["hora"] as? String ?: continue
+                        val horaInicio = horaStr.split(":")[0].toInt()
+                        val horasObjetivo = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: continue
 
-                        val duracionMinutos = (data?.get("duracionMinutos") as? Number)?.toInt() ?: 0
-                        val diasSeleccionados = (data?.get("diasSeleccionados") as? List<*>)?.map { it as? Boolean ?: false } ?: List(7) { false }
+                        Log.d(TAG, "Días seleccionados: $diasSeleccionados")
+                        Log.d(TAG, "Hora inicio: $horaInicio")
+                        Log.d(TAG, "Horas objetivo: $horasObjetivo")
 
-                        // Distribuir los minutos en los días seleccionados
+                        // Guardar configuración para los días seleccionados
                         diasSeleccionados.forEachIndexed { index, seleccionado ->
                             if (seleccionado) {
-                                val minutosActuales = minutosPorDia[index] ?: 0
-                                minutosPorDia[index] = minutosActuales + duracionMinutos
-                                Log.d(TAG, "Día $index: Sumando $duracionMinutos minutos a $minutosActuales. Total: ${minutosPorDia[index]}")
+                                horaInicioPorDia[index] = horaInicio
+                                horasObjetivoPorDia[index] = horasObjetivo
+                            }
+                        }
+
+                        // Obtener progreso real de los últimos 7 días
+                        val habitoId = doc.id
+                        for (i in 0..6) {
+                            val fecha = fechaHace7Dias.plusDays(i.toLong())
+                            val fechaStr = fecha.format(DateTimeFormatter.ISO_DATE)
+                            val diaIndex = (fecha.dayOfWeek.value + 6) % 7 // Convertir a índice 0-6 empezando en lunes
+                            
+                            Log.d(TAG, "Buscando progreso para fecha: $fechaStr (día de semana: ${fecha.dayOfWeek}, índice: $diaIndex)")
+                            
+                            val progresoDoc = db.collection("habitos")
+                                .document(userEmail)
+                                .collection("predeterminados")
+                                .document(habitoId)
+                                .collection("progreso")
+                                .document(fechaStr)
+                                .get()
+                                .await()
+
+                            Log.d(TAG, "Ruta del documento: habitos/$userEmail/predeterminados/$habitoId/progreso/$fechaStr")
+                            Log.d(TAG, "Documento existe: ${progresoDoc.exists()}")
+                            if (progresoDoc.exists()) {
+                                val datos = progresoDoc.data
+                                Log.d(TAG, "Datos del progreso: $datos")
+                                val realizados = progresoDoc.getLong("realizados") ?: 0L
+                                Log.d(TAG, "Horas dormidas para $fechaStr: $realizados")
+                                horasRealesPorDia[diaIndex] = realizados.toFloat()
+                            } else {
+                                Log.d(TAG, "No hay datos de progreso para $fechaStr")
                             }
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error procesando documento: ${e.message}")
+                        e.printStackTrace()
                     }
                 }
 
-                // Crear el historial semanal y calcular el total
+                // Crear el historial semanal
                 val historialSemanal = mutableListOf<DiaSueno>()
+                var horasTotales = 0f
                 var minutosSemanaTotales = 0
 
                 // Procesar cada día de la semana
                 for (i in 0..6) {
-                    val minutosDelDia = minutosPorDia[i] ?: 0
-                    minutosSemanaTotales += minutosDelDia
-                    // Convertir minutos a horas con decimales para la gráfica
-                    val horasDelDia = minutosDelDia / 60f
-                    historialSemanal.add(DiaSueno(horasDelDia))
-                    Log.d(TAG, "Día $i: $minutosDelDia minutos = $horasDelDia horas")
+                    val horasObjetivo = horasObjetivoPorDia[i]
+                    val horaInicio = horaInicioPorDia[i]
+                    val horasReales = horasRealesPorDia[i]
+
+                    Log.d(TAG, "Día $i - Objetivo: $horasObjetivo, Inicio: $horaInicio, Real: $horasReales")
+
+                    if (horasObjetivo != null && horaInicio != null) {
+                        val horasDormidas = horasReales ?: 0f
+                        historialSemanal.add(DiaSueno(
+                            duracionHoras = horasDormidas,
+                            horaInicio = horaInicio,
+                            horasObjetivo = horasObjetivo
+                        ))
+                        horasTotales += horasDormidas
+                        minutosSemanaTotales += (horasDormidas * 60).roundToInt()
+                        Log.d(TAG, "Agregado al historial - Dormidas: $horasDormidas, Total acumulado: $horasTotales")
+                    } else {
+                        historialSemanal.add(DiaSueno(
+                            duracionHoras = 0f,
+                            horaInicio = 0,
+                            horasObjetivo = 0f
+                        ))
+                        Log.d(TAG, "Día sin configuración, agregado con valores 0")
+                    }
                 }
 
                 // Calcular puntos basados en el promedio diario
-                val horasPromedioDiarias = minutosSemanaTotales / 7f / 60f
+                val horasPromedioDiarias = horasTotales / 7f
+                Log.d(TAG, "Promedio diario: $horasPromedioDiarias")
                 val puntosTotales = when {
                     horasPromedioDiarias >= 8f -> 100
                     horasPromedioDiarias >= 7f -> 80
@@ -108,17 +172,20 @@ class PantallaSuenoViewModel : ViewModel() {
                 val horasTotal = minutosSemanaTotales / 60
                 val minutosRestantes = minutosSemanaTotales % 60
 
-                Log.d(TAG, "Total semanal: $minutosSemanaTotales minutos = $horasTotal horas y $minutosRestantes minutos")
+                Log.d(TAG, "Resumen final:")
+                Log.d(TAG, "Total horas: $horasTotal")
+                Log.d(TAG, "Total minutos restantes: $minutosRestantes")
+                Log.d(TAG, "Puntos: $puntosTotales")
+                Log.d(TAG, "Historial semanal: $historialSemanal")
 
                 datosSueno = DatosSueno(
                     puntos = puntosTotales,
                     fecha = fechaHoy.format(DateTimeFormatter.ISO_DATE),
                     horas = horasTotal,
                     minutos = minutosRestantes,
-                    duracionHoras = minutosSemanaTotales / 60f,
+                    duracionHoras = horasTotales,
                     historialSemanal = historialSemanal
                 )
-                Log.d(TAG, "DatosSueno creado exitosamente: $datosSueno")
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error al cargar datos de sueño: ${e.message}")

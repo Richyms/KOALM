@@ -24,6 +24,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -41,6 +42,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -48,22 +50,20 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
+import com.example.koalm.model.MetricasHabito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.timers.NotificationService
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.VerdeBorde
-import com.example.koalm.ui.theme.VerdeContenedor
+import com.example.koalm.ui.theme.*
 import java.time.LocalDate
-
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
-
 import com.google.firebase.firestore.FirebaseFirestore
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -88,6 +88,9 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
     //  Duración
     var duracionMin by remember { mutableStateOf(15f) }      // 1-180 min
     val rangoDuracion = 1f..180f
+
+    // Objetivo de páginas
+    var objetivoPaginas by remember { mutableStateOf(1) }
 
     // Cargar la duración guardada del temporizador
     val sharedPreferences = context.getSharedPreferences("AppPreferences", MODE_PRIVATE)
@@ -131,13 +134,23 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                     hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
                     duracionMinutos = duracionMin.toInt(),
                     notasHabilitadas = notasHabilitadas,
-                    userId = currentUser.uid
+                    userId = currentUser.uid,
+                    objetivoPaginas = objetivoPaginas,
+                    metricasEspecificas = MetricasHabito()
                 )
 
                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
                     // Programar notificación
                     programarNotificacion(
-                        context, descripcion, duracionMin, hora, diasSeleccionados, navController, TAG, notasHabilitadas
+                        context = context,
+                        descripcion = descripcion,
+                        duracionMin = duracionMin,
+                        hora = hora,
+                        diasSeleccionados = diasSeleccionados,
+                        navController = navController,
+                        tag = TAG,
+                        notasHabilitadas = notasHabilitadas,
+                        objetivoPaginas = objetivoPaginas
                     )
                 }.onFailure { error ->
                     Log.e(TAG, "Error al crear el hábito: ${error.message}")
@@ -200,6 +213,26 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                         placeholder = { Text(stringResource(R.string.placeholder_descripcion)) },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Objetivo de páginas
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Etiqueta("Objetivo de páginas")
+                        OutlinedTextField(
+                            value = objetivoPaginas.toString(),
+                            onValueChange = { 
+                                val newValue = it.toIntOrNull() ?: 1
+                                objetivoPaginas = newValue.coerceAtLeast(1)
+                            },
+                            label = { Text("Páginas por día") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Establece cuántas páginas quieres escribir por día",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
                     // Selección de días
                     Etiqueta(stringResource(R.string.label_frecuencia))
@@ -371,7 +404,9 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                     hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
                                     duracionMinutos = duracionMin.toInt(),
                                     notasHabilitadas = notasHabilitadas,
-                                    userId = currentUser.uid
+                                    userId = currentUser.uid,
+                                    objetivoPaginas = objetivoPaginas,
+                                    metricasEspecificas = MetricasHabito()
                                 )
 
                                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
@@ -421,7 +456,10 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                             "Progreso diario guardado",
                                             Toast.LENGTH_LONG
                                         ).show()
-                                        navController.navigateUp()
+                                        navController.navigate("salud_mental") {
+                                            popUpTo("salud_mental") { inclusive = true }
+                                            launchSingleTop = true
+                                        }
                                     }?.addOnFailureListener { e ->
                                         Toast.makeText(
                                             context,
@@ -436,7 +474,10 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                         context.getString(R.string.success_notifications_scheduled),
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                    navController.navigateUp()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
                                 }.onFailure { error ->
                                     Log.e(TAG, "Error al crear el hábito: ${error.message}")
                                     Toast.makeText(
@@ -681,7 +722,8 @@ private fun programarNotificacion(
     diasSeleccionados: List<Boolean>,
     navController: NavHostController,
     tag: String,
-    notasHabilitadas: Boolean
+    notasHabilitadas: Boolean,
+    objetivoPaginas: Int = 1
 ) {
     val notificationService = NotificationService()
     val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), hora)
@@ -712,12 +754,14 @@ private fun programarNotificacion(
         hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
         duracionMinutos = duracionMin.toInt(),
         notasHabilitadas = notasHabilitadas,
-        userId = currentUser.uid
+        userId = currentUser.uid,
+        objetivoPaginas = objetivoPaginas,
+        metricasEspecificas = MetricasHabito()
     )
 
     kotlinx.coroutines.runBlocking {
         habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-            // Guardar la duración del temporizador en SharedPreferences
+            // Guardar la duración en SharedPreferences
             val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
             sharedPreferences.edit().putLong("writing_timer_duration", (duracionMin * 60 * 1000).toLong()).apply()
 
@@ -740,7 +784,10 @@ private fun programarNotificacion(
                 context.getString(R.string.success_notifications_scheduled),
                 Toast.LENGTH_SHORT
             ).show()
-            navController.navigateUp()
+            navController.navigate("salud_mental") {
+                popUpTo("salud_mental") { inclusive = true }
+                launchSingleTop = true
+            }
         }.onFailure { error ->
             Log.e(tag, "Error al crear el hábito: ${error.message}")
             Toast.makeText(

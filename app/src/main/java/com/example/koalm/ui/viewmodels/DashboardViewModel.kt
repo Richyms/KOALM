@@ -129,10 +129,10 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    fun incrementarProgreso(email: String, habito: HabitoPersonalizado) {
+    fun incrementarProgreso(email: String, habito: HabitoPersonalizado, valor: Int) {
         viewModelScope.launch {
             try {
-                HabitosRepository.incrementarProgresoHabito(email, habito)
+                HabitosRepository.incrementarProgresoHabito(email, habito, valor)
                 cargarProgresos(email, habitos)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -140,10 +140,10 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
-    fun incrementarProgresoPre(email: String, habito: Habito) {
+    fun incrementarProgresoPre(email: String, habito: Habito, valor: Int) {
         viewModelScope.launch {
             try {
-                HabitoRepository.incrementarProgresoHabito(email, habito)
+                HabitoRepository.incrementarProgresoHabito(email, habito, valor)
                 cargarProgresosPre(email, habitosPre)
             } catch (e: Exception) {
                 e.printStackTrace()

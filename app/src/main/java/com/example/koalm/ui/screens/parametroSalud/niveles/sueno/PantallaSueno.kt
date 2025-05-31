@@ -114,49 +114,7 @@ fun PantallaSueno(
                             .padding(vertical = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val dias = listOf("L", "M", "X", "J", "V", "S", "D")
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.Bottom
-                        ) {
-                            dias.zip(datos.historialSemanal).forEach { (dia, sueno) ->
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Bottom
-                                ) {
-                                    // Mostrar tiempo de sueño sobre la barra
-                                    val horas = sueno.duracionHoras.toInt()
-                                    val minutos = ((sueno.duracionHoras - horas) * 60).roundToInt()
-                                    Text(
-                                        text = "${horas}h${if (minutos > 0) " ${minutos}m" else ""}",
-                                        fontSize = 10.sp,
-                                        color = Color.Gray,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(bottom = 4.dp)
-                                    )
-                                    BarraSueno(duracionHoras = sueno.duracionHoras)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(dia, fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(22.dp))
-
-                        Column(
-                            horizontalAlignment = Alignment.Start,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 34.dp, vertical = 5.dp)
-                        ) {
-                            LeyendaColor("8-12h", "Buen sueño", VerdePrincipal)
-                            LeyendaColor("7-8h", "Sueño regular", Color(0xFFFFC107))
-                            LeyendaColor("1-6h", "Sueño insuficiente", Color(0xFFE57373))
-                        }
+                        GraficaSueno(datos = datos)
                     }
                 }
             }

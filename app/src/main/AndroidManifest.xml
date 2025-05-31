@@ -41,7 +41,7 @@
 
         <!-- Servicio para manejar las notificaciones -->
         <service
-            android:name=".services.NotificationService"
+            android:name=".services.timers.NotificationService"
             android:enabled="true"
             android:exported="false" />
 

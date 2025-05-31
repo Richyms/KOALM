@@ -38,6 +38,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -464,8 +466,8 @@ fun DashboardScreen(
                 HabitoCardPersonalizado(
                     habito = habito,
                     progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
-                    onIncrementar = {
-                        viewModel.incrementarProgreso(usuarioEmail, habito)
+                    onIncrementar = { valor ->
+                        viewModel.incrementarProgreso(usuarioEmail, habito, valor)
                     }
                 )
             }
@@ -474,8 +476,8 @@ fun DashboardScreen(
                 HabitoCardPredeterminado(
                     habito = habito,
                     progreso = viewModel.progresosPre[habito.id],
-                    onIncrementar = {
-                        viewModel.incrementarProgresoPre(usuarioEmail, habito)
+                    onIncrementar = { valor ->
+                        viewModel.incrementarProgresoPre(usuarioEmail, habito, valor)
                     }
                 )
             }
@@ -493,7 +495,7 @@ fun DashboardScreen(
 fun HabitoCardPersonalizado(
     habito: HabitoPersonalizado,
     progreso: ProgresoDiario?,
-    onIncrementar: () -> Unit
+    onIncrementar: (Int) -> Unit
 ) {
 
     val realizados = progreso?.realizados ?: 0
@@ -604,7 +606,7 @@ fun HabitoCardPersonalizado(
                         }
                 )  {
                     IconButton(
-                            onClick = onIncrementar,
+                            onClick = { onIncrementar(0) },
                             modifier = Modifier
                                 .fillMaxSize()
                         ) {
@@ -632,12 +634,74 @@ fun HabitoCardPersonalizado(
 fun HabitoCardPredeterminado(
     habito: Habito,
     progreso: ProgresoDiario?,
-    onIncrementar: () -> Unit
+    onIncrementar: (Int) -> Unit
 ) {
-
     val realizados = progreso?.realizados ?: 0
     val completado = progreso?.completado ?: false
     val totalRecordatoriosxDia = progreso?.totalObjetivoDiario ?: 0
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var valorInput by remember { mutableStateOf("") }
+
+    // Diálogo para ingresar el progreso
+    if (mostrarDialogo) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogo = false },
+            title = {
+                Text(
+                    when (habito.tipo) {
+                        TipoHabito.LECTURA -> "¿Cuántos minutos leíste?"
+                        TipoHabito.ESCRITURA -> "¿Cuántas páginas escribiste?"
+                        TipoHabito.MEDITACION -> "¿Cuántos minutos meditaste?"
+                        TipoHabito.DESCONEXION_DIGITAL -> "¿Cuántos minutos estuviste desconectado?"
+                        TipoHabito.SUEÑO -> "¿Cuántas horas dormiste?"
+                        else -> "Ingresa el progreso"
+                    }
+                )
+            },
+            text = {
+                OutlinedTextField(
+                    value = valorInput,
+                    onValueChange = { valorInput = it.filter { char -> char.isDigit() || char == '.' } },
+                    label = {
+                        Text(
+                            when (habito.tipo) {
+                                TipoHabito.LECTURA -> "Minutos"
+                                TipoHabito.ESCRITURA -> "Páginas"
+                                TipoHabito.MEDITACION -> "Minutos"
+                                TipoHabito.DESCONEXION_DIGITAL -> "Minutos"
+                                TipoHabito.SUEÑO -> "Horas"
+                                else -> "Cantidad"
+                            }
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = if (habito.tipo == TipoHabito.SUEÑO) KeyboardType.Decimal else KeyboardType.Number)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val valor = if (habito.tipo == TipoHabito.SUEÑO) {
+                            valorInput.toFloatOrNull()?.toInt() ?: 0
+                        } else {
+                            valorInput.toIntOrNull() ?: 0
+                        }
+                        if (valor > 0) {
+                            onIncrementar(valor)
+                            mostrarDialogo = false
+                            valorInput = ""
+                        }
+                    }
+                ) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogo = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     // Progreso del hábito visualmente
     val progresoPorcentaje = if (totalRecordatoriosxDia == 1) {
@@ -658,8 +722,36 @@ fun HabitoCardPredeterminado(
         animationSpec = tween(durationMillis = 300)
     )
 
-    // Visualizar recordatorios
-    val progresoText = if (realizados >= 1) "Completado: 1/1" else "Realizado: 0/1"
+    // Visualizar recordatorios y métricas específicas según el tipo de hábito
+    val progresoText = when (habito.tipo) {
+        TipoHabito.ESCRITURA -> {
+            val paginasEscritas = realizados
+            if (completado) "Completado: $paginasEscritas páginas" else "Objetivo: $paginasEscritas/${habito.objetivoPaginas} páginas"
+        }
+        TipoHabito.SUEÑO -> {
+            val horasDormidas = realizados
+            if (completado) "Completado: $horasDormidas horas" else "Objetivo: $horasDormidas/${habito.objetivoHorasSueno} horas"
+        }
+        TipoHabito.LECTURA -> {
+            val minutosLeidos = realizados
+            if (completado) "Completado: $minutosLeidos minutos" else "Objetivo: $minutosLeidos minutos"
+        }
+        TipoHabito.MEDITACION -> {
+            val minutosMeditados = realizados
+            if (completado) "Completado: $minutosMeditados minutos" else "Objetivo: $minutosMeditados minutos"
+        }
+        TipoHabito.DESCONEXION_DIGITAL -> {
+            if (completado) "Completado" else "Pendiente"
+        }
+        TipoHabito.ALIMENTACION -> {
+            val comidasRealizadas = realizados
+            if (completado) "Completado: $comidasRealizadas comidas" else "Pendientes: ${totalRecordatoriosxDia - comidasRealizadas} comidas"
+        }
+        TipoHabito.HIDRATACION -> {
+            val vasosAgua = realizados
+            if (completado) "Completado: $vasosAgua vasos" else "Objetivo: $vasosAgua/$totalRecordatoriosxDia vasos"
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -674,15 +766,16 @@ fun HabitoCardPredeterminado(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = when (habito.tipo) {
                         TipoHabito.MEDITACION -> Icons.Default.SelfImprovement
                         TipoHabito.LECTURA -> Icons.Default.MenuBook
                         TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
                         TipoHabito.ESCRITURA -> Icons.Default.Edit
-                        TipoHabito.SUEÑO -> Icons.Default.SelfImprovement // Temporalmente usando el mismo ícono
-                        TipoHabito.ALIMENTACION -> Icons.Default.SelfImprovement // Temporalmente usando el mismo ícono
-                        TipoHabito.HIDRATACION -> Icons.Default.SelfImprovement // Temporalmente usando el mismo ícono
+                        TipoHabito.SUEÑO -> Icons.Default.SelfImprovement
+                        TipoHabito.ALIMENTACION -> Icons.Default.MenuBook
+                        TipoHabito.HIDRATACION -> Icons.Default.SelfImprovement
                     },
                     contentDescription = "Icono del Hábito",
                     tint = MaterialTheme.colorScheme.primary,
@@ -690,72 +783,18 @@ fun HabitoCardPredeterminado(
                         .size(33.dp)
                         .padding(end = 12.dp)
                 )
-
-                Column(modifier = Modifier.weight(1f)) {
+                Column {
                     Text(
                         text = habito.titulo,
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = progresoText,
                         style = MaterialTheme.typography.bodySmall
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = habito.hora,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            val diasDeLaSemana = listOf("L", "M", "M", "J", "V", "S", "D")
-                            Text(
-                                text = habito.diasSeleccionados.mapIndexed { index, seleccionado ->
-                                    if (seleccionado) diasDeLaSemana[index] else ""
-                                }.filter { it.isNotEmpty() }.joinToString(""),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Timer,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = formatearDuracion(habito.duracionMinutos),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
-                        }
-                    }
                 }
+            }
 
             if (completado) {
                 Icon(
@@ -798,7 +837,7 @@ fun HabitoCardPredeterminado(
                         }
                 )  {
                     IconButton(
-                        onClick = onIncrementar,
+                        onClick = { mostrarDialogo = true },
                         modifier = Modifier
                             .fillMaxSize()
                     ) {

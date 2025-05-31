@@ -335,7 +335,7 @@ fun HabitoActivoCardFisico(
         onClick = {
             try {
                 when (habito.tipo) {
-                    TipoHabito.SUEÑO -> navController.navigate("configurar_habito_sueno/${habito.id}") {
+                    TipoHabito.SUEÑO -> navController.navigate("ritmo-cardiaco") {
                         launchSingleTop = true
                         restoreState = true
                     }

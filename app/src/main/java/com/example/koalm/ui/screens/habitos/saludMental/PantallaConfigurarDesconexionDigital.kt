@@ -137,7 +137,10 @@ fun PantallaConfigurarDesconexionDigital(navController: NavHostController) {
                                 "Hábito creado y notificaciones programadas correctamente",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            navController.navigateUp()
+                            navController.navigate("salud_mental") {
+                                popUpTo("salud_mental") { inclusive = true }
+                                launchSingleTop = true
+                            }
                         },
                         onFailure = { error ->
                             Log.e(TAG, "Error al crear hábito: ${error.message}", error)

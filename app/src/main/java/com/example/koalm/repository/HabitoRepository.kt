@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
+import com.example.koalm.model.MetricasHabito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.services.timers.ReadingTimerService
@@ -88,7 +89,10 @@ class HabitoRepository {
                         notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
                         userId = data["userId"] as? String,
                         fechaCreacion = data["fechaCreacion"] as? String,
-                        fechaModificacion = data["fechaModificacion"] as? String
+                        fechaModificacion = data["fechaModificacion"] as? String,
+                        objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
+                        objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: 8f,
+                        metricasEspecificas = MetricasHabito()
                     )
                 } else {
                     Log.w(TAG, "Documento ${doc.id} tiene datos nulos")
@@ -155,7 +159,10 @@ class HabitoRepository {
                         notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
                         userId = data["userId"] as? String,
                         fechaCreacion = data["fechaCreacion"] as? String,
-                        fechaModificacion = data["fechaModificacion"] as? String
+                        fechaModificacion = data["fechaModificacion"] as? String,
+                        objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
+                        objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: 8f,
+                        metricasEspecificas = MetricasHabito()
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Error al procesar documento ${doc.id}: ${e.message}", e)
@@ -235,7 +242,10 @@ class HabitoRepository {
                 notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
                 userId = data["userId"] as? String,
                 fechaCreacion = data["fechaCreacion"] as? String,
-                fechaModificacion = data["fechaModificacion"] as? String
+                fechaModificacion = data["fechaModificacion"] as? String,
+                objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
+                objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: 8f,
+                metricasEspecificas = MetricasHabito()
             )
 
             Log.d(TAG, "Hábito obtenido exitosamente: ${habito.titulo}")
@@ -249,8 +259,51 @@ class HabitoRepository {
     companion object {
         @SuppressLint("StaticFieldLeak")
         val db = FirebaseFirestore.getInstance()
+        
+        private suspend fun actualizarProgresoAcumulado(email: String, habito: Habito, incremento: Int) {
+            val db = FirebaseFirestore.getInstance()
+            val progresoMentalRef = db.collection("usuarios")
+                .document(email)
+                .collection("progresohabitomental")
+                .document(habito.tipo.name.lowercase())
+
+            try {
+                db.runTransaction { transaction ->
+                    val snapshot = transaction.get(progresoMentalRef)
+                    val progresoActual = snapshot.getLong("total") ?: 0L
+                    val metricaEspecifica = when (habito.tipo) {
+                        TipoHabito.LECTURA -> "minutosLeidos"
+                        TipoHabito.ESCRITURA -> "paginasEscritas"
+                        TipoHabito.MEDITACION -> "minutosMeditados"
+                        TipoHabito.DESCONEXION_DIGITAL -> "minutosDesconectado"
+                        else -> null
+                    }
+
+                    val datosActualizados = mutableMapOf<String, Any>(
+                        "total" to progresoActual + incremento,
+                        "ultimaActualizacion" to LocalDate.now().toString(),
+                        "tipoHabito" to habito.tipo.name
+                    )
+
+                    if (metricaEspecifica != null) {
+                        val metricaActual = snapshot.getLong(metricaEspecifica) ?: 0L
+                        datosActualizados[metricaEspecifica] = metricaActual + incremento
+                    }
+
+                    transaction.set(
+                        progresoMentalRef,
+                        datosActualizados,
+                        SetOptions.merge()
+                    )
+                }.await()
+                Log.d("HabitoRepository", "Progreso acumulado actualizado para ${habito.tipo.name}")
+            } catch (e: Exception) {
+                Log.e("HabitoRepository", "Error actualizando progreso acumulado: ${e.message}")
+            }
+        }
+
         // Incrementar el progreso de un hábito
-        suspend fun incrementarProgresoHabito(email: String, habito: Habito) {
+        suspend fun incrementarProgresoHabito(email: String, habito: Habito, valor: Int) {
             val progresoRef = db.collection("habitos")
                 .document(email)
                 .collection("predeterminados")
@@ -265,14 +318,27 @@ class HabitoRepository {
             val nuevoProgreso = progresoActual ?: ProgresoDiario(
                 realizados = 0,
                 completado = false,
-                totalObjetivoDiario = 1
+                totalObjetivoDiario = when (habito.tipo) {
+                    TipoHabito.ESCRITURA -> habito.objetivoPaginas
+                    TipoHabito.SUEÑO -> habito.objetivoHorasSueno.toInt()
+                    else -> 1
+                }
             )
 
             // No hacer nada si ya estaba completo
             if (nuevoProgreso.completado) return
 
-            nuevoProgreso.realizados += 1
-            nuevoProgreso.completado = nuevoProgreso.realizados >= 1
+            nuevoProgreso.realizados += valor
+            nuevoProgreso.completado = when (habito.tipo) {
+                TipoHabito.ESCRITURA -> nuevoProgreso.realizados >= habito.objetivoPaginas
+                TipoHabito.SUEÑO -> nuevoProgreso.realizados >= habito.objetivoHorasSueno
+                else -> nuevoProgreso.realizados >= 1
+            }
+
+            // Si es un hábito mental o físico, actualizamos el progreso acumulado
+            if (habito.clase == ClaseHabito.MENTAL || habito.clase == ClaseHabito.FISICO) {
+                actualizarProgresoAcumulado(email, habito, valor)
+            }
 
             // Actualizamos la racha si se completó hoy
             if (nuevoProgreso.completado) {
@@ -289,8 +355,6 @@ class HabitoRepository {
                 .document(habito.id)
                 .set(habito, SetOptions.merge())
                 .await()
-
-            Log.d("Firestore", "Progreso actualizado para el hábito: ${habito.id}")
         }
 
         // Actualizar racha del hábito

@@ -58,6 +58,7 @@ import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
 import com.example.koalm.model.TipoHabito
+import com.example.koalm.model.MetricasHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.ui.theme.GrisMedio
 import com.google.firebase.auth.FirebaseAuth
@@ -179,7 +180,9 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                     diasSeleccionados = diasSeleccionados,
                     hora = horaDormir.format(DateTimeFormatter.ofPattern("HH:mm")),
                     duracionMinutos = (duracionHoras * 60).roundToInt(),
-                    userId = currentUser.uid
+                    userId = currentUser.uid,
+                    objetivoHorasSueno = duracionHoras,
+                    metricasEspecificas = MetricasHabito()
                 )
 
                 habitosRepository.crearHabito(habito).onSuccess { habitoId ->
@@ -518,7 +521,9 @@ fun PantallaConfiguracionHabitoSueno(navController: NavHostController) {
                                 diasSeleccionados = diasSeleccionados,
                                 hora = horaDormir.format(DateTimeFormatter.ofPattern("HH:mm")),
                                 duracionMinutos = (duracionHoras * 60).roundToInt(),
-                                userId = currentUser.uid
+                                userId = currentUser.uid,
+                                objetivoHorasSueno = duracionHoras,
+                                metricasEspecificas = MetricasHabito()
                             )
 
                             habitosRepository.crearHabito(habito).onSuccess { habitoId ->

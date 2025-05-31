@@ -69,7 +69,7 @@ object HabitosRepository {
     }
 
     // Incrementar el progreso de un hábito
-    suspend fun incrementarProgresoHabito(email: String, habito: HabitoPersonalizado) {
+    suspend fun incrementarProgresoHabito(email: String, habito: HabitoPersonalizado, valor: Int) {
         val idDocumento = habito.nombre.replace(" ", "_")
         val progresoRef = db.collection("habitos")
             .document(email)
@@ -94,7 +94,7 @@ object HabitosRepository {
         // No hacer nada si ya estaba completo
         if (nuevoProgreso.completado) return
 
-        nuevoProgreso.realizados += 1
+        nuevoProgreso.realizados += valor
         nuevoProgreso.completado = nuevoProgreso.realizados >= total
 
         // Actualizamos la racha si se completó hoy
@@ -119,48 +119,16 @@ object HabitosRepository {
     //Actualizar la racha con días activos
     private fun actualizarRacha(habito: HabitoPersonalizado, progreso: ProgresoDiario) {
         val hoy = LocalDate.now()
-        val frecuencia = habito.frecuencia ?: List(7) { true }
-
-        val diaDeLaSemanaHoy = (hoy.dayOfWeek.value + 6) % 7
-        if (!frecuencia[diaDeLaSemanaHoy]) {
-            Log.d("Racha", "Hoy no está en la frecuencia, no se actualiza racha.")
-            return
-        }
-
         val ultimoDia = habito.ultimoDiaCompletado?.let { LocalDate.parse(it) }
-        Log.d("Racha", "Último día completado: $ultimoDia")
 
-        if (ultimoDia == null) {
+        if (ultimoDia == null || !ultimoDia.plusDays(1).isEqual(hoy)) {
             habito.rachaActual = 1
-            Log.d("Racha", "No había último día. Racha actual = 1")
         } else {
-            // Verificamos si se rompió la racha ANTES de hoy
-            var fechaEsperada = ultimoDia.plusDays(1)
-            var rachaRota = false
-
-            while (fechaEsperada.isBefore(hoy)) {
-                val dia = (fechaEsperada.dayOfWeek.value + 6) % 7
-                if (frecuencia[dia]) {
-                    // Este día requería completarse pero no se hizo
-                    rachaRota = true
-                    break
-                }
-                fechaEsperada = fechaEsperada.plusDays(1)
-            }
-
-            if (rachaRota) {
-                habito.rachaActual = 1
-                Log.d("Racha", "Racha rota antes de hoy. Se reinicia a 1.")
-            } else {
-                // Si se mantiene la secuencia, aumentamos
-                habito.rachaActual += 1
-                Log.d("Racha", "Racha continúa. Nueva racha: ${habito.rachaActual}")
-            }
+            habito.rachaActual += 1
         }
 
         if (habito.rachaActual > habito.rachaMaxima) {
             habito.rachaMaxima = habito.rachaActual
-            Log.d("Racha", "Nueva racha máxima: ${habito.rachaMaxima}")
         }
 
         habito.ultimoDiaCompletado = hoy.toString()

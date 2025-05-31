@@ -172,14 +172,20 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             "Progreso diario guardado",
                             Toast.LENGTH_LONG
                         ).show()
-                        navController.navigateUp()
+                        navController.navigate("salud_mental") {
+                            popUpTo("salud_mental") { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }?.addOnFailureListener { e ->
                         Toast.makeText(
                             context,
                             "Error al guardar el progreso: ${e.message}",
                             Toast.LENGTH_LONG
                         ).show()
-                        navController.navigateUp()
+                        navController.navigate("salud_mental") {
+                            popUpTo("salud_mental") { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
 
                     Toast.makeText(
@@ -187,7 +193,10 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                         context.getString(R.string.success_notifications_scheduled),
                         Toast.LENGTH_SHORT
                     ).show()
-                    navController.navigateUp()
+                    navController.navigate("salud_mental") {
+                        popUpTo("salud_mental") { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }.onFailure { error ->
                     Log.e(TAG, "Error al crear el hábito: ${error.message}")
                     Toast.makeText(
