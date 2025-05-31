@@ -47,7 +47,6 @@ import androidx.compose.foundation.background
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPersonalizarPerfil(navController: NavHostController) {
@@ -66,12 +65,17 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     val opcionesGenero = listOf("Masculino", "Femenino", "Prefiero no decirlo")
     var username by remember { mutableStateOf("") }  // Aquí almacenamos el username
 
+    // **Nuevo estado: perfilGuardado → para saber si ya guardó sus datos**
+    var perfilGuardado by remember { mutableStateOf(false) }
+
     var mostrarDialogoExito by remember{ mutableStateOf(false) }
     if (mostrarDialogoExito) {
         ExitoDialogoGuardadoAnimado(
             mensaje = "¡Perfil guardado correctamente!",
             onDismiss = {
                 mostrarDialogoExito = false
+                // Una vez confirmado, marcamos perfil como guardado y navegamos
+                perfilGuardado = true
                 navController.navigate("menu") {
                     popUpTo("personalizar") { inclusive = true }
                     launchSingleTop = true
@@ -102,6 +106,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             inputStream?.close()
         }
     }
+
     // Leer los datos guardados una sola vez al componer
     LaunchedEffect(email) {
         if (email != null) {
@@ -127,7 +132,8 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
         }
     }
 
-    // UI
+    // ------------------ A PARTIR DE AQUÍ, MODIFICAMOS SOLO EL SCAFFOLD ------------------
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -140,11 +146,16 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
+
+        // **REEMPLAZAMOS bottomBar por una condicional: sólo si perfilGuardado == true mostramos la barra.**
         bottomBar = {
-            BarraNavegacionInferior(
-                navController = navController,
-                rutaActual = "personalizar"
-            )
+            if (perfilGuardado) {
+                BarraNavegacionInferior(
+                    navController = navController,
+                    rutaActual = "personalizar" // o la ruta que corresponda
+                )
+            }
+            // Si perfilGuardado == false, no se renderiza nada aquí (la barra está “bloqueada”/oculta).
         }
     ) { innerPadding ->
         Column(
@@ -165,9 +176,10 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                 }
             )
             Spacer(modifier = Modifier.height(20.dp))
-            CampoUsuario(username)         { username = it}
+            CampoUsuario(username)         { username = it }
             CampoNombre(nombre)            { nombre = it }
             CampoApellidos(apellidos)      { apellidos = it }
+
             // Mostrar el campo de fecha de nacimiento
             CampoFechaNacimiento(fechasec) { showDatePicker = true }
             // Mostrar el DatePicker y manejar la selección de fecha
@@ -185,6 +197,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
             SelectorGenero(opcionesGenero, generoSeleccionado) { generoSeleccionado = it }
             Spacer(modifier = Modifier.weight(1f))
 
+            // Botón “Guardar”
             BotonGuardarPerfil {
                 if (uid != null) {
                     if (email == null) {
@@ -195,7 +208,6 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                     val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
                     // Validar campos requeridos
                     if (
-                    // imagenBase64 Es solo si quieeere
                         username.isBlank() ||
                         !regex.matches(username) ||
                         username.trim().length < 3 ||
@@ -231,6 +243,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
                         .document(email)
                         .set(usuario.toMap(), SetOptions.merge())
                         .addOnSuccessListener {
+                            // Al guardar correctamente, mostramos diálogo de éxito
                             mostrarDialogoExito = true
                         }
                         .addOnFailureListener { e ->
@@ -244,7 +257,7 @@ fun PantallaPersonalizarPerfil(navController: NavHostController) {
     }
 }
 
-//Función auxiliar para la imagen del usuario
+// Función auxiliar para convertir Base64 a Bitmap
 fun base64ToBitmap(base64Str: String): Bitmap? {
     return try {
         val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
@@ -303,7 +316,7 @@ fun ImagenUsuario(imagenBase64: String?, onEditClick: () -> Unit, onDeleteClick:
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .offset(y = 16.dp) 
+                .offset(y = 16.dp)
                 .background(
                     color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(16.dp)
@@ -341,8 +354,8 @@ fun ImagenUsuario(imagenBase64: String?, onEditClick: () -> Unit, onDeleteClick:
 
 @Composable
 fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
-    val regex = "^[a-zA-Z0-9_ ]*$".toRegex() // Letras, números, guion bajo y espacios
-    val limpio = value.filter { it.code != 8203 } // elimina caracteres invisibles si los hay
+    val regex = "^[a-zA-Z0-9_ ]*$".toRegex()
+    val limpio = value.filter { it.code != 8203 }
 
     val valido = limpio.isNotBlank() &&
             limpio.trim().length >= 3 &&
@@ -362,33 +375,37 @@ fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = if (valido) VerdePrincipal else Color.Red,
+            focusedBorderColor   = if (valido) VerdePrincipal else Color.Red,
             unfocusedBorderColor = if (valido || value.isEmpty()) GrisMedio else Color.Red,
-            focusedLabelColor = if (valido) VerdePrincipal else Color.Red,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            errorLabelColor = Color.Red
+            focusedLabelColor    = if (valido) VerdePrincipal else Color.Red,
+            unfocusedLabelColor  = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            errorLabelColor      = Color.Red
         ),
         supportingText = {
             when {
                 value.isBlank() -> {
-                    Text("El nombre no puede estar vacío o solo contener espacios.",
+                    Text(
+                        "El nombre no puede estar vacío o solo contener espacios.",
                         color = Color.Red,
-                        fontSize = 12.sp)
+                        fontSize = 12.sp
+                    )
                 }
                 value.trim().length < 3 -> {
-                    Text("Debe tener al menos 3 caracteres (excluyendo espacios).",
+                    Text(
+                        "Debe tener al menos 3 caracteres (excluyendo espacios).",
                         color = Color.Red,
-                        fontSize = 12.sp)
+                        fontSize = 12.sp
+                    )
                 }
                 !regex.matches(value) -> {
-                    Text("Solo se permiten letras, números, guion bajo y espacios.",
+                    Text(
+                        "Solo se permiten letras, números, guion bajo y espacios.",
                         color = Color.Red,
-                        fontSize = 12.sp)
+                        fontSize = 12.sp
+                    )
                 }
                 else -> {
-                    Text("Nombre de usuario válido.",
-                        color = GrisMedio,
-                        fontSize = 12.sp)
+                    Text("Nombre de usuario válido.", color = GrisMedio, fontSize = 12.sp)
                 }
             }
         }
@@ -396,7 +413,6 @@ fun CampoUsuario(value: String, onValueChange: (String) -> Unit) {
 
     Spacer(modifier = Modifier.height(12.dp))
 }
-
 
 @Composable
 fun CampoNombre(value: String, onValueChange: (String) -> Unit) {
@@ -521,8 +537,6 @@ fun FechaNacimientoSelector(
     }
 }
 
-
-
 @Composable
 fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
     val iconTint = if (isSystemInDarkTheme()) Color.White else Color.Black
@@ -579,7 +593,6 @@ fun CampoPeso(value: String, onValueChange: (String) -> Unit) {
     )
     Spacer(modifier = Modifier.height(12.dp))
 }
-
 
 @Composable
 fun CampoAltura(value: String, onValueChange: (String) -> Unit) {
@@ -659,5 +672,3 @@ fun BotonGuardarPerfil(onClick: () -> Unit) {
         Text("Guardar", color = MaterialTheme.colorScheme.onPrimary)
     }
 }
-
-
