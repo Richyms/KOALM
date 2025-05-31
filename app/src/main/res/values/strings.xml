@@ -48,9 +48,12 @@
     <string name="success_notifications_scheduled">Notificaciones programadas</string>
 
     <!-- Temporizador -->
+
+
+            <!-- Escritura -->
     <string name="timer_channel_name">Temporizador de escritura</string>
     <string name="timer_channel_description">Canal para el temporizador de escritura</string>
-    <string name="timer_notification_title">Temporizador de Escritura</string>
+    <string name="timer_notification_title">Temporizador de escritura</string>
     <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
     <string name="timer_remaining_text">Tiempo restante: %s</string>
     <string name="timer_completion_title">¡Tiempo completado!</string>
@@ -58,6 +61,17 @@
     <string name="start_writing_action">Comenzar %d min</string>
     <string name="open_notes_action">Abrir notas</string>
     <string name="start_timer">Iniciar temporizador</string>
+    <string name="timer_start_button">Iniciar</string>
+    <string name="timer_pause_button">Pausar</string>
+    <string name="timer_resume_button">Reanudar</string>
+    <string name="timer_stop_button">Detener</string>
+    <string name="timer_complete_button">Completar</string>
+
+
+
+
+
+
     
     <!-- Notas -->
     <string name="titulo_notas">Mis notas</string>
@@ -194,6 +208,8 @@
     <!-- ========================================================================= -->
     <!-- GESTIÓN Y PERSONALIZACIÓN DE HÁBITOS -->
     <!-- ========================================================================= -->
+
+
 
     <string name="boton_cancelar_modificaciones">Cancelar</string>
 
