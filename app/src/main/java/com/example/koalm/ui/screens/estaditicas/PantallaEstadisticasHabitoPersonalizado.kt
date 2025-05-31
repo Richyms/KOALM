@@ -54,6 +54,13 @@ import androidx.navigation.NavHostController
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import android.graphics.Typeface
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,142 +155,144 @@ fun PantallaEstadisticasHabitoPersonalizado(
         bottomBar = {
             BarraNavegacionInferior(navController, "inicio")
         }
-    ) { padding ->
-        var semanaVisible by remember { mutableStateOf(LocalDate.now().with(DayOfWeek.MONDAY)) }
+    ) { paddingValues ->
+            var semanaVisible by remember { mutableStateOf(LocalDate.now().with(DayOfWeek.MONDAY)) }
 
-        val inicioSemana = semanaVisible.with(DayOfWeek.MONDAY)
-        val finSemana = inicioSemana.plusDays(6)
+            val inicioSemana = semanaVisible.with(DayOfWeek.MONDAY)
+            val finSemana = inicioSemana.plusDays(6)
 
-        val progresoSemanaActual = progresoActual.filterKeys { fecha ->
-            fecha in inicioSemana..finSemana
-        }
-
-        val diasSemana = (0..6).map { inicioSemana.plusDays(it.toLong()) }
-
-        fun frecuenciaParaDia(fecha: LocalDate): List<Boolean>? {
-            // Si hay progreso para ese día, usarlo
-            progresoSemanaActual[fecha]?.frecuencia?.let { return it }
-
-            // Si no, buscar el documento de progreso anterior más reciente
-            val fechasAnteriores = progresoActual.keys.filter { it < fecha }.sortedDescending()
-            for (fechaAnterior in fechasAnteriores) {
-                progresoActual[fechaAnterior]?.frecuencia?.let { return it }
-            }
-            // Si no hay ningún progreso previo, fallback a frecuencia del hábito general
-            return habitoActual.frecuencia
-        }
-
-        val diasPlaneados = diasSemana.count { dia ->
-            val frecuencia = frecuenciaParaDia(dia)
-            if (frecuencia != null) {
-                val diaSemanaIndex = (dia.dayOfWeek.value + 6) % 7
-                frecuencia.getOrNull(diaSemanaIndex) == true
-            } else false
-        }
-
-        val diasRegistrados = progresoSemanaActual.count { it.value.completado}
-
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Calcular rachaActual, rachaMaxima
-            val rachaActual = habitoActual.rachaActual
-            val rachaMaxima = habitoActual.rachaMaxima
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                IndicadorCircular("Racha actual", rachaActual, rachaMaxima)
-                IndicadorCircular("Racha máxima", rachaMaxima, rachaMaxima)
+            val progresoSemanaActual = progresoActual.filterKeys { fecha ->
+                fecha in inicioSemana..finSemana
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            val diasSemana = (0..6).map { inicioSemana.plusDays(it.toLong()) }
 
-            Row(
+            fun frecuenciaParaDia(fecha: LocalDate): List<Boolean>? {
+                // Si hay progreso para ese día, usarlo
+                progresoSemanaActual[fecha]?.frecuencia?.let { return it }
+
+                // Si no, buscar el documento de progreso anterior más reciente
+                val fechasAnteriores = progresoActual.keys.filter { it < fecha }.sortedDescending()
+                for (fechaAnterior in fechasAnteriores) {
+                    progresoActual[fechaAnterior]?.frecuencia?.let { return it }
+                }
+                // Si no hay ningún progreso previo, fallback a frecuencia del hábito general
+                return habitoActual.frecuencia
+            }
+
+            val diasPlaneados = diasSemana.count { dia ->
+                val frecuencia = frecuenciaParaDia(dia)
+                if (frecuencia != null) {
+                    val diaSemanaIndex = (dia.dayOfWeek.value + 6) % 7
+                    frecuencia.getOrNull(diaSemanaIndex) == true
+                } else false
+            }
+
+            val diasRegistrados = progresoSemanaActual.count { it.value.completado}
+
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(paddingValues)
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.habitosperestadisticas),
-                    contentDescription = null,
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Calcular rachaActual, rachaMaxima
+                val rachaActual = habitoActual.rachaActual
+                val rachaMaxima = habitoActual.rachaMaxima
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    IndicadorCircular("Racha actual", rachaActual, rachaMaxima)
+                    IndicadorCircular("Racha máxima", rachaMaxima, rachaMaxima)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
                     modifier = Modifier
-                        .size(120.dp)
-                        .weight(0.3f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.habitosperestadisticas),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(120.dp)
+                            .weight(0.3f)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .weight(0.7f)
+                            .height(90.dp)
+                    ) {
+                        SelectorHabitosCentrado(
+                            habitos = habitos,
+                            selectedIndex = selectedIndex,
+                            onSelectedIndexChange = { nuevoIndice ->
+                                val nuevoHabito = habitos[nuevoIndice]
+                                val fechaInicio = nuevoHabito.fechaInicio?.let {
+                                    LocalDate.parse(it).with(DayOfWeek.MONDAY)
+                                } ?: LocalDate.now().with(DayOfWeek.MONDAY)
+
+                                semanaVisible = maxOf(fechaInicio, LocalDate.now().with(DayOfWeek.MONDAY))
+                            }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "$diasRegistrados/$diasPlaneados días",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Default.BarChart, contentDescription = "Gráfico")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Log.d("Graficador", "==== LLAVES DEL MAPA progresoPorDia ====")
+                progresoActual.keys.forEach { fecha ->
+                    Log.d("Graficador", "Fecha en progresoPorDia: $fecha")
+                }
+
+                GraficadorProgresoHabitoSwipe(
+                    progresoPorDia = progresoActual,
+                    frecuenciaPorDefecto = habitoActual.frecuencia,
+                    colorHabito = colorHabito,
+                    fechaInicioHabito = habitoActual.fechaInicio,
+                    semanaReferencia = semanaVisible,
+                    onSemanaChange = { nuevaSemana -> semanaVisible = nuevaSemana }
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.height(15.dp))
 
-                Box(
-                    modifier = Modifier
-                        .weight(0.7f)
-                        .height(90.dp)
+                Button(
+                    onClick = { navController.navigate("gestion_habitos_personalizados") },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF478D4F))
                 ) {
-                    SelectorHabitosCentrado(
-                        habitos = habitos,
-                        selectedIndex = selectedIndex,
-                        onSelectedIndexChange = { nuevoIndice ->
-                            val nuevoHabito = habitos[nuevoIndice]
-                            val fechaInicio = nuevoHabito.fechaInicio?.let {
-                                LocalDate.parse(it).with(DayOfWeek.MONDAY)
-                            } ?: LocalDate.now().with(DayOfWeek.MONDAY)
-
-                            semanaVisible = maxOf(fechaInicio, LocalDate.now().with(DayOfWeek.MONDAY))
-                        }
-                    )
+                    Text("Gestionar hábito")
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "$diasRegistrados/$diasPlaneados días",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(Icons.Default.BarChart, contentDescription = "Gráfico")
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Log.d("Graficador", "==== LLAVES DEL MAPA progresoPorDia ====")
-            progresoActual.keys.forEach { fecha ->
-                Log.d("Graficador", "Fecha en progresoPorDia: $fecha")
-            }
-
-            GraficadorProgresoHabitoSwipe(
-                progresoPorDia = progresoActual,
-                frecuenciaPorDefecto = habitoActual.frecuencia,
-                colorHabito = colorHabito,
-                fechaInicioHabito = habitoActual.fechaInicio,
-                semanaReferencia = semanaVisible,
-                onSemanaChange = { nuevaSemana -> semanaVisible = nuevaSemana }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { navController?.navigate("gestion_habitos_personalizados") },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF478D4F))
-            ) {
-                Text("Visualizar hábito")
-            }
-        }
     }
 }
 
@@ -523,7 +532,7 @@ fun GraficadorProgresoHabitoSwipe(
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         Text(
             text = "Desliza o usa las flechas para cambiar de semana",
@@ -544,11 +553,13 @@ fun LocalDate.formatSemana(): String {
 
 @Composable
 fun GraficadorProgreso(
-    valores: List<Pair<Float, Float>>, // Pair<realizados, totalRecordatoriosPorDia>
+    valores: List<Pair<Float, Float>>,
     etiquetas: List<String>,
     colorHabito: Color,
-    meta: Int
-) {
+    meta: Int,
+    labelEjeY: String = "Objetivo (veces por día)",
+    labelEjeX: String = "Días activos del hábito"
+){
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
@@ -567,6 +578,25 @@ fun GraficadorProgreso(
             textSize = 24f
             color = android.graphics.Color.GRAY
             isAntiAlias = true
+        }
+
+        // Título del eje Y (rotado verticalmente)
+        drawContext.canvas.nativeCanvas.apply {
+            save()
+            rotate(-90f, 0f, size.height / 2)
+            drawText(
+                labelEjeY,
+                -size.height / 12,
+                60f,
+                android.graphics.Paint().apply {
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    textSize = 32f
+                    color = android.graphics.Color.DKGRAY
+                    isAntiAlias = true
+                    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                }
+            )
+            restore()
         }
 
         // Dibujar líneas y etiquetas en eje Y
@@ -617,6 +647,19 @@ fun GraficadorProgreso(
             val x = (index * barWidth) + barWidth / 2
             drawContext.canvas.nativeCanvas.drawText(label, x, size.height + 50f, paintX)
         }
+        // Título del eje X
+        drawContext.canvas.nativeCanvas.drawText(
+            labelEjeX,
+            size.width / 2,
+            size.height + 120f,
+            android.graphics.Paint().apply {
+                textAlign = android.graphics.Paint.Align.CENTER
+                textSize = 32f
+                color = android.graphics.Color.DKGRAY
+                isAntiAlias = true
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+        )
     }
 }
 
@@ -624,7 +667,7 @@ fun GraficadorProgreso(
 fun SelectorHabitosCentrado(
     habitos: List<HabitoPersonalizado>,
     selectedIndex: MutableState<Int>,
-    onSelectedIndexChange: (Int) -> Unit  // nuevo callback
+    onSelectedIndexChange: (Int) -> Unit
 ) {
     if (habitos.isEmpty()) return
 
@@ -632,10 +675,13 @@ fun SelectorHabitosCentrado(
     val visibleItems = 3
     val listState = rememberLazyListState()
 
+    val density = LocalDensity.current
+    val centerOffsetPx = with(density) { (itemHeight * visibleItems / 2).toPx() }
+
     val centeredIndex by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
-            val center = layoutInfo.viewportEndOffset / 2
+            val center = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
             val closest = layoutInfo.visibleItemsInfo.minByOrNull { item ->
                 kotlin.math.abs((item.offset + item.size / 2) - center)
             }
@@ -643,69 +689,97 @@ fun SelectorHabitosCentrado(
         }
     }
 
-    // Actualizar selectedIndex al centrar y notificar cambio
+    // Actualiza cuando el ítem centrado cambia
     LaunchedEffect(centeredIndex) {
         if (selectedIndex.value != centeredIndex) {
             selectedIndex.value = centeredIndex
-            onSelectedIndexChange(centeredIndex) // Notifica el cambio al padre
+            onSelectedIndexChange(centeredIndex)
         }
     }
 
-    // Animar scroll al cambiar índice desde fuera
+    // Anima scroll cuando el valor externo cambia
     LaunchedEffect(selectedIndex.value) {
         listState.animateScrollToItem(selectedIndex.value)
     }
 
-    Box(
-        modifier = Modifier
-            .height(itemHeight * visibleItems)
-            .fillMaxWidth()
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = itemHeight)
-        ) {
-            items(habitos.size) { i ->
-                val habito = habitos[i]
-                val isSelected = i == selectedIndex.value
+        Text(
+            text = "Selecciona un hábito",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.DarkGray,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-                val fontSize = if (isSelected) 18.sp else 14.sp
-                val alpha = if (isSelected) 1f else 0.4f
-                val height = if (isSelected) 40.dp else 30.dp
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(height),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = habito.nombre,
-                        fontSize = fontSize,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = Color.Black.copy(alpha = alpha)
-                    )
-                }
-            }
-        }
-
-        // Sombra superior e inferior para efecto visual
         Box(
             modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White,
-                            Color.Transparent,
-                            Color.Transparent,
-                            Color.White
+                .height(itemHeight * visibleItems)
+                .fillMaxWidth()
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(vertical = itemHeight)
+            ) {
+                itemsIndexed(habitos) { index, habito ->
+                    val layoutInfo = listState.layoutInfo
+                    val itemInfo = layoutInfo.visibleItemsInfo.find { it.index == index }
+                    val center = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
+
+                    val itemCenter = itemInfo?.let { it.offset + it.size / 2 } ?: 0
+                    val distanceFromCenter = kotlin.math.abs(itemCenter - center).toFloat()
+
+                    // Controla escala y transparencia
+                    val maxDistance = centerOffsetPx
+                    val scaleFactor = 1f - (distanceFromCenter / maxDistance).coerceIn(0f, 0.5f)
+                    val alpha = 1f - (distanceFromCenter / maxDistance).coerceIn(0f, 0.6f)
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(itemHeight)
+                            .graphicsLayer {
+                                scaleX = scaleFactor
+                                scaleY = scaleFactor
+                                this.alpha = alpha
+                            }
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (index == selectedIndex.value)
+                                    Color(0xFF81C784).copy(alpha = 0.3f)
+                                else Color.Transparent
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = habito.nombre,
+                            fontSize = 16.sp,
+                            fontWeight = if (index == selectedIndex.value) FontWeight.SemiBold else FontWeight.Normal,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+
+            // Gradiente arriba y abajo para profundidad
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.White,
+                            0.15f to Color.Transparent,
+                            0.85f to Color.Transparent,
+                            1f to Color.White
                         )
                     )
-                )
-        )
+
+            )
+        }
     }
 }
 
