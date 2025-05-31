@@ -74,22 +74,6 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
-    //DataStorage
-    implementation(platform("com.google.firebase:firebase-bom:32.1.1"))
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
-    implementation("io.coil-kt:coil-compose:2.4.0")
-
-
-
-
-
-
-
-    // — Keyboard options
-    implementation(platform("androidx.compose:compose-bom:2024.03.00"))
-    implementation("androidx.compose.ui:ui-text")
 
 
     // — Google Sign‑In
@@ -122,6 +106,7 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.runtime)
     implementation(libs.firebase.dataconnect)
+    implementation(libs.firebase.storage.ktx)
 
     // — Testing
     testImplementation(libs.junit)

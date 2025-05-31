@@ -72,7 +72,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
 import com.lottiefiles.dotlottie.core.util.DotLottieSource
 import com.dotlottie.dlplayer.Mode
-import com.example.koalm.ui.screens.auth.FalloDialogoGuardadoAnimado
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
 import java.time.Instant
 import java.time.ZoneId
 
@@ -1249,60 +1250,6 @@ suspend fun cargarProgresoHabitoPorNombre(nombreHabito: String): ProgresoDiario?
     } catch (e: Exception) {
         Log.e("Firestore", "Error cargando progreso del hábito: ${e.message}")
         null
-    }
-}
-
-
-@Composable
-fun ExitoDialogoGuardadoAnimado(
-    mensaje: String,
-    onDismiss: () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
-    ){
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp,
-            modifier = Modifier
-                .padding(16.dp)
-                .wrapContentSize()
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // DotLottieAnimation
-                DotLottieAnimation(
-                    source = DotLottieSource.Url("https://lottie.host/d4eb5337-6ae9-4e63-a6c2-62d4b0ccdb42/WXTotsqYYQ.lottie"),
-                    autoplay = true,
-                    loop = false,
-                    speed = 1.5f,
-                    useFrameInterpolation = true,
-                    playMode = Mode.FORWARD,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = mensaje,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(onClick = onDismiss) {
-                    Text("¡Genial!")
-                }
-            }
-        }
     }
 }
 

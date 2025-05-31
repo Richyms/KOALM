@@ -44,13 +44,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import java.util.TimeZone
 import androidx.compose.foundation.background
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.dotlottie.dlplayer.Mode
-import com.example.koalm.ui.screens.habitos.personalizados.ExitoDialogoGuardadoAnimado
-import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
-import com.lottiefiles.dotlottie.core.util.DotLottieSource
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -665,55 +660,4 @@ fun BotonGuardarPerfil(onClick: () -> Unit) {
     }
 }
 
-@Composable
-fun FalloDialogoGuardadoAnimado(
-    mensaje: String,
-    onDismiss: () -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
-    ){
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp,
-            modifier = Modifier
-                .padding(16.dp)
-                .wrapContentSize()
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // DotLottieAnimation
-                DotLottieAnimation(
-                    source = DotLottieSource.Url("https://lottie.host/294b7a8b-750d-469f-9bbe-b34e1fc458f8/Ge24RqRaKI.lottie"),
-                    autoplay = true,
-                    loop = true,
-                    speed = 1.5f,
-                    useFrameInterpolation = false,
-                    playMode = Mode.FORWARD,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
-                )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = mensaje,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(onClick = onDismiss) {
-                    Text("¡Intenta nuevamente!")
-                }
-            }
-        }
-    }
-}

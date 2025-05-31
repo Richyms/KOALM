@@ -50,13 +50,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
 import androidx.compose.animation.core.*
 import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NavHostController
+import com.example.koalm.ui.components.BarraNavegacionInferior
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaEstadisticasHabitoPersonalizado(
-    navController: NavController? = null
+    navController: NavHostController
 ) {
     val habitos = remember { mutableStateListOf<HabitoPersonalizado>() }
     val progresoPorHabito = remember { mutableStateMapOf<String, Map<LocalDate, ProgresoDiario>>() }
@@ -142,6 +144,9 @@ fun PantallaEstadisticasHabitoPersonalizado(
                     }
                 }
             )
+        },
+        bottomBar = {
+            BarraNavegacionInferior(navController, "inicio")
         }
     ) { padding ->
         var semanaVisible by remember { mutableStateOf(LocalDate.now().with(DayOfWeek.MONDAY)) }
@@ -307,11 +312,6 @@ fun IndicadorCircular(titulo: String, valor: Int, maximo: Int) {
     }
 }
 
-@Preview(showSystemUi = true)
-@Composable
-fun VistaPreviaPantallaEstadisticas() {
-    PantallaEstadisticasHabitoPersonalizado()
-}
 
 fun prepararDatosParaGrafica(
     progresoPorDia: Map<LocalDate, ProgresoDiario>,
