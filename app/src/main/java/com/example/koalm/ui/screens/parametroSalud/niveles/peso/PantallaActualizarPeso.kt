@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
@@ -34,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.viewmodels.PesoViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
@@ -59,6 +61,16 @@ fun PantallaActualizarPeso(
     var showPhotoCheck by remember { mutableStateOf(false) }
     var pesoText by remember { mutableStateOf(TextFieldValue(if (peso == 0f) "" else peso.toString())) }
 
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Subido correctamente!",
+            onDismiss = {
+                mostrarDialogoExito = false
+            }
+        )
+    }
+
     val imagePicker = rememberLauncherForActivityResult(GetContent()) { uri: Uri? ->
         uri?.let {
             coroutineScope.launch {
@@ -71,7 +83,7 @@ fun PantallaActualizarPeso(
                         .document(correo!!)
                         .update("photoUrl", url)
                         .await()
-                    showPhotoCheck = true
+                    mostrarDialogoExito = true
                 } catch(e: Exception) {
                     Log.e("DEBUG_PESO","Error subiendo foto",e)
                 }
@@ -173,24 +185,10 @@ fun PantallaActualizarPeso(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Subir foto", color = green, fontSize = 16.sp)
-                    Icon(Icons.Default.ArrowForward, contentDescription = "Seleccionar imagen", tint = green)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Seleccionar imagen", tint = green)
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
-
-            // Animación palomita y mensaje
-            AnimatedVisibility(
-                visible = showPhotoCheck,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Check, contentDescription = "Listo", tint = green, modifier = Modifier.size(64.dp))
-                    Spacer(Modifier.height(8.dp))
-                    Text("Subido correctamente", color = green, fontSize = 16.sp)
-                }
-            }
         }
     }
 }
