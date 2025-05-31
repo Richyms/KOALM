@@ -265,7 +265,7 @@ class HabitoRepository {
             val nuevoProgreso = progresoActual ?: ProgresoDiario(
                 realizados = 0,
                 completado = false,
-                totalRecordatoriosPorDia = 1
+                totalObjetivoDiario = 1
             )
 
             // No hacer nada si ya estaba completo

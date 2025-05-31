@@ -2,10 +2,12 @@
 package com.example.koalm.ui.screens.habitos.personalizados
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,12 +39,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.koalm.data.HabitosRepository.obtenerHabitosPersonalizados
 import com.example.koalm.ui.components.obtenerIconoPorNombre
+import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
+import com.lottiefiles.dotlottie.core.util.DotLottieSource
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.dotlottie.dlplayer.Mode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,6 +195,17 @@ fun HabitoCardExpandible(
     var expandedMenu by remember { mutableStateOf(false) }
     var mostrarDialogoConfirmacion by remember { mutableStateOf(false) }
 
+    //Mensaje de exito
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Hábito eliminado con éxito!",
+            onDismiss = {
+                mostrarDialogoExito = false
+                onEliminarHabito()
+            }
+        )
+    }
     val diasSemana = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
     val diasActivos = habito.frecuencia
         ?.mapIndexedNotNull { index, activo -> if (activo) diasSemana.getOrNull(index) else null }
@@ -317,6 +335,14 @@ fun HabitoCardExpandible(
             // Parte expandida
             if (expanded) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    if (habito.objetivoDiario == 1) {
+                        Text("Objetivo por día: ${habito.objetivoDiario} vez al día ", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    } else if (habito.objetivoDiario > 1) {
+                        Text("Objetivo por día: ${habito.objetivoDiario} veces al día", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                     if (diasActivos.isNotBlank()) {
                         Text("Frecuencia: $diasActivos", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -341,12 +367,17 @@ fun HabitoCardExpandible(
                             }
                     }
 
-                    if (habito.rachaActual > 0) {
+                    if (habito.rachaActual == 1) {
+                        Text("Racha Actual: ${habito.rachaActual} día", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    } else if(habito.rachaActual > 1) {
                         Text("Racha Actual: ${habito.rachaActual} días", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    if (habito.rachaMaxima > 0) {
+                    if (habito.rachaMaxima == 1) {
+                        Text("Racha Máxima: ${habito.rachaMaxima} dia", style = MaterialTheme.typography.bodyMedium)
+                    } else if (habito.rachaMaxima > 1) {
                         Text("Racha Máxima: ${habito.rachaMaxima} días", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -356,28 +387,104 @@ fun HabitoCardExpandible(
 
     // Diálogo de confirmación
     if (mostrarDialogoConfirmacion) {
-        AlertDialog(
-            onDismissRequest = { mostrarDialogoConfirmacion = false },
-            title = { Text("¿Eliminar hábito?") },
-            text = { Text("¿Estás seguro de que deseas eliminar el hábito\"${habito.nombre}\"? Esta acción no se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    mostrarDialogoConfirmacion = false
-                    eliminarHabitoPersonalizado(
-                        nombreHabito = habito.nombre,
-                        usuarioEmail = FirebaseAuth.getInstance().currentUser?.email,
-                        onSuccess = onEliminarHabito
-                    )
-                }) {
-                    Text("Eliminar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarDialogoConfirmacion = false }) {
-                    Text("Cancelar")
-                }
+        ConfirmacionDialogoEliminarAnimado(
+            habitoNombre = habito.nombre,
+            onCancelar = { mostrarDialogoConfirmacion = false },
+            onConfirmar = {
+                mostrarDialogoConfirmacion = false
+                eliminarHabitoPersonalizado(
+                    nombreHabito = habito.nombre,
+                    usuarioEmail = FirebaseAuth.getInstance().currentUser?.email,
+                    onSuccess = {
+                        mostrarDialogoExito = true
+                    }
+                )
             }
         )
+    }
+}
+
+//Cnfirmacion de eliminacion del habito
+@Composable
+fun ConfirmacionDialogoEliminarAnimado(
+    habitoNombre: String,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { /* Evitar cierre automático */ },
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Lottie de advertencia
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/039fc5d3-fdaa-4025-9051-c2843ff5eab4/1RvypHYH4i.lottie"),
+                    autoplay = true,
+                    loop = true,
+                    speed = 1f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "¿Eliminar hábito?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "¿Estás seguro de que deseas eliminar el hábito \"$habitoNombre\"? Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onCancelar,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                    ) {
+                        Text(
+                            stringResource(R.string.boton_cancelar_modificaciones),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onConfirmar
+                    ) {
+                        Text("Eliminar")
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -96,6 +96,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation("com.airbnb.android:lottie-compose:6.2.0")
+    implementation("com.github.LottieFiles:dotlottie-android:0.5.0")
 
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.material.icons.extended)

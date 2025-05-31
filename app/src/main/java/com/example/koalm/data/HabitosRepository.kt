@@ -80,13 +80,13 @@ object HabitosRepository {
 
         val snapshot = progresoRef.get().await()
         val progresoActual = snapshot.toObject(ProgresoDiario::class.java)
-        val total = habito.recordatorios?.horas?.size ?: 1
+        val total = habito.objetivoDiario
 
         // Inicializamos si no existía
         val nuevoProgreso = progresoActual ?: ProgresoDiario(
             realizados = 0,
             completado = false,
-            totalRecordatoriosPorDia = total,
+            totalObjetivoDiario = total,
             fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
             frecuencia = habito.frecuencia
         )

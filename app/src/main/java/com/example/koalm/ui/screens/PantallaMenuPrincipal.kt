@@ -500,12 +500,8 @@ fun HabitoCardPersonalizado(
     val completado = progreso?.completado ?: false
 
     // Progreso del hábito visualmente
-    val progresoPorcentaje = if (habito.unaVezPorHabito == 1) {
-        if (completado) 1f else 0f
-    } else {
-        val total = (habito.recordatorios?.horas?.size ?: 1).coerceAtLeast(1)
-        (realizados.toFloat() / total).coerceIn(0f, 1f)
-    }
+    val total = habito.objetivoDiario
+    val progresoPorcentaje = (realizados.toFloat() / total).coerceIn(0f, 1f)
 
     var progresoAnimado by remember { mutableFloatStateOf(0f) }
 
@@ -525,16 +521,12 @@ fun HabitoCardPersonalizado(
     val colorIcono = parseColorFromFirebase(habito.colorEtiqueta, darken = true)
 
     // Visualizar recordatorios
-    val total = habito.recordatorios?.horas?.size ?: 0
-    val progresoText = if (habito.unaVezPorHabito == 1) {
-        if (completado) "Completado: 1/1" else "Realizado: 0/1"
-    } else {
-        if (realizados >= total && total > 0) {
+    val progresoText = if (realizados >= total && total > 0) {
             "Completado: $realizados/$total"
         } else {
-            "Realizado: $realizados/$total"
+            "Objetivo por día: $realizados/$total"
         }
-    }
+
 
     Column(
         modifier = Modifier
@@ -645,7 +637,7 @@ fun HabitoCardPredeterminado(
 
     val realizados = progreso?.realizados ?: 0
     val completado = progreso?.completado ?: false
-    val totalRecordatoriosxDia = progreso?.totalRecordatoriosPorDia ?: 0
+    val totalRecordatoriosxDia = progreso?.totalObjetivoDiario ?: 0
 
     // Progreso del hábito visualmente
     val progresoPorcentaje = if (totalRecordatoriosxDia == 1) {

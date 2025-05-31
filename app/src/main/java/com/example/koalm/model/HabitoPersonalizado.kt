@@ -13,10 +13,10 @@ data class HabitoPersonalizado(
     val fechaInicio: String? = null,
     val fechaFin: String? = null,
     val modoFin: String? = null,                    // "calendario" o "dias"
-    val unaVezPorHabito: Int = 0,                   // cuando solo es una vez la que el usuario hace el hábito por día
     var rachaActual: Int = 0,
     var rachaMaxima: Int = 0,
     var ultimoDiaCompletado: String? = null,
+    val objetivoDiario: Int = 0,
     val clase: ClaseHabito = ClaseHabito.PERSONALIZADO
 ) {
 
@@ -31,10 +31,10 @@ data class HabitoPersonalizado(
         "fechaInicio" to fechaInicio,
         "fechaFin" to fechaFin,
         "modoFin" to modoFin,
-        "unaVezPorHabito" to unaVezPorHabito,
         "rachaActual" to rachaActual,
         "rachaMaxima" to rachaMaxima,
         "ultimoDiaCompletado" to ultimoDiaCompletado,
+        "objetivoDiario" to objetivoDiario,
         "clase" to clase.name
     )
 

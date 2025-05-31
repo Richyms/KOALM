@@ -135,7 +135,9 @@ fun PantallaEstadisticasHabitoPersonalizado(
             TopAppBar(
                 title = { Text("Estadísticas hábitos personalizados") },
                 navigationIcon = {
-                    IconButton(onClick = { navController?.navigateUp() }) {
+                    IconButton(onClick = {
+                        navController?.navigate("menu")
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
                     }
                 }
@@ -344,7 +346,7 @@ fun prepararDatosParaGrafica(
     val valores = fechasActivas.map { fecha ->
         val progreso = progresoPorDia[fecha]
         val realizados = progreso?.realizados?.toFloat() ?: 0f
-        val total = progreso?.totalRecordatoriosPorDia?.toFloat() ?: 1f
+        val total = progreso?.totalObjetivoDiario?.toFloat() ?: 1f
         Pair(realizados, total)
     }
 

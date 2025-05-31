@@ -132,7 +132,7 @@
     <!-- Hábito personalizado -->
     <string name="titulo_config_habito_personalizado">Configurar hábito personalizado</string>
     <string name="label_nombre_habito">Nombre del hábito *</string>
-    <string name="label_frecuencia_P">Frecuencia: </string>
+    <string name="label_frecuencia_P">Frecuencia: * </string>
     <string name="label_hora_recordatorio">Hora del recordatorio: </string>
     <string name="label_finaliza_el">Finaliza el:</string>
     <string name="boton_fecha">Fecha</string>
@@ -143,9 +143,14 @@
     <string name="label_dias">días</string>
     <string name="label_switch_activar_recordatorio">Activar recordatorios:</string>
     <string name="label_tipo_notificacion">  Tipo de notificación:</string>
-    <string name="label_notificacion_personalizada">  Notifiación personalizada:</string>
-    <string name="label_configuracion_adicional">Configuraciones adicionales:</string>
+    <string name="label_notificacion_personalizada">  Notificación personalizada:</string>
+    <string name="label_configuracion_habito">Configuración del hábito</string>
+    <string name="label_configuracion_adicional">Configuraciones adicionales</string>
     <string name="label_vista_previa">Vista previa del hábito</string>
+    <string name="label_objetivo_diarioDef">vez al día</string>
+    <string name="label_dia">dia</string>
+    <string name="label_objetivo_diario">veces al día</string>
+    <string name="label_objetivo_texto">Objetivo por día: * </string>
 
     <string name="boton_Automatico">Automático</string>
     <string name="boton_Personalizado">Personalizado</string>

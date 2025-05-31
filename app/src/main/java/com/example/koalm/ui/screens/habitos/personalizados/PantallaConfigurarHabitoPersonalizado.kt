@@ -3,6 +3,9 @@ package com.example.koalm.ui.screens.habitos.personalizados
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,12 +43,13 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.sp
 import com.example.koalm.ui.theme.VerdePrincipal
 import com.example.koalm.model.HabitoPersonalizado
@@ -53,7 +57,6 @@ import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.Recordatorios
 import com.example.koalm.ui.components.SelectorDeIconoDialog
 import com.example.koalm.ui.components.obtenerIconoPorNombre
-import com.example.koalm.ui.screens.habitos.saludMental.DiaCircle
 import com.example.koalm.ui.screens.habitos.saludMental.HoraField
 import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
 import com.google.firebase.auth.FirebaseAuth
@@ -61,7 +64,17 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.DayOfWeek
 import java.time.temporal.ChronoUnit
-
+import androidx.compose.ui.window.Dialog
+import com.airbnb.lottie.compose.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.window.DialogProperties
+import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
+import com.lottiefiles.dotlottie.core.util.DotLottieSource
+import com.dotlottie.dlplayer.Mode
+import com.example.koalm.ui.screens.auth.FalloDialogoGuardadoAnimado
+import java.time.Instant
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +82,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     val context = LocalContext.current
     val idHabitoOriginal = nombreHabitoEditar?.replace(" ", "_")
     val esEdicion = nombreHabitoEditar != null
-
     var nombreHabito by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var horaRecordatorio by remember { mutableStateOf(LocalTime.of(7, 0)) }
@@ -79,10 +91,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     var fechaSeleccionada by remember { mutableStateOf<LocalDate?>(null) }
     var mostrarDatePicker by remember { mutableStateOf(false) }
     var diasDuracion by remember { mutableStateOf("") }
-    val errorNombre = stringResource(R.string.error_nombre)
-    val errorHora = stringResource(R.string.error_hora)
-    val mensajeExito = stringResource(R.string.mensaje_guardado)
-
     var mostrarSelectorIconos by remember { mutableStateOf(false) }
     var iconoSeleccionado by remember { mutableStateOf("") }
 
@@ -93,12 +101,40 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     var finalizarActivo by remember { mutableStateOf(false) }
     val horarios = remember { mutableStateListOf<LocalTime>()}
     var horaAEditarIndex by remember { mutableStateOf<Int?>(null) }
-    var unaVezPorHabito by remember { mutableStateOf("") }
     val habitoOriginal = remember { mutableStateOf<HabitoPersonalizado?>(null) }
     val progresoHabitoOriginal = remember { mutableStateOf<ProgresoDiario?>(null) }
     val esLunes = LocalDate.now().dayOfWeek == DayOfWeek.MONDAY
-    val recordatoriosHabilitados = !esEdicion || esLunes
-
+    val objetivoHabilitado = !esEdicion || esLunes
+    var objetivoDiarioTexto by remember { mutableStateOf("1") }
+    var objetivoDiario by remember { mutableStateOf(1) }
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Hábito guardado con éxito!",
+            onDismiss = {
+                mostrarDialogoExito = false
+                navController.navigateUp()
+            }
+        )
+    }
+    var mostrarDialogoFalloFecha by remember{ mutableStateOf(false) }
+    if (mostrarDialogoFalloFecha) {
+        FalloDialogoGuardadoAnimado(
+            mensaje = "Selecciona una fecha válida.",
+            onDismiss = {
+                mostrarDialogoFalloFecha = false
+            }
+        )
+    }
+    var mostrarDialogoFalloHora by remember{ mutableStateOf(false) }
+    if (mostrarDialogoFalloHora) {
+        FalloDialogoGuardadoAnimado(
+            mensaje = "Ya agregaste esta hora.",
+            onDismiss = {
+                mostrarDialogoFalloHora = false
+            }
+        )
+    }
 
     var modoAutomatico by remember { mutableStateOf(true) }
     var modoPersonalizado by remember { mutableStateOf(true) }
@@ -180,8 +216,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
         finalizarActivo = habitoExistente.fechaFin != null && habitoExistente.fechaFin.lowercase()!="null"
 
-        // Repeticiones por día
-        unaVezPorHabito = habitoExistente.unaVezPorHabito.toString()
     }
 
     Scaffold(
@@ -224,19 +258,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                         onValueChange = { nuevoValor ->
                             val regex = Regex("^[a-zA-Z0-9][a-zA-Z0-9 ]*\$")
 
-                            // Detectamos si intentó poner más de 20 caracteres
-                            val sobrepasaLongitud = nuevoValor.length > 20
-
-                            // Cortamos el texto a máximo 20 caracteres
-                            val valorFiltrado = if (sobrepasaLongitud) nuevoValor.take(20) else nuevoValor
-
-                            nombreHabito = valorFiltrado
+                            // Cortamos el texto a máximo 20 caracteres primero
+                            val valorFiltrado = if (nuevoValor.length > 20) nuevoValor.take(20) else nuevoValor
 
                             // Validamos si está vacío o cumple regex
                             val esValidoRegex = valorFiltrado.isEmpty() || regex.matches(valorFiltrado)
 
-                            // Mostramos error si sobrepasa longitud o regex inválido
-                            nombreError = sobrepasaLongitud || !esValidoRegex
+                            // Actualizamos el estado con valor filtrado
+                            nombreHabito = valorFiltrado
                         },
 
                         label = { Text(stringResource(R.string.label_nombre_habito)) },
@@ -244,12 +273,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !esEdicion,
                         supportingText = {
-                            if (nombreError) {
-                                Text(
-                                    text = "Máximo 20 caracteres.",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
+                                Text("${nombreHabito.length}/20 caracteres")
                         }
                     )
 
@@ -316,14 +340,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                     )
 
                     Text(
-                        text = stringResource(R.string.label_configuracion_adicional),
+                        text = stringResource(R.string.label_configuracion_habito),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
                     if (esEdicion && !esLunes) {
                         Text(
-                            text = "La frecuencia y los recordatorios solo se pueden modificar cada lunes para comenzar la semana con nuevos objetivos.",
+                            text = "La configuración del hábito solo se pueden modificar cada lunes para comenzar la semana con nuevos objetivos.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                             modifier = Modifier
@@ -334,48 +358,101 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                     }
 
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
+                    ){
+                        Text(
+                            text = stringResource(R.string.label_objetivo_texto),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        TooltipDialogAyuda(
+                            titulo = "Objetivo Diario",
+                            mensaje = "Establece la cantidad de veces que quieres realizar este hábito cada día para ayudarte a mantener un seguimiento efectivo."
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
+
+                        // TextField con filtro: no permite ingresar "0" como único valor
+                        OutlinedTextField(
+                            value = objetivoDiarioTexto,
+                            onValueChange = { nuevoTexto ->
+                                if (nuevoTexto.isEmpty() || nuevoTexto.toIntOrNull()?.let { it > 0 } == true) {
+                                    objetivoDiarioTexto = nuevoTexto
+                                    nuevoTexto.toIntOrNull()?.let {
+                                        objetivoDiario = it
+                                    }
+                                }
+                            },
+                            enabled = objetivoHabilitado,
+                            modifier = Modifier.width(90.dp),
+                            singleLine = true,
+                            label = { Text("Num.") },
+                            shape = RoundedCornerShape(8.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+
+                        AnimatedContent(targetState = objetivoDiario, label = "CambioTexto") { valor ->
+                            Text(
+                                text = if (valor == 1)
+                                    stringResource(R.string.label_objetivo_diarioDef) // vez al día
+                                else
+                                    stringResource(R.string.label_objetivo_diario)    // veces al día
+                            )
+                        }
+
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ){
                         Text(
                             text = stringResource(R.string.label_frecuencia_P),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
-                        Spacer(modifier = Modifier.weight(1f))
 
-                        Switch(
-                            checked = frecuenciaActivo,
-                            onCheckedChange = {
-                                frecuenciaActivo = it
-                                if (!it) {
-                                    diasSeleccionados = List(7) { false } // Reinicia los días a no seleccionados
-                                    }
-                            },
-                            enabled = !esEdicion || esLunes,
-                            modifier = Modifier.padding(start = 10.dp),
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = VerdePrincipal,
-                                uncheckedThumbColor = Color.LightGray,
-                                uncheckedTrackColor = Color.Gray
-                            )
+                        TooltipDialogAyuda(
+                            titulo = "Frecuencia",
+                            mensaje = "Selecciona los días de la semana en los que deseas mantener activo tu hábito."
                         )
                     }
 
-                    if (frecuenciaActivo) {
+                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             listOf("L", "M", "M", "J", "V", "S", "D").forEachIndexed { index, dia ->
-                                DiaCircle(label = dia, selected = diasSeleccionados[index], enabled = !esEdicion || esLunes) {
-                                    diasSeleccionados = diasSeleccionados.toMutableList()
-                                        .also { it[index] = !it[index] }
+                                DiaCircle(
+                                    label = dia,
+                                    selected = diasSeleccionados[index],
+                                    enabled = !esEdicion || esLunes
+                                ) {
+                                    diasSeleccionados = diasSeleccionados.toMutableList().also { it[index] = !it[index] }
                                 }
                             }
                         }
+                        DiasSeleccionadosResumen(diasSeleccionados)
                     }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        thickness = 1.dp,
+                        color = Color.Gray
+                    )
+
+                    Text(
+                        text = stringResource(R.string.label_configuracion_adicional),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
@@ -385,6 +462,10 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             text = stringResource(R.string.label_switch_activar_recordatorio),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
+                        )
+                        TooltipDialogAyuda(
+                            titulo = "Recordatorios",
+                            mensaje = "Al activar esta opción, puedes establecer notificaciones personalizadas o automáticas para ayudarte a cumplir tu hábito."
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
@@ -396,7 +477,6 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                     modoPersonalizado = true
                                     }
                             },
-                            enabled = !esEdicion || esLunes,
                             modifier = Modifier.padding(start = 10.dp),
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -419,39 +499,71 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { if (recordatoriosHabilitados) modoPersonalizado = true },
-                                border = BorderStroke(1.dp, if (recordatoriosHabilitados) VerdeBorde else Color.LightGray),
+                                onClick = { modoPersonalizado = true },
+                                border = BorderStroke(1.dp, VerdeBorde ),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     containerColor = if (modoPersonalizado) {
-                                        if (recordatoriosHabilitados) MaterialTheme.colorScheme.primary else Color.Gray
+                                       MaterialTheme.colorScheme.primary
                                     } else Color.Transparent,
                                     contentColor = if (modoPersonalizado) {
-                                        if (recordatoriosHabilitados) Color.White else Color.DarkGray
+                                        Color.White
                                     } else Color.Black
                                 ),
                                 shape = RoundedCornerShape(50),
                                 modifier = Modifier.weight(1f),
-                                enabled = recordatoriosHabilitados
                             ) {
                                 Text(text = stringResource(R.string.boton_Personalizado))
                             }
 
                             OutlinedButton(
-                                onClick = { if (recordatoriosHabilitados) modoPersonalizado = false },
-                                border = BorderStroke(1.dp, if (recordatoriosHabilitados) VerdeBorde else Color.LightGray),
+                                onClick = { modoPersonalizado = false },
+                                border = BorderStroke(1.dp, VerdeBorde),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     containerColor = if (!modoPersonalizado) {
-                                        if (recordatoriosHabilitados) MaterialTheme.colorScheme.primary else Color.Gray
+                                        MaterialTheme.colorScheme.primary
                                     } else Color.Transparent,
                                     contentColor = if (!modoPersonalizado) {
-                                        if (recordatoriosHabilitados) Color.White else Color.DarkGray
+                                        Color.White
                                     } else Color.Black
                                 ),
                                 shape = RoundedCornerShape(50),
                                 modifier = Modifier.weight(1f),
-                                enabled = recordatoriosHabilitados
                             ) {
                                 Text(text = stringResource(R.string.boton_Automatico))
+                            }
+                        }
+
+                        AnimatedVisibility(visible = modoPersonalizado) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Configura tus recordatorios a la hora que prefieras.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.widthIn(max = 300.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = !modoPersonalizado) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "La aplicación te enviará recordatorios automáticamente.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.widthIn(max = 300.dp),
+                                    textAlign = TextAlign.Center
+                                )
                             }
                         }
 
@@ -471,25 +583,22 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Box(modifier = Modifier.width(200.dp)) {
-                                            HoraField(hora = hora, enabled = recordatoriosHabilitados) {
-                                                if (recordatoriosHabilitados) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            HoraField(hora = hora) {
                                                     mostrarTimePicker = true
                                                     horaAEditarIndex = index
-                                                }
                                             }
                                         }
 
                                         IconButton(
                                             onClick = {
-                                                if (recordatoriosHabilitados) horarios.removeAt(index)
+                                                horarios.removeAt(index)
                                             },
-                                            enabled = recordatoriosHabilitados
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Delete,
                                                 contentDescription = "Eliminar horario",
-                                                tint = if (recordatoriosHabilitados) Color.Red else Color.LightGray
+                                                tint = Color.Red
                                             )
                                         }
                                     }
@@ -499,35 +608,26 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clickable(enabled = recordatoriosHabilitados) {
-                                        if (recordatoriosHabilitados) {
-                                            horarios.add(LocalTime.now())
-                                        } else {
-                                            Toast.makeText(context, "Los recordatorios solo se pueden modificar cada lunes para comenzar la semana con nuevos objetivos.", Toast.LENGTH_SHORT).show()
-                                        }
+                                    .clickable {
+                                        horaAEditarIndex = null // <- Indica que es una nueva hora
+                                        mostrarTimePicker = true
                                     }
                                     .padding(top = 8.dp)
                             ) {
                                 Icon(
                                     Icons.Default.AddCircle,
                                     contentDescription = "Agregar",
-                                    tint = if (recordatoriosHabilitados) MaterialTheme.colorScheme.primary else Color.LightGray
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "Agregar hora.",
                                     fontSize = 14.sp,
-                                    color = if (recordatoriosHabilitados) Color.Black else Color.Gray
+                                    color = Color.Black
                                 )
                             }
                         }
                     }
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        thickness = 1.dp,
-                        color = Color.Gray
-                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
@@ -537,6 +637,10 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             text = stringResource(R.string.label_finaliza_el),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
+                        )
+                        TooltipDialogAyuda(
+                            titulo = "Finalizar hábito",
+                            mensaje = "Al activar esta opción, puedes establecer cuándo deseas finalizar este hábito."
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Switch(
@@ -591,6 +695,40 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             }
                         }
 
+                        AnimatedVisibility(visible = modoFecha) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Selecciona una fecha específica para finalizar el hábito.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.widthIn(max = 300.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = !modoFecha) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Indica cuántos días deseas mantener este hábito a partir de hoy.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.widthIn(max = 300.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(8.dp))
 
                         if (modoFecha) {
@@ -604,6 +742,8 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Medium
                                 )
+
+                                Spacer(modifier = Modifier.width(8.dp))
 
                                 OutlinedButton(
                                     onClick = { mostrarDatePicker = true },
@@ -639,23 +779,41 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                                 OutlinedTextField(
                                     value = diasDuracion,
-                                    onValueChange = { diasDuracion = it },
+                                    onValueChange = { input ->
+                                        val number = input.toIntOrNull()
+                                        if (number != null && number >= 1) {
+                                            diasDuracion = input
+                                        } else if (input.isEmpty()) {
+                                            diasDuracion = ""
+                                        }
+                                    },
                                     modifier = Modifier
-                                        .width(70.dp)
-                                        .height(48.dp),
+                                        .width(90.dp)
+                                        .height(60.dp),
                                     singleLine = true,
+                                    label = { Text("Num.") },
                                     shape = RoundedCornerShape(50),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
                                 )
 
+
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                Text(
-                                    text = stringResource(R.string.label_dias),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                AnimatedContent(
+                                    targetState = diasDuracion.toIntOrNull() ?: 0,
+                                    label = "CambioTexto"
+                                ) { valor ->
+                                    Text(
+                                        text = if (valor == 1)
+                                            stringResource(R.string.label_dia)  // día
+                                        else
+                                            stringResource(R.string.label_dias) // días
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+
+
                             }
                         }
                     }
@@ -678,20 +836,31 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                     Button(
                         onClick = {
-                            // Validación del campo de nombre
+                            // Validaciones de campos obligatorios
+                            val frecuenciaDias = diasSeleccionados.count { it }
+
                             if (nombreHabito.isBlank()) {
                                 Toast.makeText(
                                     context,
                                     "El nombre del hábito es obligatorio",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                            } else if (nombreHabito.length >= 20) {
+                            }
+                            if (objetivoDiarioTexto.isBlank()) {
                                 Toast.makeText(
                                     context,
-                                    "El nombre del hábito no debe tener más de 20 caracteres.",
+                                    "El objetivo diario es obligatorio",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                            } else {
+                            }
+                            if (frecuenciaDias <= 0) {
+                                Toast.makeText(
+                                    context,
+                                    "Selecciona al menos un día activo del hábito",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            else {
                                 // Obtener la referencia al usuario actual en Firebase Authentication
                                 val userEmail = FirebaseAuth.getInstance().currentUser?.email
                                 val db = FirebaseFirestore.getInstance()
@@ -708,10 +877,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                         colorEtiqueta = colorSeleccionado.toString(),
                                         iconoEtiqueta = iconoSeleccionado.toString(),
                                         descripcion = descripcion,
-                                        frecuencia = if (frecuenciaActivo) { diasSeleccionados
-                                        } else {
-                                            List(7) { true } // Todos los días activos
-                                        },
+                                        frecuencia = diasSeleccionados,
                                         recordatorios = Recordatorios(
                                             tipo = if (modoPersonalizado) "personalizado" else "automatico",
                                             horas = if (modoPersonalizado)
@@ -731,12 +897,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                             fechaSeleccionada.toString(), diasDuracion
                                         ),
                                         modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
-                                        unaVezPorHabito = if (!recordatorioActivo) 1 else 0,
                                         rachaActual = if (esEdicion) habitoOriginal.value?.rachaActual
                                             ?: 0 else 0,
                                         rachaMaxima = if (esEdicion) habitoOriginal.value?.rachaMaxima
                                             ?: 0 else 0,
-                                        ultimoDiaCompletado = if (esEdicion) habitoOriginal.value?.ultimoDiaCompletado else null
+                                        ultimoDiaCompletado = if (esEdicion) habitoOriginal.value?.ultimoDiaCompletado else null,
+                                        objetivoDiario = objetivoDiario
 
                                     )
 
@@ -752,16 +918,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                         nombreHabito.replace(" ", "_")
                                     }
 
+
                                     // Guardar el hábito en Firestore bajo la subcolección "personalizados" del usuario
                                     userHabitsRef.document(habitoId)  // Usando el nombre del hábito como ID
                                         .set(habitoMap)
                                         .addOnSuccessListener {
-                                            Toast.makeText(
-                                                context,
-                                                "Hábito guardado con éxito",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            navController.navigateUp()
+                                            mostrarDialogoExito = true
                                         }
                                         .addOnFailureListener { e ->
                                             Toast.makeText(
@@ -774,17 +936,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                                         // Crear el objeto de progreso
                                         val progreso = ProgresoDiario(
-                                            //realizados = if (esEdicion) progresoHabitoOriginal.value?.realizados ?: 0 else 0,
-                                            //completado = if (esEdicion) progresoHabitoOriginal.value?.completado ?: false else false,
-                                            realizados = 0,
-                                            completado =  false,
-                                            totalRecordatoriosPorDia = if (modoPersonalizado) horarios.size else 3,
+                                            realizados = if (esEdicion) progresoHabitoOriginal.value?.realizados ?: 0 else 0,
+                                            completado = if (esEdicion) progresoHabitoOriginal.value?.completado ?: false else false,
+                                            //realizados = 0,
+                                            //completado =  false,
+                                            totalObjetivoDiario = objetivoDiario,
                                             fecha = if (esEdicion) progresoHabitoOriginal.value?.fecha ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                                             else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
-                                            frecuencia = if (frecuenciaActivo) { diasSeleccionados
-                                            } else {
-                                                List(7) { true } // Todos los días activos
-                                            }
+                                            frecuencia = diasSeleccionados
                                         )
 
                                         // Referenciar al documento de progreso usando la fecha actual como ID
@@ -798,19 +957,23 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                         // Guardar en Firestore usando el .toMap()
                                         progresoRef.set(progreso.toMap())
                                             .addOnSuccessListener {
+                                                /*
                                                 Toast.makeText(
                                                     context,
                                                     "Progreso diario guardado",
                                                     Toast.LENGTH_LONG
                                                 ).show()
-                                                navController.navigateUp()
+                                                  */
+                                                //navController.navigateUp()
                                             }
                                             .addOnFailureListener { e ->
+                                                /*
                                                 Toast.makeText(
                                                     context,
                                                     "Error al guardar el progreso: ${e.message}",
                                                     Toast.LENGTH_LONG
                                                 ).show()
+                                                 */
                                                 navController.navigateUp()
                                             }
                                 } else {
@@ -868,11 +1031,22 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
     if (mostrarTimePicker) {
         TimePickerDialog(
-            initialTime = horaAEditarIndex?.let { horarios[it] } ?: LocalTime.now(),
+            initialTime = LocalTime.now(),
             onTimePicked = { nuevaHora ->
-                horaAEditarIndex?.let { index ->
-                    horarios[index] = nuevaHora
+                val horaSinSegundos = nuevaHora.withSecond(0).withNano(0)
+
+                if (horaAEditarIndex != null) {
+                    // Editando
+                    horarios[horaAEditarIndex!!] = horaSinSegundos
+                } else {
+                    // Agregando
+                    if (!horarios.contains(horaSinSegundos)) {
+                        horarios.add(horaSinSegundos)
+                    } else {
+                        mostrarDialogoFalloHora = true
+                    }
                 }
+
                 mostrarTimePicker = false
             },
             onDismiss = { mostrarTimePicker = false }
@@ -883,8 +1057,14 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     if (mostrarDatePicker) {
         val localeContext = remember { context.withLocale(Locale("es", "MX")) }
 
-        val today = Calendar.getInstance()
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
         val millisHoy = today.timeInMillis
+
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = millisHoy
         )
@@ -894,16 +1074,20 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        if (millis >= millisHoy) {
-                            val cal = Calendar.getInstance().apply { timeInMillis = millis }
-                            fechaSeleccionada = LocalDate.of(
-                                cal.get(Calendar.YEAR),
-                                cal.get(Calendar.MONTH) + 1,
-                                cal.get(Calendar.DAY_OF_MONTH) + 1
-                            )
+                        val selected = Calendar.getInstance().apply {
+                            timeInMillis = millis
+                            set(Calendar.HOUR_OF_DAY, 0)
+                            set(Calendar.MINUTE, 0)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
+
+                        if (selected.timeInMillis >= millisHoy) {
+                            val localDate = LocalDate.ofEpochDay(millis / 86_400_000)
+                            fechaSeleccionada = localDate
                             mostrarDatePicker = false
                         } else {
-                            Toast.makeText(context, "Selecciona una fecha válida", Toast.LENGTH_SHORT).show()
+                            mostrarDialogoFalloFecha = true
                         }
                     }
                 }) {
@@ -1068,16 +1252,143 @@ suspend fun cargarProgresoHabitoPorNombre(nombreHabito: String): ProgresoDiario?
     }
 }
 
+
+@Composable
+fun ExitoDialogoGuardadoAnimado(
+    mensaje: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ){
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // DotLottieAnimation
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/d4eb5337-6ae9-4e63-a6c2-62d4b0ccdb42/WXTotsqYYQ.lottie"),
+                    autoplay = true,
+                    loop = false,
+                    speed = 1.5f,
+                    useFrameInterpolation = true,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = mensaje,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("¡Genial!")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TooltipDialogAyuda(
+    titulo: String,
+    mensaje: String,
+    icon: ImageVector = Icons.Default.Info
+) {
+    var mostrarDialogo by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { mostrarDialogo = true }) {
+        Icon(
+            imageVector = icon,
+            contentDescription = "Ayuda",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+
+    if (mostrarDialogo) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogo = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = titulo,
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            },
+            text = {
+                Column {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = mensaje,
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { mostrarDialogo = false },
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text("Entendido")
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp
+        )
+    }
+}
+
+@Composable
+fun DiasSeleccionadosResumen(diasSeleccionados: List<Boolean>) {
+    val seleccionadosCount = diasSeleccionados.count { it }
+    val totalDias = diasSeleccionados.size
+    Text(
+        text = "$seleccionadosCount/$totalDias días activos",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp),
+        textAlign = TextAlign.Center
+    )
+}
+
 @Composable
 fun DiaCircle(label: String, selected: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
-
-    val bg = when {
+    val targetBgColor = when {
         !enabled -> Color(0xFFE0E0E0)
         selected -> MaterialTheme.colorScheme.primary
         else -> Color.Transparent
     }
 
-    val borderColor = when {
+    val targetBorderColor = when {
         !enabled -> Color(0xFFE0E0E0)
         selected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outline
@@ -1089,13 +1400,16 @@ fun DiaCircle(label: String, selected: Boolean, enabled: Boolean = true, onClick
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
+    val animatedBgColor by animateColorAsState(targetValue = targetBgColor, label = "backgroundColorAnimation")
+    val animatedBorderColor by animateColorAsState(targetValue = targetBorderColor, label = "borderColorAnimation")
+
     Box(
         Modifier
             .size(40.dp)
             .clip(CircleShape)
-            .border(1.dp, borderColor, CircleShape)
-            .background(bg)
-            .clickable(enabled = enabled) {onClick()},
+            .border(1.dp, animatedBorderColor, CircleShape)
+            .background(animatedBgColor)
+            .clickable(enabled = enabled) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Text(label, color = textColor, style = MaterialTheme.typography.labelLarge)

@@ -405,7 +405,7 @@ fun PantallaConfiguracionHabitoEscritura(navController: NavHostController) {
                                     val progreso = ProgresoDiario(
                                         realizados = 0,
                                         completado = false,
-                                        totalRecordatoriosPorDia = 1
+                                        totalObjetivoDiario = 1
                                     )
 
                                     // Referenciar al documento de progreso usando la fecha actual como ID
