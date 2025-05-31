@@ -13,6 +13,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue                // <-- para “by remember { … }”
+import androidx.compose.runtime.setValue                // <-- para “var x by remember { … }”
+import androidx.compose.runtime.collectAsState          // <-- para “collectAsState(…)”
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,8 +37,9 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 // ---------------------------------------------------------------------
-// Data class ActividadDiaria (si la tienes en otro archivo,
-// quita esta definición y usa el import adecuado)
+// Data class ActividadDiaria. Si ya la tienes en otro archivo,
+// coméntala aquí y haz import de donde esté definida.
+// ---------------------------------------------------------------------
 data class ActividadDiaria(
     val tipo: String,
     val meta: Float,
@@ -49,7 +53,7 @@ fun PantallaActividadDiaria(
     navController: NavHostController,
     viewModel: ActividadDiariaViewModel = viewModel()
 ) {
-    // 1) Recolectamos los datos del ViewModel
+    // 1) Recolectamos los datos del ViewModel (StateFlow) y los convertimos a State<…>
     val actividadesState by viewModel.actividades.collectAsState(initial = emptyList())
 
     // 2) Si aún no hay datos, mostramos un indicador de carga
@@ -66,16 +70,15 @@ fun PantallaActividadDiaria(
     // 3) Extraemos los tres tipos (Pasos, Calorías quemadas, Tiempo activo)
     val tipos = actividadesState.map { it.tipo }
 
-    // 4) Configuramos el LazyColumn "infinito" para seleccionar tipo
+    // 4) Configuramos el LazyColumn “infinito” para seleccionar tipo
     val listState = rememberLazyListState()
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
+    //  -- derivedStateOf devuelve un State<Int>, así que “by” necesita getValue
     val selectedIndex by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
-            // Centro del viewport
             val center = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
-            // Buscamos el ítem más cercano al centro
             layoutInfo.visibleItemsInfo.minByOrNull {
                 kotlin.math.abs((it.offset + it.size / 2) - center)
             }?.index?.rem(tipos.size) ?: 0
@@ -137,9 +140,9 @@ fun PantallaActividadDiaria(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .clickable { diaSeleccionado = index }  // Al hacer clic, actualizamos el día seleccionado
+                            .clickable { diaSeleccionado = index }
                     ) {
-                        // 1) Letra del día (verde + negritas si está seleccionado; gris en caso contrario)
+                        // 1) Letra del día (verde + negrita si está seleccionado; gris si no)
                         Text(
                             text = letra,
                             fontWeight = if (esSeleccionado) FontWeight.Bold else FontWeight.Normal,
@@ -160,7 +163,7 @@ fun PantallaActividadDiaria(
 
                         Spacer(modifier = Modifier.height(6.dp))
 
-                        // 3) Número del día para los que no están seleccionados
+                        // 3) Mostrar número del día para los que NO están seleccionados
                         if (!esSeleccionado) {
                             Text(
                                 text = numerosDias[index],
@@ -201,7 +204,9 @@ fun PantallaActividadDiaria(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(100_000) { index ->
+                        // EN LUGAR DE “items(100_000) { … }” (que daba ambigüedad),
+                        // usamos “items(count = 100_000) { … }” para forzar el overload correcto:
+                        items(count = 100_000) { index ->
                             val actualIndex = index % tipos.size
                             val isSelected = actualIndex == selectedIndex
 
@@ -274,35 +279,36 @@ fun PantallaActividadDiaria(
 
 
 /**
- * Ahora esta función grafica el valor del día que se seleccione:
- *   - Obtiene el Float en  `actividad.datos[indiceSeleccionado]`
- *   - Normaliza contra su meta
- *   - Dibuja UNA sola "barra" (o punto) centrada
- *   - Debajo muestra la letra del día correspondiente a índiceSeleccionado
+ *  Esta función dibuja una sola barra en vertical, correspondiente
+ *  a “actividad.datos[indiceSeleccionado]”.  Dado que el ViewModel ya
+ *  alineó cada posición 0..6 con lunes..domingo, aquí solo hacemos:
+ *    - Valor crudo arriba de la barra.
+ *    - Barra (Box) con altura proporcional.
+ *    - Debajo, la letra del día que se corresponda.
  */
 @Composable
 fun GraficadorActividadDia(
     actividad: ActividadDiaria,
     indiceSeleccionado: Int
 ) {
-    // 1) Extraemos únicamente el dato del día seleccionado
+    // 1) Leemos el dato exacto para ese día (Monday=0, Tuesday=1, … Sunday=6)
     val valorDia = actividad.datos.getOrNull(indiceSeleccionado) ?: 0f
     val meta = actividad.meta
 
     // 2) Normalizamos en [0f..1f]
     val proporcion = (valorDia / meta).coerceIn(0f, 1f)
 
-    // 3) Elegimos color según porcentaje
+    // 3) Elegir color según porcentaje
     val colorBarra = when {
         proporcion > 0.8f -> MarronKoala
         proporcion > 0.5f -> GrisMedio
         else               -> VerdePrincipal
     }
 
-    // 4) Altura total de la "gráfica"
+    // 4) Altura total de la “gráfica”
     val graficoHeight = 160.dp
 
-    // 5) Letra del día con base en índice (L, M, X, J, V, S, D)
+    // 5) Letra de los días (solo para mostrar abajo del gráfico)
     val letrasDias = listOf("L", "M", "X", "J", "V", "S", "D")
     val letraDia = letrasDias.getOrNull(indiceSeleccionado) ?: ""
 
@@ -324,7 +330,7 @@ fun GraficadorActividadDia(
         }
 
         // ┌───────────────────────────────────────────────────────────────────┐
-        // │    Contenedor de la "gráfica" con UNA sola barra                │
+        // │    Contenedor de la “gráfica” con UNA sola barra                │
         // └───────────────────────────────────────────────────────────────────┘
         Box(
             modifier = Modifier
@@ -359,7 +365,7 @@ fun GraficadorActividadDia(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
-                    // 2) "Barra" proporcional
+                    // 2) “Barra” proporcional en altura
                     Box(
                         modifier = Modifier
                             .width(20.dp)
@@ -382,7 +388,7 @@ fun GraficadorActividadDia(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 40.dp),  // Misma compensación que antes
+            .padding(start = 40.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
