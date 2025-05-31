@@ -122,7 +122,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Configuración */ }) {
+                        IconButton(onClick = { navController.navigate("nosotros") }) {
                             Icon(Icons.Default.Settings, contentDescription = "Configuración")
                         }
                     },
