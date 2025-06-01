@@ -8,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -16,14 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
+import java.util.Locale
+import com.example.koalm.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,18 +34,35 @@ fun PantallaControlPeso(
     var pesoObjetivo by remember { mutableStateOf(0f) }
 
     LaunchedEffect(correo) {
-        if (correo != null) {
-            val snapshot = Firebase.firestore.collection("usuarios")
+        if (correo == null) return@LaunchedEffect
+        val firestore = Firebase.firestore
+
+        // 1) Leer primero el peso registrado en /usuarios/{correo} → campo "peso"
+        val pesoUsuario: Float = try {
+            val userDoc = firestore
+                .collection("usuarios")
+                .document(correo)
+                .get()
+                .await()
+            userDoc.getDouble("peso")?.toFloat() ?: 0f
+        } catch (e: Exception) {
+            0f
+        }
+
+        // 2) Intentar leer de /usuarios/{correo}/metasSalud/valores → campo "pesoActual" y "pesoObjetivo"
+        val metasDoc = try {
+            firestore
+                .collection("usuarios")
                 .document(correo)
                 .collection("metasSalud")
                 .document("valores")
                 .get()
                 .await()
-
-            pesoActual = snapshot.getDouble("pesoActual")?.toFloat() ?: 0f
-            pesoObjetivo = snapshot.getDouble("pesoObjetivo")?.toFloat() ?: 0f
+        } catch (e: Exception) {
+            null
         }
     }
+
 
     Scaffold(
         topBar = {
@@ -88,7 +104,6 @@ fun PantallaControlPeso(
                         .clickable { navController.navigate("progreso-peso") }
                 )
 
-                // Indicador sutil
                 Text(
                     text = "Toca al koala para ver tu progreso",
                     fontSize = 13.sp,
@@ -106,21 +121,26 @@ fun PantallaControlPeso(
                 ) {
                     Text(
                         text = when {
-                            pesoObjetivo > pesoActual -> String.format(
-                                Locale.getDefault(),
-                                "Debes ganar %.1f kg",
-                                kotlin.math.abs(pesoObjetivo - pesoActual)
-                            )
-                            pesoObjetivo < pesoActual -> String.format(
-                                Locale.getDefault(),
-                                "Debes perder %.1f kg",
-                                kotlin.math.abs(pesoObjetivo - pesoActual)
-                            )
+                            pesoObjetivo > pesoActual -> {
+                                String.format(
+                                    Locale.getDefault(),
+                                    "Debes ganar %.1f kg",
+                                    kotlin.math.abs(pesoObjetivo - pesoActual)
+                                )
+                            }
+                            pesoObjetivo < pesoActual -> {
+                                String.format(
+                                    Locale.getDefault(),
+                                    "Debes perder %.1f kg",
+                                    kotlin.math.abs(pesoObjetivo - pesoActual)
+                                )
+                            }
                             else -> "No hay cambio de peso"
                         },
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
+
                 }
             }
 
@@ -130,19 +150,36 @@ fun PantallaControlPeso(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    ComponenteObjetivos("Peso actual", "Actualizar peso", pesoActual, navController, "actualizar-peso")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ComponenteObjetivos(
+                        titulo = "Peso actual",
+                        textoBoton = "Actualizar peso",
+                        valor = pesoActual,
+                        navController = navController,
+                        ruta = "actualizar-peso"
+                    )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    ComponenteObjetivos("Objetivo", "Editar objetivo", pesoObjetivo, navController, "objetivos-peso")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ComponenteObjetivos(
+                        titulo = "Objetivo",
+                        textoBoton = "Editar objetivo",
+                        valor = pesoObjetivo,
+                        navController = navController,
+                        ruta = "objetivos-peso"
+                    )
                 }
             }
+
         }
     }
 }
 
 @Composable
-fun ComponenteObjetivos(
+private fun ComponenteObjetivos(
     titulo: String,
     textoBoton: String,
     valor: Float,

@@ -91,7 +91,7 @@ fun PantallaObjetivosPeso(
             // 3) Peso objetivo (editable, actualiza ViewModel)
             FieldRow(
                 label = "Peso objetivo",
-                value = pesoObj.toString(),
+                value = if (pesoObj == 0f) "" else pesoObj.toString(),
                 fecha = null,
                 editable = true,
                 onValueChange = { nuevoTexto ->
