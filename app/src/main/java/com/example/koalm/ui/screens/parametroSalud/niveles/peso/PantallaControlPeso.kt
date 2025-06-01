@@ -1,12 +1,14 @@
 package com.example.koalm.ui.screens.parametroSalud.niveles.peso
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -14,23 +16,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
-import java.util.Locale
-import com.example.koalm.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlPeso(
     navController: NavHostController
-) { val correo = FirebaseAuth.getInstance().currentUser?.email
+) {
+    val correo = FirebaseAuth.getInstance().currentUser?.email
     var pesoActual by remember { mutableStateOf(0f) }
     var pesoObjetivo by remember { mutableStateOf(0f) }
 
@@ -47,7 +47,6 @@ fun PantallaControlPeso(
             pesoObjetivo = snapshot.getDouble("pesoObjetivo")?.toFloat() ?: 0f
         }
     }
-
 
     Scaffold(
         topBar = {
@@ -86,6 +85,17 @@ fun PantallaControlPeso(
                     modifier = Modifier
                         .size(200.dp)
                         .align(Alignment.TopCenter)
+                        .clickable { navController.navigate("progreso-peso") }
+                )
+
+                // Indicador sutil
+                Text(
+                    text = "Toca al koala para ver tu progreso",
+                    fontSize = 13.sp,
+                    color = GrisMedio,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(top = 180.dp)
                 )
 
                 Column(
@@ -95,17 +105,22 @@ fun PantallaControlPeso(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (pesoObjetivo > pesoActual) {
-                            String.format(Locale.getDefault(), "Debes ganar %.1f kg", kotlin.math.abs(pesoObjetivo - pesoActual))
-                        } else if (pesoObjetivo < pesoActual) {
-                            String.format(Locale.getDefault(), "Debes perder %.1f kg", kotlin.math.abs(pesoObjetivo - pesoActual))
-                        } else {
-                            "No hay cambio de peso"
+                        text = when {
+                            pesoObjetivo > pesoActual -> String.format(
+                                Locale.getDefault(),
+                                "Debes ganar %.1f kg",
+                                kotlin.math.abs(pesoObjetivo - pesoActual)
+                            )
+                            pesoObjetivo < pesoActual -> String.format(
+                                Locale.getDefault(),
+                                "Debes perder %.1f kg",
+                                kotlin.math.abs(pesoObjetivo - pesoActual)
+                            )
+                            else -> "No hay cambio de peso"
                         },
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-
                 }
             }
 
@@ -115,24 +130,25 @@ fun PantallaControlPeso(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     ComponenteObjetivos("Peso actual", "Actualizar peso", pesoActual, navController, "actualizar-peso")
                 }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     ComponenteObjetivos("Objetivo", "Editar objetivo", pesoObjetivo, navController, "objetivos-peso")
                 }
             }
-
         }
     }
 }
 
 @Composable
-fun ComponenteObjetivos(titulo : String, textoBoton: String, valor: Float, navController: NavHostController, ruta: String) {
+fun ComponenteObjetivos(
+    titulo: String,
+    textoBoton: String,
+    valor: Float,
+    navController: NavHostController,
+    ruta: String
+) {
     Text(titulo, fontSize = 14.sp)
     Spacer(modifier = Modifier.height(6.dp))
     Text("$valor kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)

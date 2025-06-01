@@ -25,10 +25,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.GrisCard
-import com.example.koalm.ui.theme.GrisMedio
-import com.example.koalm.ui.theme.MarronKoala
-import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.ui.theme.*
 import com.example.koalm.viewmodels.ActividadDiariaViewModel
 
 // ---------------------------------------------------------------------

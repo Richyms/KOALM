@@ -53,6 +53,7 @@ import com.example.koalm.ui.screens.parametroSalud.PantallaParametrosSalud
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaControlPeso
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
+import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaProgresoPeso
 import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -96,6 +97,7 @@ fun AppNavigation(
         screenWithSlide("estadisticas") { PantallaParametrosSalud(navController) }
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
+        screenWithSlide("progreso-peso") { PantallaProgresoPeso(navController) }
         composable(
             "configurar_habito_personalizado/{nombreHabitoEditar}",
             arguments = listOf(navArgument("nombreHabitoEditar") {
