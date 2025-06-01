@@ -120,10 +120,3 @@ fun EntradaPesoItem(entrada: PesoEntrada) {
         )
     }
 }
-
-/* ----------  PREVIEW ---------- */
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewPantallaProgreso() {
-    PantallaProgresoPeso(navController = rememberNavController())
-}
