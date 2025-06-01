@@ -21,11 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.data.StepCounterRepository
 import com.example.koalm.ui.components.snapshotsAsState
@@ -98,15 +96,32 @@ fun PantallaParametrosSalud(
         ) {
             Spacer(Modifier.height(5.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.training),
-                contentDescription = "Koala salud",
+            Row(
                 modifier = Modifier
-                    .size(150.dp)
-                    .offset(y = (-10).dp)
-            )
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.training),
+                    contentDescription = "Koala salud",
+                    modifier = Modifier
+                        .size(150.dp)
+                        .offset(y = (-10).dp)
+                )
 
-            /* ---------- Tarjetas mini ---------- */
+                Spacer(Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    TituloYBarra("Pasos", pasos.toFloat() / metaPasos.coerceAtLeast(1))
+                    TituloYBarra("Tiempo Activo", minutos.toFloat() / metaMinutos.coerceAtLeast(1))
+                    TituloYBarra("Calorías", calorias.toFloat() / metaCalorias.coerceAtLeast(1))
+                }
+            }
+
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
@@ -118,7 +133,6 @@ fun PantallaParametrosSalud(
                 InfoMiniCard("Calorías", "$calorias kcal/$metaCalorias kcal", Icons.Default.LocalFireDepartment)
             }
 
-            /* ---------- Tarjetas grandes (mock) ---------- */
             InfoCard("Sueño", "7 h 7 min", Icons.Default.Bedtime, 0.88f) {
                 navController.navigate("sueño-de-anoche")
             }
@@ -137,6 +151,22 @@ fun PantallaParametrosSalud(
 
             Spacer(Modifier.height(70.dp))
         }
+    }
+}
+
+/* ----------  BARRA CON TÍTULO ---------- */
+@Composable
+fun TituloYBarra(titulo: String, progreso: Float) {
+    Column {
+        Text(titulo, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        LinearProgressIndicator(
+            progress = { progreso.coerceIn(0f, 1f) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp),
+            color = if (progreso > 0f) VerdePrincipal else GrisClaro,
+            trackColor = GrisClaro
+        )
     }
 }
 
@@ -203,11 +233,4 @@ fun InfoCard(
             }
         }
     }
-}
-
-/* ----------  PREVIEW  ---------- */
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun VistaPreviaPantallaParametrosSalud() {
-    PantallaParametrosSalud(rememberNavController())
 }
