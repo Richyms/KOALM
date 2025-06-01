@@ -6,7 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -22,32 +22,52 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlPeso(
     navController: NavHostController
-) { val correo = FirebaseAuth.getInstance().currentUser?.email
+) {
+    val correo = FirebaseAuth.getInstance().currentUser?.email
     var pesoActual by remember { mutableStateOf(0f) }
     var pesoObjetivo by remember { mutableStateOf(0f) }
 
     LaunchedEffect(correo) {
-        if (correo != null) {
-            val snapshot = Firebase.firestore.collection("usuarios")
+        if (correo == null) return@LaunchedEffect
+        val firestore = Firebase.firestore
+
+        // 1) Leer primero el peso registrado en /usuarios/{correo} → campo "peso"
+        val pesoUsuario: Float = try {
+            val userDoc = firestore
+                .collection("usuarios")
+                .document(correo)
+                .get()
+                .await()
+            userDoc.getDouble("peso")?.toFloat() ?: 0f
+        } catch (e: Exception) {
+            0f
+        }
+
+        // 2) Intentar leer de /usuarios/{correo}/metasSalud/valores → campo "pesoActual" y "pesoObjetivo"
+        val metasDoc = try {
+            firestore
+                .collection("usuarios")
                 .document(correo)
                 .collection("metasSalud")
                 .document("valores")
                 .get()
                 .await()
-
-            pesoActual = snapshot.getDouble("pesoActual")?.toFloat() ?: 0f
-            pesoObjetivo = snapshot.getDouble("pesoObjetivo")?.toFloat() ?: 0f
+        } catch (e: Exception) {
+            null
         }
-    }
 
+        // 3) Si existe y tiene pesoActual, usarlo; si no, usar pesoUsuario
+        val pesoDesdeMetas: Float? = metasDoc?.getDouble("pesoActual")?.toFloat()
+        pesoActual = pesoDesdeMetas ?: pesoUsuario
+
+        // 4) Para el objetivo, si existe en metasDoc, leer "pesoObjetivo", si no → 0f
+        pesoObjetivo = metasDoc?.getDouble("pesoObjetivo")?.toFloat() ?: 0f
+    }
 
     Scaffold(
         topBar = {
@@ -71,7 +91,6 @@ fun PantallaControlPeso(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Spacer(modifier = Modifier.height(4.dp))
 
             Box(
@@ -95,17 +114,26 @@ fun PantallaControlPeso(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (pesoObjetivo > pesoActual) {
-                            String.format(Locale.getDefault(), "Debes ganar %.1f kg", kotlin.math.abs(pesoObjetivo - pesoActual))
-                        } else if (pesoObjetivo < pesoActual) {
-                            String.format(Locale.getDefault(), "Debes perder %.1f kg", kotlin.math.abs(pesoObjetivo - pesoActual))
-                        } else {
-                            "No hay cambio de peso"
+                        text = when {
+                            pesoObjetivo > pesoActual -> {
+                                String.format(
+                                    Locale.getDefault(),
+                                    "Debes ganar %.1f kg",
+                                    kotlin.math.abs(pesoObjetivo - pesoActual)
+                                )
+                            }
+                            pesoObjetivo < pesoActual -> {
+                                String.format(
+                                    Locale.getDefault(),
+                                    "Debes perder %.1f kg",
+                                    kotlin.math.abs(pesoObjetivo - pesoActual)
+                                )
+                            }
+                            else -> "No hay cambio de peso"
                         },
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     )
-
                 }
             }
 
@@ -118,21 +146,38 @@ fun PantallaControlPeso(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ComponenteObjetivos("Peso actual", "Actualizar peso", pesoActual, navController, "actualizar-peso")
+                    ComponenteObjetivos(
+                        titulo = "Peso actual",
+                        textoBoton = "Actualizar peso",
+                        valor = pesoActual,
+                        navController = navController,
+                        ruta = "actualizar-peso"
+                    )
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ComponenteObjetivos("Objetivo", "Editar objetivo", pesoObjetivo, navController, "objetivos-peso")
+                    ComponenteObjetivos(
+                        titulo = "Objetivo",
+                        textoBoton = "Editar objetivo",
+                        valor = pesoObjetivo,
+                        navController = navController,
+                        ruta = "objetivos-peso"
+                    )
                 }
             }
-
         }
     }
 }
 
 @Composable
-fun ComponenteObjetivos(titulo : String, textoBoton: String, valor: Float, navController: NavHostController, ruta: String) {
+private fun ComponenteObjetivos(
+    titulo: String,
+    textoBoton: String,
+    valor: Float,
+    navController: NavHostController,
+    ruta: String
+) {
     Text(titulo, fontSize = 14.sp)
     Spacer(modifier = Modifier.height(6.dp))
     Text("$valor kg", fontWeight = FontWeight.Bold, fontSize = 16.sp)

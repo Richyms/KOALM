@@ -15,7 +15,7 @@ import java.util.*
 
 class ObjetivosPesoViewModel : ViewModel() {
     private val db = Firebase.firestore
-    private val usuario = FirebaseAuth.getInstance().currentUser?.email
+    private val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
 
     private val _pesoInicial = MutableStateFlow(0f)
     val pesoInicial: StateFlow<Float> = _pesoInicial
@@ -34,50 +34,93 @@ class ObjetivosPesoViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            if (usuario == null) return@launch
-            val ref = db.collection("usuarios")
-                .document(usuario)
-                .collection("metasSalud")
-                .document("valores")
-            val snap = ref.get().await()
+            if (usuarioEmail == null) return@launch
 
-            // Carga peso actual y fecha
-            val actual = snap.getDouble("pesoActual")?.toFloat() ?: 0f
-            _pesoActual.value = actual
-            _fechaActual.value = snap.getString("fechaMedicion") ?: ""
+            // 1) Leer pesoInicial y fechaInicial desde /usuarios/{email}
+            var pesoDesdeUser = 0f
+            var fechaCreacionDesdeUser = ""
+            try {
+                val userDoc = db.collection("usuarios")
+                    .document(usuarioEmail)
+                    .get()
+                    .await()
 
-            // Carga o inicializa peso inicial y fecha
-            val inicial = snap.getDouble("pesoInicial")?.toFloat()
-            val fechaIni = snap.getString("fechaInicial")
-            if (inicial == null || fechaIni == null) {
-                val hoy = LocalDate.now()
-                    .format(DateTimeFormatter.ofPattern("d MMMM, yyyy", Locale("es", "MX")))
-                ref.update(
-                    mapOf(
-                        "pesoInicial" to actual,
-                        "fechaInicial" to hoy
-                    )
-                ).await()
-                _pesoInicial.value = actual
-                _fechaInicial.value = hoy
-            } else {
-                _pesoInicial.value = inicial
-                _fechaInicial.value = fechaIni
+                if (userDoc.exists()) {
+                    pesoDesdeUser = userDoc.getDouble("peso")?.toFloat() ?: 0f
+                    fechaCreacionDesdeUser = userDoc.getString("fechaCreacion") ?: ""
+                }
+            } catch (e: Exception) {
+                // Si hay error, dejamos pesoDesdeUser=0f, fechaCreacionDesdeUser=""
             }
 
-            // Carga peso objetivo
-            _pesoObjetivo.value = snap.getDouble("pesoObjetivo")?.toFloat() ?: 0f
+            // Asignar siempre pesoInicial y fechaInicial desde /usuarios
+            _pesoInicial.value = pesoDesdeUser
+            _fechaInicial.value = fechaCreacionDesdeUser
+
+            // 2) Leer pesoActual, fechaActual y pesoObjetivo desde metasSalud/valores
+            try {
+                val refMetas = db.collection("usuarios")
+                    .document(usuarioEmail)
+                    .collection("metasSalud")
+                    .document("valores")
+
+                val snapMetas = refMetas.get().await()
+                if (snapMetas.exists()) {
+                    // Peso actual y fecha de medición actual
+                    _pesoActual.value = snapMetas.getDouble("pesoActual")?.toFloat() ?: pesoDesdeUser
+                    _fechaActual.value = snapMetas.getString("fechaMedicion") ?: fechaCreacionDesdeUser
+
+                    // Si no hay pesoInicial o fechaInicial en metasSalud, inicializarlos
+                    val inicialDesdeMetas = snapMetas.getDouble("pesoInicial")?.toFloat()
+                    val fechaIniDesdeMetas = snapMetas.getString("fechaInicial")
+                    if (inicialDesdeMetas == null || fechaIniDesdeMetas == null) {
+                        // Formato "d MMMM, yyyy" en español, p. ej. "31 mayo, 2025"
+                        val hoy = LocalDate.now()
+                            .format(DateTimeFormatter.ofPattern("d MMMM, yyyy", Locale("es", "MX")))
+                        refMetas.update(
+                            mapOf(
+                                "pesoInicial" to pesoDesdeUser,
+                                "fechaInicial" to fechaCreacionDesdeUser.ifEmpty { hoy }
+                            )
+                        ).await()
+                        // El _pesoInicial ya se asignó desde /usuarios
+                    }
+
+                    // Carga peso objetivo
+                    _pesoObjetivo.value = snapMetas.getDouble("pesoObjetivo")?.toFloat() ?: 0f
+                } else {
+                    // Si no existe documento en metasSalud, crearlo con pesoInicial/fechaInicial
+                    val hoy = LocalDate.now()
+                        .format(DateTimeFormatter.ofPattern("d MMMM, yyyy", Locale("es", "MX")))
+                    refMetas.set(
+                        mapOf(
+                            "pesoInicial" to pesoDesdeUser,
+                            "fechaInicial" to fechaCreacionDesdeUser.ifEmpty { hoy },
+                            "pesoActual" to pesoDesdeUser,
+                            "fechaMedicion" to fechaCreacionDesdeUser.ifEmpty { hoy },
+                            "pesoObjetivo" to 0f
+                        )
+                    ).await()
+                    _pesoActual.value = pesoDesdeUser
+                    _fechaActual.value = fechaCreacionDesdeUser.ifEmpty { hoy }
+                    _pesoObjetivo.value = 0f
+                }
+            } catch (e: Exception) {
+                // En caso de error, dejamos pesoActual/fechaActual/pesoObjetivo en sus valores actuales
+            }
         }
     }
 
     /** Actualiza en Firestore sólo el campo pesoObjetivo */
     fun guardarObjetivo(onDone: () -> Unit) = viewModelScope.launch {
-        if (usuario == null) return@launch
-        val ref = db.collection("usuarios")
-            .document(usuario)
+        if (usuarioEmail == null) return@launch
+
+        val refMetas = db.collection("usuarios")
+            .document(usuarioEmail)
             .collection("metasSalud")
             .document("valores")
-        ref.update("pesoObjetivo", _pesoObjetivo.value).await()
+
+        refMetas.update("pesoObjetivo", _pesoObjetivo.value).await()
         onDone()
     }
 
