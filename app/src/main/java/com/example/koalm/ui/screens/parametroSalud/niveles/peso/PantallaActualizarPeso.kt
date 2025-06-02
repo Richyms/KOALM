@@ -6,9 +6,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.GetContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -18,7 +15,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
@@ -33,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.viewmodels.PesoViewModel
@@ -106,7 +101,9 @@ fun PantallaActualizarPeso(
                 actions = {
                     IconButton(onClick = {
                         val nuevo = pesoText.text.toFloatOrNull() ?: 0f
-                        viewModel.actualizarPeso(nuevo, fecha) { navController.navigateUp() }
+                        viewModel.actualizarPeso(nuevo) {
+                            navController.navigateUp()
+                        }
                     }) {
                         Icon(Icons.Default.Check, contentDescription = "Guardar")
                     }
