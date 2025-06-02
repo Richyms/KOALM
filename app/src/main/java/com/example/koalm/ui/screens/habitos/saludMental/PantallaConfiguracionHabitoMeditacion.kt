@@ -369,21 +369,30 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
             Spacer(Modifier.weight(1f))
 
             /* ----------------------------  Botón Guardar  --------------------------- */
-            Button(
-                onClick = {
-                    if (diasSeleccionados.any { it }) {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Selecciona al menos un día",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Guardar")
+                Button(
+                    onClick = {
+                        if (diasSeleccionados.any { it }) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Selecciona al menos un día",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+                }
             }
         }
     }

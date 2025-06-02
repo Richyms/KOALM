@@ -3,6 +3,7 @@ package com.example.koalm.ui.screens.parametroSalud.niveles.estres
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.SentimentNeutral
@@ -123,10 +124,10 @@ fun PantallaEstres(
                     }
                 }
             }
-            /*Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Button(
-                onClick = { /* TODO: Agregar acción real */ },
+                onClick = { navController.navigate("test_de_ansiedad") },
                 colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
@@ -135,7 +136,7 @@ fun PantallaEstres(
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text("Realizar test", fontSize = 16.sp)
-            }*/
+            }
         }
     }
 }
