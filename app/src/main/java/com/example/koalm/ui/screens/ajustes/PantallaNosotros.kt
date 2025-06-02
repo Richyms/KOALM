@@ -125,11 +125,18 @@ fun ListaIntegrantes() {
 
         AnimatedVisibility(visible = expanded) {
             Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text("• Rigel Ocaña")
+                Text("• Karime Calero")
+                Text("• Kein Carrillo")
+                Text("• Eduardo Morgado")
+                Text("• Damian Franco")
                 Text("• Miguel Gomez")
+                Text("• Nailea Hernandez")
+                Text("• Maximiliano Leon")
+                Text("• Jesus Melo")
                 Text("• Ricardo Mora")
-                Text("• Vero")
-                //Agregar todos
+                Text("• Rigel Ocaña")
+                Text("• Michel Vazquez")
+                Text("• Veronica Villegas")
             }
         }
     }
