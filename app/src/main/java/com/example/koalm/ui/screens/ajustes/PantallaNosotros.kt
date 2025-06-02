@@ -66,7 +66,7 @@ fun PantallaNosotros(navController: NavHostController){
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
@@ -86,8 +86,6 @@ fun PantallaNosotros(navController: NavHostController){
             Spacer(Modifier.weight(1f))
 
             ListaIntegrantes()
-
-            Spacer(Modifier.weight(1f))
 
             Image(
                 painter = painterResource(id = R.drawable.koala_comiendo),//Remplazar foto por una del logo o equipo
