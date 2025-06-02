@@ -1,5 +1,6 @@
 package com.example.koalm.ui.screens.tests
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,12 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.example.koalm.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaTestAnsiedad(navController: NavController? = null) {
+fun PantallaTestAnsiedad(navController: NavHostController? = null) {
     val preguntas = listOf(
         "Sentirse nervioso/a, intranquilo/a o con los nervios de punta.",
         "No poder dejar de preocuparse o no poder controlar la preocupación.",
@@ -37,26 +40,39 @@ fun PantallaTestAnsiedad(navController: NavController? = null) {
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(navController = navController)
+            navController?.let { BarraNavegacionInferior(it, "estadisticas") }
         },
         topBar = {
             TopAppBar(
                 title = { Text("Test de ansiedad", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
-                    IconButton(onClick = { navController?.popBackStack() }) {
+                    IconButton(onClick = { navController?.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = Color.Black
+                )
             )
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .background(Color.White)
         ) {
+            Text(
+                text = "En las últimas 2 semanas, ¿con qué frecuencia has experimentado alguno de los siguientes problemas?",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(vertical = 24.dp),
+                color = Color.Black
+            )
+
             preguntas.forEachIndexed { index, pregunta ->
                 PreguntaCard(
                     pregunta = pregunta,
@@ -67,21 +83,34 @@ fun PantallaTestAnsiedad(navController: NavController? = null) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = {
-                    val resultado = calcularResultado(respuestas)
-                    navController?.navigate("resultado/$resultado")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5D9B63))
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Resultados", color = Color.White)
+                Button(
+                    onClick = {
+                        val resultado = calcularResultado(respuestas)
+                        navController?.navigate("resultado_ansiedad/$resultado")
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal),
+                    enabled = respuestas.none { it == -1 }
+                ) {
+                    Text(
+                        "Ver resultados",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -93,20 +122,28 @@ fun PreguntaCard(
     seleccionada: Int,
     onSeleccionar: (Int) -> Unit
 ) {
-    Column(
+    OutlinedCard(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(color = Color(0xFFEAF4E6), shape = RoundedCornerShape(8.dp))
-            .padding(12.dp)
+            .fillMaxWidth(),
+        border = BorderStroke(1.dp, VerdeBorde),
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = VerdeContenedor
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Text(text = pregunta, fontSize = 14.sp, color = Color.Black, fontWeight = FontWeight.Medium)
-        Spacer(modifier = Modifier.height(8.dp))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(color = Color.White, shape = RoundedCornerShape(8.dp))
-                .padding(8.dp)
+                .padding(16.dp)
         ) {
+            Text(
+                text = pregunta,
+                fontSize = 15.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            
             opciones.forEachIndexed { index, opcion ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -117,50 +154,32 @@ fun PreguntaCard(
                     RadioButton(
                         selected = seleccionada == index,
                         onClick = { onSeleccionar(index) },
-                        colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF5D9B63))
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = VerdePrincipal,
+                            unselectedColor = VerdePrincipal.copy(alpha = 0.6f)
+                        )
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(opcion)
+                    Text(
+                        text = opcion,
+                        fontSize = 14.sp,
+                        color = Color.Black.copy(alpha = 0.8f),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
                 }
             }
         }
     }
 }
 
-@Composable
-fun BottomNavigationBar(navController: NavController?) {
-    NavigationBar(
-        containerColor = Color.White
-    ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = { navController?.navigate("inicio") },
-            icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-            label = { Text("Inicio") }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController?.navigate("habitos") },
-            icon = { Icon(Icons.Default.FavoriteBorder, contentDescription = "Hábitos") },
-            label = { Text("Hábitos") }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { navController?.navigate("perfil") },
-            icon = { Icon(Icons.Default.Person, contentDescription = "Perfil") },
-            label = { Text("Perfil") }
-        )
-    }
-}
-
 fun calcularResultado(respuestas: List<Int>): Int {
-    return respuestas.count { it != -1 }
+    return respuestas.sumOf { it + 1 }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewPantallaTestAnsiedad() {
     MaterialTheme {
-        PantallaTestAnsiedad(navController = null)
+        PantallaTestAnsiedad()
     }
 }
+

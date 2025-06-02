@@ -54,6 +54,7 @@ import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaControlP
 import com.example.koalm.ui.screens.parametroSalud.niveles.ritmoCardiaco.PantallaRitmoCardiaco
 import com.example.koalm.ui.screens.parametroSalud.niveles.sueno.PantallaSueno
 import com.example.koalm.ui.screens.tests.PantallaTestAnsiedad
+import com.example.koalm.ui.screens.tests.PantallaResultadoAnsiedad
 import com.example.koalm.ui.screens.ajustes.PantallaCambiarContrasena
 import com.example.koalm.ui.screens.ajustes.PantallaTyC
 import com.example.koalm.ui.screens.ajustes.PantallaPrivacidad
@@ -140,6 +141,17 @@ fun AppNavigation(
         screenWithSlide("privacidad") { PantallaPrivacidad(navController)}
         screenWithSlide("nosotros") { PantallaNosotros(navController)}
         screenWithSlide("ajustes") { PantallaAjustes(navController)}
+
+        composable(
+            route = "resultado_ansiedad/{puntaje}",
+            arguments = listOf(navArgument("puntaje") {
+                type = NavType.IntType
+                defaultValue = 0
+            })
+        ) { backStackEntry ->
+            val puntaje = backStackEntry.arguments?.getInt("puntaje") ?: 0
+            PantallaResultadoAnsiedad(navController, puntaje)
+        }
 
         composable(
             route = "temporizador_meditacion/{duracion}",

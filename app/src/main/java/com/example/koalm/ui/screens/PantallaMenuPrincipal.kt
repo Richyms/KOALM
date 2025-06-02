@@ -472,8 +472,6 @@ fun HabitoCardPersonalizado(
     val completado = progreso?.completado ?: false
 
     var mostrarDialogoLogro by remember { mutableStateOf(false) }
-    var mostrarDialogo by remember { mutableStateOf(false) }
-    var valorInput by remember { mutableStateOf("") }
 
     LaunchedEffect(completado) {
         if (completado && !logrosPrefs.fueMostrado(habito.nombre)) {
@@ -486,41 +484,6 @@ fun HabitoCardPersonalizado(
         LogroDialogoAnimado(
             mensaje = "¡Has completado el objetivo diario de tu hábito!",
             onDismiss = { mostrarDialogoLogro = false }
-        )
-    }
-
-    // Diálogo para ingresar el progreso
-    if (mostrarDialogo) {
-        AlertDialog(
-            onDismissRequest = { mostrarDialogo = false },
-            title = { Text("Ingresa el progreso") },
-            text = {
-                OutlinedTextField(
-                    value = valorInput,
-                    onValueChange = { valorInput = it.filter { char -> char.isDigit() } },
-                    label = { Text("Cantidad") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val valor = valorInput.toIntOrNull() ?: 0
-                        if (valor > 0) {
-                            onIncrementar(valor)
-                            mostrarDialogo = false
-                            valorInput = ""
-                        }
-                    }
-                ) {
-                    Text("Confirmar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarDialogo = false }) {
-                    Text("Cancelar")
-                }
-            }
         )
     }
 
@@ -538,7 +501,6 @@ fun HabitoCardPersonalizado(
         targetValue = progresoAnimado,
         animationSpec = tween(durationMillis = 300)
     )
-
 
     // Obtener colores
     val colorFondo = parseColorFromFirebase(habito.colorEtiqueta)
@@ -628,7 +590,7 @@ fun HabitoCardPersonalizado(
                         }
                 )  {
                     IconButton(
-                        onClick = { mostrarDialogo = true },
+                        onClick = { onIncrementar(1) },
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Sumar", tint = Color.Black)
