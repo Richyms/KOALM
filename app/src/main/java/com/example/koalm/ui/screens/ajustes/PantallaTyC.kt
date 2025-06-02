@@ -62,7 +62,29 @@ fun PantallaTyC (navController: NavHostController){
                     Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Text("Insertar texto que contiene TyC")
+                    Text("Al descargar, instalar o utilizar la aplicación KOALM, usted acepta los presentes Términos y Condiciones de uso.\n" +
+                            "Si no está de acuerdo con alguno de ellos, le recomendamos no utilizar la aplicación.\n" + "KOALM es una aplicación móvil que permite al usuario monitorear su actividad física diaria, incluyendo pasos, " +
+                            "calidad y duración del sueño, tiempo de ejercicio y seguimiento de hábitos personales, tanto establecidos como nuevos.\n" +
+                            "El usuario se compromete a utilizar la aplicación únicamente para fines personales y lícitos.\n" +
+                            "Queda prohibido:\n" +
+                            "•\tUsar la app para recopilar datos de otros usuarios sin consentimiento.\n" +
+                            "•\tIntentar vulnerar la seguridad o integridad del sistema.\n" +
+                            "•\tModificar, copiar, distribuir o comercializar el software sin autorización.\n" +
+                            "Todos los derechos de propiedad intelectual sobre el software, diseño, código fuente y contenido visual pertenecen a los desarrolladores del proyecto KOALM.\n" +
+                            "No se otorgan licencias de uso más allá de lo expresamente permitido.\n\n" +
+                            "KOALM es una herramienta de acompañamiento personal. No constituye un servicio médico ni reemplaza el consejo de profesionales de la salud.\n" +
+                            "El equipo desarrollador no se hace responsable por daños derivados del uso incorrecto de la aplicación.\n" +
+                            "KOALM puede recopilar información como:\n" +
+                            "•\tDatos personales (nombre, correo electrónico).\n" +
+                            "•\tDatos de actividad física (pasos, sueño, hábitos).\n" +
+                            "•\tGeolocalización (opcional y solo con consentimiento).\n" +
+                            "Toda la información se maneja conforme a lo establecido en nuestra Política de Privacidad.\n" +
+                            "La aplicación puede integrar servicios externos como Firebase, los cuales cuentan con sus propias políticas de privacidad y tratamiento de datos.\n" +
+                            "Al usar KOALM, usted también acepta los términos de dichos servicios.\n" +
+                            "Nos reservamos el derecho de modificar estos términos en cualquier momento, en caso de cambios sustanciales, se notificará a los usuarios dentro de la app o por correo electrónico.\n" +
+                            "Este documento se rige por las leyes mexicanas, incluyendo la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.\n" +
+                            "Para dudas, aclaraciones o ejercicio de derechos ARCO (Acceso, Rectificación, Cancelación u Oposición), puedes contactarnos al correo:\n" +
+                            "adslatex@gmail.com")
                 }
             }
         }

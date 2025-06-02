@@ -12,12 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -66,7 +62,7 @@ fun PantallaNosotros(navController: NavHostController){
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
@@ -86,8 +82,6 @@ fun PantallaNosotros(navController: NavHostController){
             Spacer(Modifier.weight(1f))
 
             ListaIntegrantes()
-
-            Spacer(Modifier.weight(1f))
 
             Image(
                 painter = painterResource(id = R.drawable.koala_comiendo),//Remplazar foto por una del logo o equipo
@@ -125,11 +119,18 @@ fun ListaIntegrantes() {
 
         AnimatedVisibility(visible = expanded) {
             Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text("• Rigel Ocaña")
+                Text("• Karime Calero")
+                Text("• Kein Carrillo")
+                Text("• Eduardo Morgado")
+                Text("• Damian Franco")
                 Text("• Miguel Gomez")
+                Text("• Nailea Hernandez")
+                Text("• Maximiliano Leon")
+                Text("• Jesus Melo")
                 Text("• Ricardo Mora")
-                Text("• Vero")
-                //Agregar todos
+                Text("• Rigel Ocaña")
+                Text("• Michel Vazquez")
+                Text("• Veronica Villegas")
             }
         }
     }
