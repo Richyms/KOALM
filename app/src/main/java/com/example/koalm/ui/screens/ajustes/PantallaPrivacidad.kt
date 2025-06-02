@@ -53,7 +53,61 @@ fun PantallaPrivacidad (navController: NavHostController){
                     Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Text("Insertar Politicas de Privacidad")
+                    Text("El responsable del tratamiento de tus datos es el equipo de desarrollo de la aplicación KOALM.\n" +
+                            "Puedes contactarnos en:\n" +
+                            "adslatex@gmail.com" +
+                            "Al utilizar KOALM, podríamos recopilar los siguientes tipos de información:\n" +
+                            "\n" +
+                            "Datos personales básicos: nombre, correo electrónico, edad (si es necesario).\n" +
+                            "\n" +
+                            "Datos de salud y actividad: número de pasos, tiempo y calidad de sueño, hábitos registrados, duración de ejercicio.\n" +
+                            "\n" +
+                            "Geolocalización: únicamente si el usuario otorga permiso.\n" +
+                            "\n" +
+                            "Datos técnicos: tipo de dispositivo, sistema operativo, versión de la app, identificadores anónimos, etc.\n" +
+                            "Usamos tus datos para los siguientes fines:\n" +
+                            "\n" +
+                            "Mostrarte estadísticas personalizadas sobre tu actividad física.\n" +
+                            "\n" +
+                            "Dar seguimiento a tus hábitos existentes y sugerirte nuevas rutinas.\n" +
+                            "\n" +
+                            "Mejorar el rendimiento y seguridad de la aplicación.\n" +
+                            "\n" +
+                            "Comunicarnos contigo en caso de soporte técnico o notificaciones relevantes.\n" +
+                            "\n" +
+                            "En ningún caso utilizaremos tus datos con fines publicitarios sin tu consentimiento explícito.\n" +
+                            "Tu uso de la app implica el consentimiento para el tratamiento de tus datos bajo los términos descritos en esta política, en el caso de datos sensibles (como salud o ubicación), siempre solicitaremos tu consentimiento explícito.\n" +
+                            "No compartimos tu información personal con terceros, salvo en los siguientes casos:\n" +
+                            "\n" +
+                            "Proveedores tecnológicos como Firebase o Google Analytics, que nos ayudan a ofrecer el servicio.\n" +
+                            "\n" +
+                            "Obligaciones legales o requerimientos de autoridad competente.\n" +
+                            "\n" +
+                            "En todos los casos, nos aseguramos de que estos terceros cumplan con estándares adecuados de privacidad.\n" +
+                            "Como titular de tus datos, tienes derecho a:\n" +
+                            "\n" +
+                            "Acceder a tus datos personales.\n" +
+                            "\n" +
+                            "Rectificar cualquier dato incorrecto o desactualizado.\n" +
+                            "\n" +
+                            "Cancelar tu información si ya no deseas que sea tratada.\n" +
+                            "\n" +
+                            "Oponerte al tratamiento de tus datos para ciertos fines.\n" +
+                            "\n" +
+                            "Para ejercer estos derechos, envía una solicitud al correo: adslatex@gmail.com\n" +
+                            "Adoptamos medidas técnicas, administrativas y físicas para proteger tu información, incluyendo:\n" +
+                            "\n" +
+                            "Cifrado de datos sensibles.\n" +
+                            "\n" +
+                            "Autenticación segura.\n" +
+                            "\n" +
+                            "Copias de seguridad regulares.\n" +
+                            "\n" +
+                            "Restricción de acceso a datos.\n" +
+                            "Conservamos tu información únicamente el tiempo necesario para cumplir con las finalidades señaladas." +
+                            "\nPuedes solicitar la eliminación de tus datos en cualquier momento.\n" +
+                            "Nos reservamos el derecho de modificar esta Política en cualquier momento. En caso de cambios sustanciales, notificaremos a través de la app o por correo electrónico.\n" +
+                            "Al usar KOALM, aceptas esta Política de Privacidad. Si no estás de acuerdo, por favor no utilices la aplicación.")
                 }
             }
         }
