@@ -21,20 +21,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.koalm.R
 import com.example.koalm.ui.components.BarraNavegacionInferior
-import com.example.koalm.ui.theme.GrisMedio
-import com.example.koalm.ui.theme.MarronKoala
-import com.example.koalm.ui.theme.VerdePrincipal
+import com.example.koalm.ui.theme.*
 import com.example.koalm.viewmodels.ActividadDiariaViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
+
+// Partes para las graficas
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.draw.clip
+
 
 // ---------------------------------------------------------------------
 // Data class ActividadDiaria. Si ya la tienes en otro archivo,
@@ -291,65 +294,69 @@ fun GraficadorActividadDia(
     actividad: ActividadDiaria,
     indiceSeleccionado: Int
 ) {
-    // 1) Leemos el dato exacto para ese día (Monday=0, Tuesday=1, … Sunday=6)
     val valorDia = actividad.datos.getOrNull(indiceSeleccionado) ?: 0f
     val meta = actividad.meta
-
-    // 2) Normalizamos en [0f..1f]
     val proporcion = (valorDia / meta).coerceIn(0f, 1f)
 
-    // 3) Elegir color según porcentaje
     val colorBarra = when {
         proporcion > 0.8f -> MarronKoala
         proporcion > 0.5f -> GrisMedio
-        else               -> VerdePrincipal
+        else              -> VerdePrincipal
     }
 
-    // 4) Altura total de la “gráfica”
-    val graficoHeight = 160.dp
-
-    // 5) Letra de los días (solo para mostrar abajo del gráfico)
+    val graficoHeight = 180.dp
+    val ejeYWidth = 40.dp
     val letrasDias = listOf("L", "M", "X", "J", "V", "S", "D")
     val letraDia = letrasDias.getOrNull(indiceSeleccionado) ?: ""
 
-    Row(modifier = Modifier.fillMaxWidth()) {
-        // ┌───────────────────────────────────────────────────────────────────┐
-        // │    Eje Y: mostramos 5 etiquetas (“100%”, “75%”, etc.)           │
-        // └───────────────────────────────────────────────────────────────────┘
-        Column(
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(graficoHeight)
+    ) {
+        Box(
             modifier = Modifier
-                .width(40.dp)
-                .height(graficoHeight),
-            verticalArrangement = Arrangement.SpaceBetween
+                .width(ejeYWidth)
+                .fillMaxHeight()
+                .padding(end = 8.dp)
         ) {
-            Text(text = "100%", fontSize = 10.sp, color = Color.Gray)
-            Text(text = "75%",  fontSize = 10.sp, color = Color.Gray)
-            Text(text = "50%",  fontSize = 10.sp, color = Color.Gray)
-            Text(text = "25%",  fontSize = 10.sp, color = Color.Gray)
-            Text(text = "0%",   fontSize = 10.sp, color = Color.Gray)
+            val niveles = listOf("100%",  "75%", "50%", "25%", "0%")
+            val posiciones = listOf(1f, 0.75f, 0.5f, 0.25f, 0f)
+            niveles.forEachIndexed { i, texto ->
+                Text(
+                    text = texto,
+                    fontSize = 10.sp,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .offset(y = -(posiciones[i] * (graficoHeight.value - 10)).dp)
+                )
+            }
         }
 
-        // ┌───────────────────────────────────────────────────────────────────┐
-        // │    Contenedor de la “gráfica” con UNA sola barra                │
-        // └───────────────────────────────────────────────────────────────────┘
         Box(
             modifier = Modifier
                 .weight(1f)
-                .height(graficoHeight)
+                .fillMaxHeight()
         ) {
-            // a) Líneas de grilla (4 divisores)
-            Column(modifier = Modifier.fillMaxSize()) {
-                repeat(4) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    Divider(color = Color.LightGray, thickness = 1.dp)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val heightPx = size.height
+                val widthPx = size.width
+                val lineY = listOf(0f, 0.25f, 0.5f, 0.75f, 1f)
+                lineY.forEach { y ->
+                    val yPos = heightPx * (1 - y)
+                    drawLine(
+                        color = Color.LightGray.copy(alpha = 0.3f),
+                        start = Offset(0f, yPos),
+                        end = Offset(widthPx, yPos),
+                        strokeWidth = 1.5f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                    )
                 }
-                Spacer(modifier = Modifier.weight(1f))
             }
 
-            // b) Dibujamos UNA sola barra, centrada
             Row(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.Bottom
             ) {
@@ -357,23 +364,12 @@ fun GraficadorActividadDia(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Bottom
                 ) {
-                    // 1) Valor crudo encima
-                    Text(
-                        text = valorDia.toInt().toString(),
-                        fontSize = 10.sp,
-                        color = Color.DarkGray,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-
-                    // 2) “Barra” proporcional en altura
                     Box(
                         modifier = Modifier
-                            .width(20.dp)
-                            .fillMaxHeight(proporcion)
-                            .background(
-                                color = colorBarra,
-                                shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
-                            )
+                            .width(6.dp)
+                            .height((proporcion * (graficoHeight.value - 40)).dp)
+                            .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
+                            .background(colorBarra)
                     )
                 }
             }
@@ -382,26 +378,19 @@ fun GraficadorActividadDia(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    // ┌───────────────────────────────────────────────────────────────────┐
-    // │  Etiqueta DEBAJO de la barra: solo la letra del día seleccionado│
-    // └───────────────────────────────────────────────────────────────────┘
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 40.dp),
+            .padding(start = ejeYWidth),
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
             text = letraDia,
             fontSize = 10.sp,
             color = Color.DarkGray,
-            modifier = Modifier.width(20.dp)
+            modifier = Modifier.width(6.dp)
         )
     }
 }
 
-@Preview(showSystemUi = true)
-@Composable
-fun VistaPreviaPantallaActividad() {
-    PantallaActividadDiaria(navController = rememberNavController())
-}
+
