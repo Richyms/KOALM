@@ -134,7 +134,7 @@ private fun BotonesAjustes(navController: NavHostController) {
 
     Button(
         onClick = { cerrarSesion(context, navController) },
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B)),
         modifier = botonModifier
     ) {
         Text("Cerrar sesión", color = Blanco)
@@ -142,7 +142,7 @@ private fun BotonesAjustes(navController: NavHostController) {
 
     Button(
         onClick = { /*Agregar Logica*/ },
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B)),
         modifier = botonModifier
     ) {
         Text("Borrar Cuenta", color = Blanco)

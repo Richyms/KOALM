@@ -64,18 +64,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.DayOfWeek
 import java.time.temporal.ChronoUnit
-import androidx.compose.ui.window.Dialog
-import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.window.DialogProperties
-import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
-import com.lottiefiles.dotlottie.core.util.DotLottieSource
-import com.dotlottie.dlplayer.Mode
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
-import java.time.Instant
-import java.time.ZoneId
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,8 +98,11 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
     val progresoHabitoOriginal = remember { mutableStateOf<ProgresoDiario?>(null) }
     val esLunes = LocalDate.now().dayOfWeek == DayOfWeek.MONDAY
     val objetivoHabilitado = !esEdicion || esLunes
-    var objetivoDiarioTexto by remember { mutableStateOf("1") }
     var objetivoDiario by remember { mutableStateOf(1) }
+    val objetivoDiarioOriginal = progresoHabitoOriginal.value?.totalObjetivoDiario ?: 1
+    val diasOriginales = progresoHabitoOriginal.value?.frecuencia ?: List(7) { false }
+    val modificoObjetivo = objetivoDiario != objetivoDiarioOriginal
+    val modificoFrecuencia = diasSeleccionados != diasOriginales
     var mostrarDialogoExito by remember{ mutableStateOf(false) }
     if (mostrarDialogoExito) {
         ExitoDialogoGuardadoAnimado(
@@ -164,6 +159,9 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
         descripcion = habitoExistente.descripcion
         iconoSeleccionado = habitoExistente.iconoEtiqueta
         colorSeleccionado = parseColorFromFirebase(habitoExistente.colorEtiqueta)
+
+        // Objetivo
+        objetivoDiario = habitoExistente.objetivoDiario
 
         // Frecuencia (días seleccionados)
         diasSeleccionados = habitoExistente.frecuencia ?: List(7) { false }
@@ -331,6 +329,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                         value = descripcion,
                         onValueChange = { descripcion = it },
                         label = { Text(stringResource(R.string.label_descripcion)) },
+                        placeholder = {Text("Ejemplo: Quiero ir al gimnasio para sentirme con más energía, mejorar mi salud y aumentar mi autoestima." )},
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -382,14 +381,12 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                         // TextField con filtro: no permite ingresar "0" como único valor
                         OutlinedTextField(
-                            value = objetivoDiarioTexto,
+                            value = if (objetivoDiario == 0) "" else objetivoDiario.toString(),
                             onValueChange = { nuevoTexto ->
-                                if (nuevoTexto.isEmpty() || nuevoTexto.toIntOrNull()?.let { it > 0 } == true) {
-                                    objetivoDiarioTexto = nuevoTexto
-                                    nuevoTexto.toIntOrNull()?.let {
-                                        objetivoDiario = it
-                                    }
+                                nuevoTexto.toIntOrNull()?.let {
+                                    if (it > 0) objetivoDiario = it
                                 }
+                                if (nuevoTexto.isEmpty()) objetivoDiario = 0
                             },
                             enabled = objetivoHabilitado,
                             modifier = Modifier.width(90.dp),
@@ -847,7 +844,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                            if (objetivoDiarioTexto.isBlank()) {
+                            if (objetivoDiario <= 0) {
                                 Toast.makeText(
                                     context,
                                     "El objetivo diario es obligatorio",
@@ -872,12 +869,26 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                     val userHabitsRef = db.collection("habitos").document(userEmail)
                                         .collection("personalizados")
 
+                                    //Control de racha
+                                    if (esEdicion && modificoObjetivo && progresoHabitoOriginal.value?.completado != false) {
+                                        habitoOriginal.value = habitoOriginal.value?.copy(
+                                            rachaActual = maxOf(0, (habitoOriginal.value?.rachaActual ?: 1) - 1)
+                                        )
+                                    }
+
+                                    if (esEdicion && modificoObjetivo && progresoHabitoOriginal.value?.completado != false) {
+                                        habitoOriginal.value = habitoOriginal.value?.copy(
+                                            rachaMaxima = maxOf(0, (habitoOriginal.value?.rachaMaxima ?: 1) - 1)
+                                        )
+                                    }
+
                                     // Crear el objeto HabitoPersonalizado
                                     val habitoPersonalizado = HabitoPersonalizado(
                                         nombre = nombreHabito,
                                         colorEtiqueta = colorSeleccionado.toString(),
                                         iconoEtiqueta = iconoSeleccionado.toString(),
                                         descripcion = descripcion,
+                                        objetivoDiario = objetivoDiario,
                                         frecuencia = diasSeleccionados,
                                         recordatorios = Recordatorios(
                                             tipo = if (modoPersonalizado) "personalizado" else "automatico",
@@ -898,13 +909,18 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                             fechaSeleccionada.toString(), diasDuracion
                                         ),
                                         modoFin = if (modoFecha) "calendario" else "dias",  // Definimos el modo de fin
-                                        rachaActual = if (esEdicion) habitoOriginal.value?.rachaActual
-                                            ?: 0 else 0,
-                                        rachaMaxima = if (esEdicion) habitoOriginal.value?.rachaMaxima
-                                            ?: 0 else 0,
+                                        rachaActual = if (!esEdicion) {
+                                            0
+                                        } else {
+                                            habitoOriginal.value?.rachaActual ?: 0
+                                        },
+                                        rachaMaxima = if (!esEdicion) {
+                                            0
+                                        } else {
+                                            habitoOriginal.value?.rachaMaxima ?: 0
+                                        },
                                         ultimoDiaCompletado = if (esEdicion) habitoOriginal.value?.ultimoDiaCompletado else null,
-                                        objetivoDiario = objetivoDiario
-
+                                        estaActivo = true
                                     )
 
                                     // Convertir el objeto a un mapa
@@ -937,10 +953,20 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
                                         // Crear el objeto de progreso
                                         val progreso = ProgresoDiario(
-                                            realizados = if (esEdicion) progresoHabitoOriginal.value?.realizados ?: 0 else 0,
-                                            completado = if (esEdicion) progresoHabitoOriginal.value?.completado ?: false else false,
-                                            //realizados = 0,
-                                            //completado =  false,
+                                            realizados = if (!esEdicion) {
+                                                    0
+                                                } else if (modificoObjetivo || modificoFrecuencia) {
+                                                    0
+                                                } else {
+                                                    progresoHabitoOriginal.value?.realizados ?: 0
+                                                },
+                                            completado = if (!esEdicion) {
+                                                    false
+                                                } else if (modificoObjetivo || modificoFrecuencia) {
+                                                    false
+                                                } else {
+                                                    progresoHabitoOriginal.value?.completado ?: false
+                                                },
                                             totalObjetivoDiario = objetivoDiario,
                                             fecha = if (esEdicion) progresoHabitoOriginal.value?.fecha ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                                             else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),

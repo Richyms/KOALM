@@ -8,7 +8,7 @@
     <!-- Escritura -->
 
     <string name="titulo_config_escritura">Configurar hábito de escritura</string>
-    <string name="label_descripcion">Añadir descripción</string>
+    <string name="label_descripcion">Escribe tu motivación</string>
     <string name="placeholder_descripcion">No sabes lo que piensas hasta que lo escribes.</string>
     
     <string name="label_frecuencia">Frecuencia: *</string>

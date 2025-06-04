@@ -70,14 +70,27 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
 
     // Llamar a la función para obtener los hábitos
     LaunchedEffect(usuarioEmail) {
+        isLoading.value = true
+        val hoy = LocalDate.now().toString()
+
         try {
-            // La función de suspensión se llama aquí dentro de LaunchedEffect
             val listaHabitos = obtenerHabitosPersonalizados(usuarioEmail)
-            habitos.value = listaHabitos
+
+            // Verifica y actualiza hábitos finalizados
+            val habitosActualizados = listaHabitos.map { habito ->
+                if (habito.fechaFin == hoy && habito.estaActivo) {
+                    desactivarHabito(habito, usuarioEmail)
+                    habito.copy(estaActivo = false)
+                } else {
+                    habito
+                }
+            }
+
+            habitos.value = habitosActualizados
         } catch (e: Exception) {
             Log.e("Firestore", "Error al obtener hábitos: ${e.message}")
         } finally {
-            isLoading.value = false // Cambiar el estado a no cargando
+            isLoading.value = false
         }
     }
 
@@ -105,6 +118,10 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            //Variables para habitos activos y finalizados
+            val habitosActivos = habitos.value.filter { it.estaActivo }
+            val habitosFinalizados = habitos.value.filterNot { it.estaActivo }
+
             if (isLoading.value) {
                 CircularProgressIndicator(modifier = Modifier.size(40.dp))
             } else if (habitos.value.isEmpty()) {
@@ -148,17 +165,55 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
                 }
             } else {
                 val coroutineScope = rememberCoroutineScope()
-                habitos.value.forEach { habito ->
-                    HabitoCardExpandible(
-                        habito = habito,
-                        navController = navController,
-                        onEliminarHabito = {
-                            coroutineScope.launch {
-                                habitos.value = obtenerHabitosPersonalizados(usuarioEmail)
-                            }
-                        }
+
+                Text("Hábitos Activos", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (habitosActivos.isEmpty()) {
+                    Text(
+                        text = "No tienes hábitos activos",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    habitosActivos.forEach { habito ->
+                        HabitoCardExpandible(
+                            habito = habito,
+                            navController = navController,
+                            onEliminarHabito = {
+                                coroutineScope.launch {
+                                    habitos.value = obtenerHabitosPersonalizados(usuarioEmail)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+
+                if (habitosFinalizados.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text("Hábitos Finalizados", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Para reactivar un hábito, edita la fecha de fin desde la opción Editar.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    habitosFinalizados.forEach { habito ->
+                        HabitoCardExpandible(
+                            habito = habito,
+                            navController = navController,
+                            onEliminarHabito = {
+                                coroutineScope.launch {
+                                    habitos.value = obtenerHabitosPersonalizados(usuarioEmail)
+                                }
+                            },
+                            colorPersonalizado = Color.LightGray
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
                 Spacer(Modifier.weight(1f))
 
@@ -190,7 +245,8 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
 fun HabitoCardExpandible(
     habito: HabitoPersonalizado,
     navController: NavHostController,
-    onEliminarHabito: () -> Unit = {} // Se llama cuando el hábito es eliminado para actualizar la lista
+    onEliminarHabito: () -> Unit = {},
+    colorPersonalizado: Color? = null // Se llama cuando el hábito es eliminado para actualizar la lista
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedMenu by remember { mutableStateOf(false) }
@@ -218,30 +274,38 @@ fun HabitoCardExpandible(
 
     // Extensión para oscurecer el color
     fun Color.darken(factor: Float): Color {
+        val safeFactor = factor.coerceIn(0f, 1f)
         return Color(
-            red = (red * (1 - factor)).coerceIn(0f, 1f),
-            green = (green * (1 - factor)).coerceIn(0f, 1f),
-            blue = (blue * (1 - factor)).coerceIn(0f, 1f),
+            red = (red * (1 - safeFactor)).coerceIn(0f, 1f),
+            green = (green * (1 - safeFactor)).coerceIn(0f, 1f),
+            blue = (blue * (1 - safeFactor)).coerceIn(0f, 1f),
             alpha = alpha
         )
     }
 
     // Función para hacer el parseo de color desde FB
     fun parseColorFromFirebase(colorString: String, darken: Boolean = false, darkenFactor: Float = 0.15f): Color {
-        val regex = Regex("""Color\(([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+),.*\)""")
+        val regex = Regex("""Color\(([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)(?:,.*)?\)""")
         val match = regex.find(colorString)
-        return if (match != null) {
-            val (r, g, b, a) = match.destructured
-            val baseColor = Color(r.toFloat(), g.toFloat(), b.toFloat(), a.toFloat())
-            if (darken) baseColor.darken(darkenFactor) else baseColor
-        } else {
-            Log.e("ColorParse", "No se pudo parsear el color: $colorString")
-            Color.Gray
+
+        if (match != null) {
+            val (rStr, gStr, bStr, aStr) = match.destructured
+
+            val r = rStr.toFloatOrNull()?.takeIf { !it.isNaN() } ?: 0.5f
+            val g = gStr.toFloatOrNull()?.takeIf { !it.isNaN() } ?: 0.5f
+            val b = bStr.toFloatOrNull()?.takeIf { !it.isNaN() } ?: 0.5f
+            val a = aStr.toFloatOrNull()?.takeIf { !it.isNaN() } ?: 1f
+
+            val baseColor = Color(r.coerceIn(0f, 1f), g.coerceIn(0f, 1f), b.coerceIn(0f, 1f), a.coerceIn(0f, 1f))
+            return if (darken) baseColor.darken(darkenFactor) else baseColor
         }
+
+        Log.e("ColorParse", "Color inválido: $colorString")
+        return Color.Gray
     }
 
-    val colorTarjeta = parseColorFromFirebase(habito.colorEtiqueta)
-    val colorIcono = parseColorFromFirebase(habito.colorEtiqueta, darken = true)
+    val colorTarjeta = colorPersonalizado?: parseColorFromFirebase(habito.colorEtiqueta)
+    val colorIcono = colorPersonalizado?: parseColorFromFirebase(habito.colorEtiqueta, darken = true)
 
     // Tarjeta Expandible
     Card(
@@ -270,7 +334,7 @@ fun HabitoCardExpandible(
                         contentDescription = "Icono del Hábito",
                         tint = colorIcono,
                         modifier = Modifier.size(18.dp)
-                        )
+                    )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
 
@@ -365,7 +429,7 @@ fun HabitoCardExpandible(
                         formatearFecha(fechaRaw)?.let { fechaFormateada ->
                             Text("Fin: $fechaFormateada", style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(8.dp))
-                            }
+                        }
                     }
 
                     if (habito.rachaActual == 1) {
@@ -553,3 +617,14 @@ fun formatearFecha(fechaStr: String): String? {
         }
 }
 
+// Desactivar habitos
+fun desactivarHabito(habito: HabitoPersonalizado, usuarioEmail: String?) {
+    if (usuarioEmail == null) return
+    val idDocumento = habito.nombre.replace(" ", "_")
+    val db = FirebaseFirestore.getInstance()
+    db.collection("habitos")
+        .document(usuarioEmail)
+        .collection("personalizados")
+        .document(idDocumento)
+        .update("estaActivo", false)
+}

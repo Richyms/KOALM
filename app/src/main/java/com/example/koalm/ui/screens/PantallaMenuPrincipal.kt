@@ -58,6 +58,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.Habito
@@ -162,7 +164,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 SeccionTitulo("Mis hábitos")
                 if (usuarioEmail != null) {
                     if (userId != null) {
-                        DashboardScreen(usuarioEmail = usuarioEmail, userId = userId)
+                        DashboardScreen(usuarioEmail = usuarioEmail, userId = userId, navController = navController,)
                     }
                 }
 
@@ -355,7 +357,8 @@ fun HabitoCarruselItem(titulo: String, descripcion: String, imagenId: Int) {
 fun DashboardScreen(
     usuarioEmail: String,
     userId: String,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = viewModel(),
+    navController: NavHostController
 ) {
     val context = LocalContext.current
     val logrosPrefs = remember { LogrosPreferences(context) }
@@ -432,14 +435,16 @@ fun DashboardScreen(
 
         if (hayHabitos) {
             habitosFiltradosPersonalizados.forEach { habito ->
-                HabitoCardPersonalizado(
-                    habito = habito,
-                    progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
-                    onIncrementar = { valor ->
-                        viewModel.incrementarProgreso(usuarioEmail, habito, valor)
-                    },
-                    logrosPrefs = logrosPrefs
-                )
+                if (habito.estaActivo) {
+                    HabitoCardPersonalizado(
+                        habito = habito,
+                        progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
+                        onIncrementar = { valor ->
+                            viewModel.incrementarProgreso(usuarioEmail, habito, valor)
+                        },
+                        logrosPrefs = logrosPrefs
+                    )
+                }
             }
 
             habitosFiltradosPredeterminados.forEach { habito ->
@@ -452,11 +457,55 @@ fun DashboardScreen(
                 )
             }
         } else {
-            Text(
-                text = "No tienes hábitos de tipo ${tipoFiltrado}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                val hayHabitosGuardados = habitos.isNotEmpty() || habitosPre.isNotEmpty()
+                Text(
+                    text = when (tipoFiltrado) {
+                        "personalizado" -> "¿Qué son los hábitos personalizados?\nCrea los tuyos según tus metas."
+                        "físico" -> "¿Qué son los hábitos físicos?\nActividades como control de sueño, alimentación e hidratación."
+                        "mental" -> "¿Qué son los hábitos mentales?\nActividades como meditar, leer o escribir."
+                        else -> {
+                            if (hayHabitosGuardados) {
+                                "No tienes hábitos activos este día."
+                            } else {
+                                "No tienes hábitos aún."
+                            }
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+
+                // Mostrar botón según tipo
+                if (tipoFiltrado != "todos") {
+                    val ruta = when (tipoFiltrado) {
+                        "físico" -> "salud_fisica"
+                        "mental" -> "salud_mental"
+                        else -> "configurar_habito_personalizado"
+                    }
+
+                    val textoBoton = when (tipoFiltrado) {
+                        "físico", "mental" -> "Configurar"
+                        else -> stringResource(R.string.boton_agregar)
+                    }
+
+                    Button(
+                        onClick = { navController.navigate(ruta) },
+                        modifier = Modifier.width(200.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = textoBoton)
+                    }
+                }
+            }
         }
     }
 }

@@ -587,7 +587,7 @@ fun GraficadorProgreso(
             drawText(
                 labelEjeY,
                 -size.height / 12,
-                60f,
+                70f,
                 android.graphics.Paint().apply {
                     textAlign = android.graphics.Paint.Align.CENTER
                     textSize = 32f
@@ -651,7 +651,7 @@ fun GraficadorProgreso(
         drawContext.canvas.nativeCanvas.drawText(
             labelEjeX,
             size.width / 2,
-            size.height + 120f,
+            size.height + 130f,
             android.graphics.Paint().apply {
                 textAlign = android.graphics.Paint.Align.CENTER
                 textSize = 32f

@@ -17,6 +17,7 @@ data class HabitoPersonalizado(
     var rachaMaxima: Int = 0,
     var ultimoDiaCompletado: String? = null,
     val objetivoDiario: Int = 0,
+    val estaActivo: Boolean = true,
     val clase: ClaseHabito = ClaseHabito.PERSONALIZADO
 ) {
 
@@ -35,6 +36,7 @@ data class HabitoPersonalizado(
         "rachaMaxima" to rachaMaxima,
         "ultimoDiaCompletado" to ultimoDiaCompletado,
         "objetivoDiario" to objetivoDiario,
+        "estaActivo" to estaActivo,
         "clase" to clase.name
     )
 

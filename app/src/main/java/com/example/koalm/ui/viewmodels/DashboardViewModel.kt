@@ -9,6 +9,7 @@ import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.ui.screens.habitos.personalizados.desactivarHabito
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -45,9 +46,21 @@ class DashboardViewModel : ViewModel() {
                 val habitosCargados = HabitosRepository.obtenerHabitosPersonalizados(email)
                 Log.d("DashboardViewModel", "Hábitos personalizados cargados: ${habitosCargados.size}")
                 habitos = habitosCargados
+                val hoy = LocalDate.now().toString()
+
+                // Marcar como inactivos los hábitos que ya finalizaron
+                val habitosActualizados = habitosCargados.map { habito ->
+                    if (habito.fechaFin == hoy && habito.estaActivo) {
+                        desactivarHabito(habito, email)
+                        habito.copy(estaActivo = false)
+                    } else {
+                        habito
+                    }
+                }
+                habitos = habitosActualizados
 
                 Log.d("DashboardViewModel", "Cargando progresos de hábitos personalizados...")
-                cargarProgresos(email, habitosCargados)
+                cargarProgresos(email, habitosActualizados)
                 Log.d("DashboardViewModel", "Progresos de hábitos personalizados cargados")
 
                 // Cargar hábitos predeterminados y sus progresos
