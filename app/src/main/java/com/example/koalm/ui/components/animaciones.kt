@@ -182,3 +182,109 @@ fun LogroDialogoAnimado(
         }
     }
 }
+
+@Composable
+fun ValidacionesDialogoAnimado(
+    mensaje: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ){
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // DotLottieAnimation
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/5e424783-9eb3-4aca-ab79-3e632976aae1/c3WN6MQ5VS.lottie"),
+                    autoplay = true,
+                    loop = true,
+                    speed = 1.5f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = mensaje,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("¡OK!")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BienvenidoDialogoAnimado(
+    mensaje: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ){
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // DotLottieAnimation
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/ddb852e8-8d1b-41c0-8ea3-4652d2116b77/bie9VSzD3Q.lottie"),
+                    autoplay = true,
+                    loop = true,
+                    speed = 1.5f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = mensaje,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(onClick = onDismiss) {
+                    Text("¡Comenzar!")
+                }
+            }
+        }
+    }
+}

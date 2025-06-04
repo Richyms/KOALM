@@ -53,6 +53,7 @@ import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.ui.viewmodels.DashboardViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -65,8 +66,10 @@ import com.example.koalm.data.HabitosRepository
 import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
+import com.example.koalm.ui.components.BienvenidoDialogoAnimado
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.ui.components.LogroDialogoAnimado
+import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 import com.example.koalm.ui.components.obtenerIconoPorNombre
 import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
 import com.example.koalm.ui.viewmodels.LogrosPreferences
@@ -94,6 +97,17 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid
     val db = FirebaseFirestore.getInstance()
     var username by remember { mutableStateOf("") }
+
+    var mostrarDialogoBienvenida by rememberSaveable{ mutableStateOf(true) }
+    if (mostrarDialogoBienvenida) {
+        BienvenidoDialogoAnimado(
+            mensaje = "Bienvenid@ $username",
+            onDismiss = {
+                mostrarDialogoBienvenida = false
+            }
+
+        )
+    }
 
     LaunchedEffect(usuarioEmail) {
         if (usuarioEmail != null) {
@@ -151,8 +165,16 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                SeccionTitulo("Racha")
-                FormatoRacha(dias = diasDeLaSemana.zip(progreso))
+                val viewModel: DashboardViewModel = viewModel()
+                val racha = viewModel.rachaSemanal
+
+                SeccionTitulo("Racha semanal")
+                FormatoRacha(
+                    dias = racha,
+                    onClick = {
+                        navController.navigate("racha_habitos")
+                        }
+                )
 
                 SeccionTitulo("Hábitos koalísticos")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -215,12 +237,9 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
     ModalDrawerSheet {
         Text("Koalm", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider()
-        listOf("Inicio", "Racha", "Parametros de salud", "Test de ansiedad").forEach {
+        listOf("Inicio", "Test de ansiedad").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = it == "Inicio", onClick = {
                 when (it) {
-                    //"Inicio" -> navController.navigate("inicio")
-                    "Racha" -> navController.navigate("racha_habitos")
-                    "Parametros de salud" -> navController.navigate("estadisticas")
                     "Test de ansiedad" -> navController.navigate("test_de_ansiedad")
                 }
             })
@@ -262,41 +281,53 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
 
 
 @Composable
-fun FormatoRacha(dias: List<Pair<String, Boolean>>) {
+fun FormatoRacha(dias: List<Pair<String, Boolean>>,  onClick: () -> Unit = {}
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp))
             .padding(vertical = 24.dp, horizontal = 12.dp)
+            .clickable { onClick() }
     ) {
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(dias) { dia ->
-                val (letra, completado) = dia
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (completado) VerdePrincipal else GrisClaro,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        if (completado) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Completado",
-                                tint = Blanco,
-                                modifier = Modifier.padding(8.dp)
-                            )
+        if (dias.isEmpty() || dias.all { !it.second }) {
+            // Mostrar mensaje para usuario nuevo o sin días completados
+            Text(
+                text = "¡Empieza hoy y construye tu racha!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(dias) { dia ->
+                    val (letra, completado) = dia
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = if (completado) VerdePrincipal else GrisClaro,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            if (completado) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Completado",
+                                    tint = Blanco,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                            }
                         }
+                        Text(
+                            text = letra,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Black,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
-                    Text(
-                        text = letra,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.Black,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
                 }
             }
         }

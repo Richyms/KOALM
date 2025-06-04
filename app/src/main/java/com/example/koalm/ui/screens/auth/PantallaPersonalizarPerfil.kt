@@ -49,6 +49,7 @@
         import androidx.compose.ui.graphics.asImageBitmap
         import java.util.TimeZone
         import androidx.compose.foundation.background
+        import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
@@ -133,6 +134,17 @@
                             Toast.makeText(context, "Error cargando perfil: ${e.message}", Toast.LENGTH_LONG).show()
                         }
                 }
+            }
+
+            // Validaciones del formulario (animación)
+            var validacionesDialogo by remember{ mutableStateOf(false) }
+            if (validacionesDialogo) {
+                ValidacionesDialogoAnimado(
+                    mensaje = "Por favor, completa todos los campos para continuar",
+                    onDismiss = {
+                        validacionesDialogo = false
+                    }
+                )
             }
 
             // ------------------ A PARTIR DE AQUÍ, MODIFICAMOS SOLO EL SCAFFOLD ------------------
@@ -223,7 +235,7 @@
                                 altura.toIntOrNull() == null ||
                                 generoSeleccionado.isEmpty()
                             ) {
-                                Toast.makeText(context, "Por favor completa todos los campos correctamente.", Toast.LENGTH_SHORT).show()
+                                validacionesDialogo = true
                                 return@BotonGuardarPerfil
                             }
 

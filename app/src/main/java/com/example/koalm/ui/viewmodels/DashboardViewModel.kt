@@ -35,6 +35,9 @@ class DashboardViewModel : ViewModel() {
     var cargando by mutableStateOf(true)
         private set
 
+    var rachaSemanal by mutableStateOf<List<Pair<String, Boolean>>>(emptyList())
+        private set
+
     fun cargarHabitos(email: String, userId: String) {
         viewModelScope.launch {
             try {
@@ -88,6 +91,8 @@ class DashboardViewModel : ViewModel() {
             } finally {
                 Log.d("DashboardViewModel", "Finalizando carga de hábitos")
                 cargando = false
+                cargarRachaSemanal(email)
+
             }
         }
     }
@@ -147,6 +152,7 @@ class DashboardViewModel : ViewModel() {
             try {
                 HabitosRepository.incrementarProgresoHabito(email, habito, valor)
                 cargarProgresos(email, habitos)
+                cargarRachaSemanal(email)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -158,6 +164,7 @@ class DashboardViewModel : ViewModel() {
             try {
                 HabitoRepository.incrementarProgresoHabito(email, habito, valor)
                 cargarProgresosPre(email, habitosPre)
+                cargarRachaSemanal(email)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -187,5 +194,89 @@ class DashboardViewModel : ViewModel() {
     private suspend fun obtenerProgresoDelDia(ref: DocumentReference): ProgresoDiario? {
         val snapshot = ref.get().await()
         return snapshot.toObject(ProgresoDiario::class.java)
+    }
+
+    private fun obtenerFechasSemanaConLetras(): List<Pair<String, String>> {
+        val hoy = LocalDate.now()
+        val lunes = hoy.minusDays(((hoy.dayOfWeek.value + 6) % 7).toLong())
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val letras = listOf("L", "M", "X", "J", "V", "S", "D")
+
+        return (0..6).map { i ->
+            val dia = lunes.plusDays(i.toLong())
+            letras[i] to dia.format(formatter)
+        }
+    }
+
+    private fun cargarRachaSemanal(email: String) {
+        viewModelScope.launch {
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val dias = obtenerFechasSemanaConLetras() // Lista (letra, fecha)
+                val resultado = mutableListOf<Pair<String, Boolean>>()
+
+                for ((index, diaData) in dias.withIndex()) {
+                    val (letraDia, fecha) = diaData
+                    val progresosConFrecuenciaActiva = mutableListOf<Boolean>()
+
+                    // PERSONALIZADOS
+                    for (habito in habitos) {
+                        val doc = db.collection("habitos").document(email)
+                            .collection("personalizados").document(habito.nombre.replace(" ", "_"))
+                            .collection("progreso").document(fecha)
+
+                        val snap = doc.get().await()
+                        val progreso = snap.toObject(ProgresoDiario::class.java)
+
+                        if (progreso != null && progreso.frecuencia?.getOrNull(index) == true) {
+                            progresosConFrecuenciaActiva.add(progreso.completado)
+                        } else if (progreso == null) {
+                            // No hay progreso, pero revisamos si debió haber
+                            val refActual = db.collection("habitos").document(email)
+                                .collection("personalizados").document(habito.nombre.replace(" ", "_"))
+                                .get().await()
+
+                            val frecuencia = refActual.get("frecuencia") as? List<Boolean>
+                            if (frecuencia?.getOrNull(index) == true) {
+                                progresosConFrecuenciaActiva.add(false) // Esperado pero no hecho
+                            }
+                        }
+                    }
+
+                    // PREDETERMINADOS
+                    for (habito in habitosPre) {
+                        val doc = db.collection("habitos").document(email)
+                            .collection("predeterminados").document(habito.id)
+                            .collection("progreso").document(fecha)
+
+                        val snap = doc.get().await()
+                        val progreso = snap.toObject(ProgresoDiario::class.java)
+
+                        if (progreso != null && progreso.frecuencia?.getOrNull(index) == true) {
+                            progresosConFrecuenciaActiva.add(progreso.completado)
+                        } else if (progreso == null) {
+                            val refActual = db.collection("habitos").document(email)
+                                .collection("predeterminados").document(habito.id)
+                                .get().await()
+
+                            val frecuencia = refActual.get("frecuencia") as? List<Boolean>
+                            if (frecuencia?.getOrNull(index) == true) {
+                                progresosConFrecuenciaActiva.add(false)
+                            }
+                        }
+                    }
+
+                    if (progresosConFrecuenciaActiva.isNotEmpty()) {
+                        val diaCompletado = progresosConFrecuenciaActiva.all { it }
+                        resultado.add(letraDia to diaCompletado)
+                    }
+                    // Si nada tenía frecuencia activa ese día, no se muestra
+                }
+
+                rachaSemanal = resultado
+            } catch (e: Exception) {
+                Log.e("DashboardViewModel", "Error al cargar racha semanal: ${e.message}")
+            }
+        }
     }
 }

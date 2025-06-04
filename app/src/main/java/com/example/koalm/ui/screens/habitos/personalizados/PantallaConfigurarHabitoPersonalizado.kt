@@ -67,6 +67,7 @@ import java.time.temporal.ChronoUnit
 import androidx.compose.runtime.Composable
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
+import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,6 +129,16 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
             mensaje = "Ya agregaste esta hora.",
             onDismiss = {
                 mostrarDialogoFalloHora = false
+            }
+        )
+    }
+    var validacionesDialogo by remember{ mutableStateOf(false) }
+    if (validacionesDialogo) {
+        ValidacionesDialogoAnimado(
+            mensaje = "¡Ups! Los campos Nombre del hábito, Objetivo diario y Frecuencia son obligatorios.\n" +
+                    "Asegúrate de completarlos para continuar",
+            onDismiss = {
+                validacionesDialogo = false
             }
         )
     }
@@ -837,26 +848,8 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             // Validaciones de campos obligatorios
                             val frecuenciaDias = diasSeleccionados.count { it }
 
-                            if (nombreHabito.isBlank()) {
-                                Toast.makeText(
-                                    context,
-                                    "El nombre del hábito es obligatorio",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            if (objetivoDiario <= 0) {
-                                Toast.makeText(
-                                    context,
-                                    "El objetivo diario es obligatorio",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            if (frecuenciaDias <= 0) {
-                                Toast.makeText(
-                                    context,
-                                    "Selecciona al menos un día activo del hábito",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                            if (nombreHabito.isBlank() || objetivoDiario <= 0 || frecuenciaDias <= 0 ) {
+                                validacionesDialogo = true
                             }
                             else {
                                 // Obtener la referencia al usuario actual en Firebase Authentication

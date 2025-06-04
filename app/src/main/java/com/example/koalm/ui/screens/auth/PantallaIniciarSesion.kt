@@ -169,13 +169,14 @@ fun PantallaIniciarSesion(
 
                                                             // Determinamos la pantalla de destino dependiendo de si el perfil está completo
                                                             val destino = if (completo) "menu" else "personalizar"
+                                                            /*
                                                             Toast.makeText(
                                                                 context,
                                                                 if (completo) "Bienvenid@ $username"
                                                                 else "Completa tu perfil antes de continuar",
                                                                 Toast.LENGTH_SHORT
                                                             ).show()
-
+                                                             */
                                                             // Navegamos a las pantallas según el estado del perfil
                                                             navController.navigate(destino) {
                                                                 popUpTo("iniciar") { inclusive = true }
