@@ -158,9 +158,15 @@ class MovimientoService : Service(), SensorEventListener {
         usuarioDoc.get()
             .addOnSuccessListener { document ->
                 // Obtenemos “peso” para calcular calorías
-                val peso = document.getDouble("peso") ?: 0.0
+                val peso = document.getDouble("peso") ?: 60.0
                 // fórmula original: calorías = pasos * peso * 0.0007
                 val calorias = (pasos * peso * 0.0007).toInt()
+
+                if (peso <= 0.0) {
+                    Log.e("KOALM_CALORIAS", "Peso inválido para cálculo de calorías: $peso")
+                } else {
+                    Log.d("KOALM_CALORIAS", "Calorías calculadas: $calorias (pasos=$pasos, peso=$peso)")
+                }
 
                 // Creamos el mapa con “pasos”, “tiempoActividad” EN MINUTOS y “calorias”
                 val data = mapOf(
