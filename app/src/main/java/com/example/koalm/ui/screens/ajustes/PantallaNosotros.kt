@@ -25,6 +25,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.example.koalm.ui.components.BarraNavegacionInferior
 
@@ -75,7 +77,18 @@ fun PantallaNosotros(navController: NavHostController){
                     Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Text("Descripción de todo el equipo")
+                    Text(
+                        text = buildAnnotatedString {
+                        append("Somos un equipo de estudiantes comprometidos con el desarrollo de soluciones tecnológicas enfocadas en el bienestar físico y mental de las personas.\n\n")
+                        append("Este proyecto nació con el objetivo de crear una aplicación que permita a los usuarios llevar un control integral de sus hábitos, emociones y estado de salud.\n\n")
+                        append("Nuestro equipo está conformado por personas con distintas habilidades: desde diseño de interfaces amigables, hasta desarrollo funcional y análisis de datos. Esto nos permitió construir una herramienta completa, funcional y visualmente atractiva.\n\n")
+                        append("A lo largo de este proceso aplicamos conocimientos adquiridos en la materia de Análisis y Diseño de Sistemas, trabajando de forma colaborativa para ofrecer una experiencia útil, sencilla y confiable.\n\n")
+                        append("Creemos firmemente que el cambio comienza con pequeños hábitos, y nuestra app es una guía para lograrlo.")
+                    },
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Justify,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
 
