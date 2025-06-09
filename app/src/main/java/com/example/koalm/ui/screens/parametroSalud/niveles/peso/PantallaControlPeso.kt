@@ -50,16 +50,24 @@ fun PantallaControlPeso(
         }
 
         // 2) Intentar leer de /usuarios/{correo}/metasSalud/valores → campo "pesoActual" y "pesoObjetivo"
-        val metasDoc = try {
-            firestore
+        try {
+            val metasDoc = firestore
                 .collection("usuarios")
                 .document(correo)
                 .collection("metasSalud")
                 .document("valores")
                 .get()
                 .await()
+
+            val pesoActualDb = metasDoc.getDouble("pesoActual")?.toFloat()
+            val pesoObjetivoDb = metasDoc.getDouble("pesoObjetivo")?.toFloat()
+
+            pesoActual = pesoActualDb ?: pesoUsuario // usa "peso" de usuario si no hay pesoActual
+            pesoObjetivo = pesoObjetivoDb ?: 0f // si no hay objetivo, deja 0
         } catch (e: Exception) {
-            null
+            // Si falla Firestore, usar valores por defecto
+            pesoActual = pesoUsuario
+            pesoObjetivo = 0f
         }
     }
 
