@@ -102,6 +102,9 @@ fun PantallaActualizarPeso(
                     IconButton(onClick = {
                         val nuevo = pesoText.text.toFloatOrNull() ?: 0f
                         viewModel.actualizarPeso(nuevo) {
+                            coroutineScope.launch {
+                                guardarPesoEnHistorial(nuevo, fecha, correo!!)
+                            }
                             navController.navigateUp()
                         }
                     }) {
@@ -189,3 +192,34 @@ fun PantallaActualizarPeso(
         }
     }
 }
+
+//Función para historial de pesos
+suspend fun guardarPesoEnHistorial(peso: Float, fecha: String, correo: String) {
+    val firestore = Firebase.firestore
+    val historialRef = firestore.collection("usuarios")
+        .document(correo)
+        .collection("historialPeso")
+
+    try {
+        // Obtener todos los documentos actuales
+        val documentos = historialRef.get().await()
+
+        // Contar cuántos registros hay
+        val siguienteNumero = documentos.size() + 1
+        val idPersonalizado = "peso$siguienteNumero"
+
+        val registro = hashMapOf(
+            "peso" to peso,
+            "fecha" to fecha
+        )
+
+        // Guardar usando el ID personalizado
+        historialRef.document(idPersonalizado).set(registro).await()
+        Log.d("DEBUG_PESO", "Historial guardado con ID: $idPersonalizado")
+
+    } catch (e: Exception) {
+        Log.e("DEBUG_PESO", "Error al guardar historial de peso", e)
+    }
+}
+
+
