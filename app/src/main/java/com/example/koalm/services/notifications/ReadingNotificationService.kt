@@ -39,7 +39,6 @@ class ReadingNotificationService : NotificationBase() {
             putExtra("is_reading", true)
             putExtra("is_digital_disconnect", false)
             putExtra("notification_title", context.getString(defaultTitle))
-            putExtra("notification_action_button", context.getString(R.string.notification_books_button))
             putExtra("timer_action", ReadingTimerService.START_TIMER_ACTION)
         }
     }

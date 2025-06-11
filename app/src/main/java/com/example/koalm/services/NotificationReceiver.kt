@@ -286,21 +286,6 @@ class NotificationReceiver : BroadcastReceiver() {
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-
-        val openBooksIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("route", "libros")
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            addCategory(Intent.CATEGORY_LAUNCHER)
-            action = Intent.ACTION_MAIN
-        }
-        
-        val openBooksPendingIntent = PendingIntent.getActivity(
-            context,
-            ReadingNotificationService.NOTIFICATION_ID + diaSemana + 100,
-            openBooksIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
         
         val notification = NotificationCompat.Builder(context, ReadingNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -312,11 +297,6 @@ class NotificationReceiver : BroadcastReceiver() {
                 R.drawable.ic_timer,
                 context.getString(R.string.start_timer),
                 startTimerPendingIntent
-            )
-            .addAction(
-                R.drawable.ic_notification,
-                context.getString(R.string.notification_books_button),
-                openBooksPendingIntent
             )
             .build()
         
