@@ -375,5 +375,35 @@ class HabitoRepository {
             habito.ultimoDiaCompletado = hoy.toString()
         }
     }
+    suspend fun guardarHabitoHidratacion(
+        userId: String,
+        descripcion: String,
+        cantlitros: Float,
+        horarios: List<String>,
+        recordatorios: Boolean,
+        frecuenciaActiva: Boolean,
+        minutosFrecuencia: Int
+    ): Boolean {
+        return try {
+            val datos = hashMapOf(
+                "descripcion" to descripcion,
+                "litros" to cantlitros,
+                "horarios" to horarios,
+                "recordatorios" to recordatorios,
+                "frecuenciaActiva" to frecuenciaActiva,
+                "minutosFrecuencia" to minutosFrecuencia
+            )
+
+            db.collection("habitosHidratacion")
+                .document(userId)
+                .set(datos)
+                .await()
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 
 }

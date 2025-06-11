@@ -35,6 +35,7 @@ import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import java.time.LocalTime
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -43,6 +44,35 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.koalm.ui.screens.habitos.saludMental.HoraField
 import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
+
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.core.content.ContextCompat
+
+
+import com.example.koalm.model.ClaseHabito
+import com.example.koalm.model.Habito
+import com.example.koalm.model.TipoHabito
+import com.example.koalm.services.timers.NotificationService
+import com.google.firebase.auth.FirebaseAuth
+
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.tasks.await
+import java.time.LocalDateTime
+import android.content.Intent
+import android.Manifest
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.koalm.data.HabitosRepository
+import com.example.koalm.model.MetricasHabito
+import com.example.koalm.repository.HabitoRepository
+import java.time.LocalDate
+
+
+
+
 
 //@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +100,112 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
     /*Frecuencia de recodatorios*/
     var minutosFrecuencia by remember { mutableStateOf(30) }
     var frecuenciaActiva by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+    val auth = FirebaseAuth.getInstance()
+    val userId = auth.currentUser?.uid ?: "anonimo"  // Solo como fallback
+    val diasSeleccionados = List(7) { true }  // Todos los días activados por default
+    val formatter = DateTimeFormatter.ofPattern("HH:mm")
+    var horarios = remember { mutableStateListOf<String>() }
+    var isLoading by remember { mutableStateOf(false) }
+    val habitosRepository = remember { HabitoRepository() }
+
+
+    fun guardarHabitoHidratacion() {
+        Log.d("GuardarHabito", "Función iniciar guardado")
+        scope.launch {
+            try {
+                val userId = auth.currentUser?.uid
+                    ?: throw Exception("Usuario no autenticado")
+
+                isLoading = true
+
+                // Generar lista de horarios según inicio, fin y frecuencia
+                horarios.clear()
+                val start = horaIni.toSecondOfDay() / 60
+                val end = horaFin.toSecondOfDay() / 60
+                val intervalo = if (frecuenciaActiva) minutosFrecuencia else 60
+                var minuto = start
+                while (minuto <= end) {
+                    val h = minuto / 60
+                    val m = minuto % 60
+                    horarios.add(String.format("%02d:%02d", h, m))
+                    minuto += intervalo
+                }
+
+                // Crear objeto Habito con tipo HIDRATACION
+                val nuevoHabito = Habito(
+                    titulo = "Hidratación",
+                    descripcion = descripcion.ifEmpty { "Recordatorios para beber agua" },
+                    clase = ClaseHabito.FISICO,
+                    tipo = TipoHabito.HIDRATACION,
+                    diasSeleccionados = List(7) { true }, // Todos los días
+                    hora = horarios.firstOrNull() ?: "",
+                    horarios = horarios.toList(),
+                    duracionMinutos = 5,
+                    userId = userId,
+                    fechaCreacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
+                    fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
+                    metricasEspecificas = MetricasHabito(mililitrosBebidos = (cantlitros * 1000).toInt()) // Opcional: info litros
+                )
+
+                // Guardar en Firebase
+                habitosRepository.crearHabito(nuevoHabito).onSuccess { habitoId ->
+                    // Programar notificaciones para cada horario
+                    val notificationService = NotificationService()
+                    context.startService(Intent(context, NotificationService::class.java))
+
+                    horarios.forEachIndexed { index, horaStr ->
+                        val hora = LocalTime.parse(horaStr, DateTimeFormatter.ofPattern("HH:mm"))
+                        val notificationTime = LocalDateTime.of(LocalDate.now(), hora)
+
+                        notificationService.scheduleNotification(
+                            context = context,
+                            habitoId = "$habitoId-$index", // ID único por notificación
+                            diasSeleccionados = nuevoHabito.diasSeleccionados,
+                            hora = notificationTime,
+                            descripcion = "Hora de hidratarse 💧",
+                            durationMinutes = 0,
+                            isAlimentation = false,
+                            isSleeping = false,
+                            isHidratation = true
+                        )
+                    }
+
+                    Toast.makeText(context, "Hábito de hidratación guardado con éxito", Toast.LENGTH_LONG).show()
+                    navController.navigateUp()
+
+                }.onFailure { e ->
+                    Toast.makeText(context, "Error al guardar hábito: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+
+    val permissionLauncherHydratation = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            guardarHabitoHidratacion()
+        } else {
+            Toast.makeText(
+                context,
+                "Permiso de notificaciones denegado",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+
+
+
+
 
     //--------------------------- UI --------------------------------------
     Scaffold(
@@ -268,27 +404,40 @@ fun PantallaConfiguracionHabitoHidratacion (navController: NavHostController) {
             ) {
                 Button(
                     onClick = {
-                        Toast.makeText(
-                            context,
-                            "Configuración de hidratación guardada",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        navController.navigateUp()
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            guardarHabitoHidratacion()
+                        } else {
+                            permissionLauncherHydratation.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                     },
                     modifier = Modifier
                         .width(200.dp)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
+                    enabled = true,
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(
-                        stringResource(R.string.boton_guardar),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.boton_guardar),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
         }
     }
+
+
 
     if (mostrarTimePickerIni) {
         TimePickerDialog(
