@@ -271,11 +271,6 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
                 }
             })
         }
-        HorizontalDivider()
-        Text("Labels", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
-        listOf("Recomendaciones de Kool", "Insignias y logros", "Información de la app").forEach {
-            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = { })
-        }
     }
 }
 
