@@ -326,28 +326,12 @@ class NotificationReceiver : BroadcastReceiver() {
         val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
             action = NotificationConstants.START_TIMER_ACTION
             putExtra("duration_minutes", durationMinutes)
-            putExtra("notas_habilitadas", notasHabilitadas)
         }
         
         val startTimerPendingIntent = PendingIntent.getBroadcast(
             context,
             WritingNotificationService.NOTIFICATION_ID + diaSemana,
             startTimerIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val openNotesIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("route", "notas")
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            addCategory(Intent.CATEGORY_LAUNCHER)
-            action = Intent.ACTION_MAIN
-        }
-        
-        val openNotesPendingIntent = PendingIntent.getActivity(
-            context,
-            WritingNotificationService.NOTIFICATION_ID + diaSemana + 100,
-            openNotesIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
@@ -361,11 +345,6 @@ class NotificationReceiver : BroadcastReceiver() {
                 R.drawable.ic_timer,
                 context.getString(R.string.start_timer),
                 startTimerPendingIntent
-            )
-            .addAction(
-                R.drawable.ic_notification,
-                context.getString(R.string.notification_notes_button),
-                openNotesPendingIntent
             )
             .build()
         

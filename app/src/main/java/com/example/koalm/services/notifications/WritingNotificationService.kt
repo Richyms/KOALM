@@ -44,7 +44,6 @@ class WritingNotificationService : NotificationBase() {
             putExtra("is_digital_disconnect", false)
             putExtra("notas_habilitadas", additionalData["notas_habilitadas"] as? Boolean ?: false)
             putExtra("notification_title", context.getString(defaultTitle))
-            putExtra("notification_action_button", context.getString(R.string.notification_notes_button))
         }
     }
 
