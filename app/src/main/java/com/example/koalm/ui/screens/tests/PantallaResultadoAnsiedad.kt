@@ -171,9 +171,9 @@ fun PantallaResultadoAnsiedad(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { navController.navigate("inicio") },
+                onClick = { navController.navigate("menu") },
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .width(200.dp)
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal),
                 shape = RoundedCornerShape(16.dp)
