@@ -21,7 +21,6 @@ import androidx.navigation.NavHostController
 import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
 import com.example.koalm.model.TipoHabito
-import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.*
 import kotlinx.coroutines.launch
@@ -46,7 +45,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.koalm.R
 import com.example.koalm.model.HabitoPersonalizado
-import com.example.koalm.data.HabitosRepository.obtenerHabitosPersonalizados
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.runtime.setValue
@@ -92,7 +90,7 @@ fun PantallaNotificacionesPersonalizados(navController: NavHostController){
         val hoy = LocalDate.now().toString()
 
         try {
-            /*val listaHabitos = obtenerHabitosPersonalizados(usuarioEmail)
+            /**/val listaHabitos = obtenerHabitosPersonalizados(usuarioEmail)
 
             // Verifica y actualiza hábitos finalizados
             val habitosActualizados = listaHabitos.map { habito ->
@@ -105,7 +103,7 @@ fun PantallaNotificacionesPersonalizados(navController: NavHostController){
             }
 
             habitos.value = habitosActualizados
-                        */
+                        /**/
         } catch (e: Exception) {
             Log.e("Firestore", "Error al obtener hábitos: ${e.message}")
         } finally {
@@ -183,7 +181,7 @@ fun PantallaNotificacionesPersonalizados(navController: NavHostController){
                             navController = navController,
                             onEliminarHabito = {
                                 coroutineScope.launch {
-                                    //habitos.value = obtenerHabitosPersonalizados(usuarioEmail)
+                                    habitos.value = obtenerHabitosPersonalizados(usuarioEmail)
                                 }
                             }
                         )
