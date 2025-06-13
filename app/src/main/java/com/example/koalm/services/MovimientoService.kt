@@ -103,12 +103,12 @@ class MovimientoService : Service(), SensorEventListener {
         lastStepTime = nowTimestamp
 
         // --- 4) Cada 60 pasos, subimos a Firestore ---
-        if (pasosHoy > 0 && pasosHoy % 60 == 0) {
+        if (pasosHoy > 0 && pasosHoy % 30 == 0) {
             // calculamos tiempoActivo en MINUTOS
             val minutosHoy = pasosHoy / 60
             Log.d(
                 "KOALM_DEBUG",
-                "Alcanzados $pasosHoy pasos (múltiplo de 60). " +
+                "Alcanzados $pasosHoy pasos (múltiplo de 30). " +
                         "Subiendo a Firestore → fecha=$currentDate, pasos=$pasosHoy, minutosActivos=$minutosHoy"
             )
             uploadMetricsToFirestore(
@@ -162,6 +162,9 @@ class MovimientoService : Service(), SensorEventListener {
                 // fórmula original: calorías = pasos * peso * 0.0007
                 val calorias = (pasos * peso * 0.0007).toInt()
 
+                //guardado local
+                guardarDatosLocales(pasos, minutosActivos, calorias)
+
                 // Creamos el mapa con “pasos”, “tiempoActividad” EN MINUTOS y “calorias”
                 val data = mapOf(
                     "pasos" to pasos,
@@ -182,6 +185,33 @@ class MovimientoService : Service(), SensorEventListener {
             .addOnFailureListener { e ->
                 Log.e("KOALM_FIRESTORE", "Error al obtener usuario para cálculo de calorías: ${e.message}", e)
             }
+    }
+
+    /*
+    Logica para guardar los datos de manera local para su posterior consulta
+     */
+    private fun guardarDatosLocales(pasos: Int, minutos:Int, calorias:Int){
+        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putInt("pasos_hoy", pasos)
+            .putInt("minutos_activos", minutos)
+            .putInt("calorias", calorias)
+            .apply()
+    }
+
+    fun obtenerPasosLocales(): Int {
+        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+        return prefs.getInt("pasos_hoy", 0)
+    }
+
+    fun obtenerMinutosLocales(): Int {
+        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+        return prefs.getInt("minutos_activos", 0)
+    }
+
+    fun obtenerCaloriasLocales(): Int {
+        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+        return prefs.getInt("calorias", 0)
     }
 
     private fun createChannel() {
