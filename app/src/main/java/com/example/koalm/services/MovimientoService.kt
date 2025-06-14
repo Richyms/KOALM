@@ -197,23 +197,8 @@ class MovimientoService : Service(), SensorEventListener {
             .putInt("minutos_activos", minutos)
             .putInt("calorias", calorias)
             .apply()
+        Log.d("LocalStorage", "Datos guardados -> pasos: $pasos, minutos: $minutos, calorias: $calorias")
     }
-
-    fun obtenerPasosLocales(): Int {
-        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
-        return prefs.getInt("pasos_hoy", 0)
-    }
-
-    fun obtenerMinutosLocales(): Int {
-        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
-        return prefs.getInt("minutos_activos", 0)
-    }
-
-    fun obtenerCaloriasLocales(): Int {
-        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
-        return prefs.getInt("calorias", 0)
-    }
-
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -241,3 +226,19 @@ class MovimientoService : Service(), SensorEventListener {
 
     override fun onBind(intent: Intent?): IBinder? = null
 }
+
+fun obtenerMinutosLocales(context: Context): Int {
+    val prefs = context.getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+    val minutos = prefs.getInt("minutos_activos", 0)
+    Log.d("LocalStorage", "Minutos recuperados: $minutos")
+    return minutos
+}
+
+fun obtenerCaloriasLocales(context: Context): Int {
+    val prefs = context.getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+    val calorias = prefs.getInt("calorias", 0)
+    Log.d("LocalStorage", "Calorías recuperadas: $calorias")
+    return calorias
+}
+
+
