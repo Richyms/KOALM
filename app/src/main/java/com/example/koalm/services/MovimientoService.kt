@@ -103,12 +103,12 @@ class MovimientoService : Service(), SensorEventListener {
         lastStepTime = nowTimestamp
 
         // --- 4) Cada 60 pasos, subimos a Firestore ---
-        if (pasosHoy > 0 && pasosHoy % 60 == 0) {
+        if (pasosHoy > 0 && pasosHoy % 30 == 0) {
             // calculamos tiempoActivo en MINUTOS
             val minutosHoy = pasosHoy / 60
             Log.d(
                 "KOALM_DEBUG",
-                "Alcanzados $pasosHoy pasos (múltiplo de 60). " +
+                "Alcanzados $pasosHoy pasos (múltiplo de 30). " +
                         "Subiendo a Firestore → fecha=$currentDate, pasos=$pasosHoy, minutosActivos=$minutosHoy"
             )
             uploadMetricsToFirestore(
@@ -162,6 +162,9 @@ class MovimientoService : Service(), SensorEventListener {
                 // fórmula original: calorías = pasos * peso * 0.0007
                 val calorias = (pasos * peso * 0.0007).toInt()
 
+                //guardado local
+                guardarDatosLocales(pasos, minutosActivos, calorias)
+
                 // Creamos el mapa con “pasos”, “tiempoActividad” EN MINUTOS y “calorias”
                 val data = mapOf(
                     "pasos" to pasos,
@@ -184,6 +187,18 @@ class MovimientoService : Service(), SensorEventListener {
             }
     }
 
+    /*
+    Logica para guardar los datos de manera local para su posterior consulta
+     */
+    private fun guardarDatosLocales(pasos: Int, minutos:Int, calorias:Int){
+        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putInt("pasos_hoy", pasos)
+            .putInt("minutos_activos", minutos)
+            .putInt("calorias", calorias)
+            .apply()
+        Log.d("LocalStorage", "Datos guardados -> pasos: $pasos, minutos: $minutos, calorias: $calorias")
+    }
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -211,3 +226,19 @@ class MovimientoService : Service(), SensorEventListener {
 
     override fun onBind(intent: Intent?): IBinder? = null
 }
+
+fun obtenerMinutosLocales(context: Context): Int {
+    val prefs = context.getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+    val minutos = prefs.getInt("minutos_activos", 0)
+    Log.d("LocalStorage", "Minutos recuperados: $minutos")
+    return minutos
+}
+
+fun obtenerCaloriasLocales(context: Context): Int {
+    val prefs = context.getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+    val calorias = prefs.getInt("calorias", 0)
+    Log.d("LocalStorage", "Calorías recuperadas: $calorias")
+    return calorias
+}
+
+

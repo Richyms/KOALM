@@ -40,6 +40,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.AddAlert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -143,6 +145,9 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         }
                     },
                     actions = {
+                        IconButton(onClick = { navController.navigate("notificaciones") }) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notificaciones")
+                        }
                         IconButton(onClick = { navController.navigate("ajustes") }) {
                             Icon(Icons.Default.Settings, contentDescription = "Configuración")
                         }

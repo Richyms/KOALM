@@ -39,7 +39,7 @@ class DigitalDisconnectNotificationService : NotificationBase() {
             putExtra("is_reading", false)
             putExtra("is_digital_disconnect", true)
             putExtra("notification_title", context.getString(defaultTitle))
-            putExtra("notification_action_button", context.getString(R.string.notification_disconnect_button))
+            //putExtra("notification_action_button", context.getString(R.string.notification_disconnect_button))
         }
     }
 

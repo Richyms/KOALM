@@ -217,7 +217,7 @@ class NotificationReceiver : BroadcastReceiver() {
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-
+/*
         val historyIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("route", "historial_meditacion")
@@ -225,6 +225,7 @@ class NotificationReceiver : BroadcastReceiver() {
             addCategory(Intent.CATEGORY_LAUNCHER)
             action = Intent.ACTION_MAIN
         }
+
         
         val historyPendingIntent = PendingIntent.getActivity(
             context,
@@ -232,7 +233,7 @@ class NotificationReceiver : BroadcastReceiver() {
             historyIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        
+         */
         val notification = NotificationCompat.Builder(context, MeditationNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(MeditationNotificationService().defaultTitle))
@@ -244,11 +245,13 @@ class NotificationReceiver : BroadcastReceiver() {
                 context.getString(R.string.start_timer),
                 startTimerPendingIntent
             )
+            /*
             .addAction(
                 R.drawable.ic_notification,
                 context.getString(R.string.historial_meditacion),
                 historyPendingIntent
             )
+             */
             .build()
         
         notificationManager.notify(MeditationNotificationService.NOTIFICATION_ID + diaSemana, notification)
@@ -286,6 +289,23 @@ class NotificationReceiver : BroadcastReceiver() {
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+
+        /*
+        val openBooksIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "libros")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+
+        val openBooksPendingIntent = PendingIntent.getActivity(
+            context,
+            ReadingNotificationService.NOTIFICATION_ID + diaSemana + 100,
+            openBooksIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        */
         
         val notification = NotificationCompat.Builder(context, ReadingNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -298,6 +318,13 @@ class NotificationReceiver : BroadcastReceiver() {
                 context.getString(R.string.start_timer),
                 startTimerPendingIntent
             )
+            /*
+            .addAction(More actions
+                R.drawable.ic_notification,
+                context.getString(R.string.notification_books_button),
+                openBooksPendingIntent
+            )
+            */
             .build()
         
         notificationManager.notify(ReadingNotificationService.NOTIFICATION_ID + diaSemana, notification)
@@ -326,7 +353,6 @@ class NotificationReceiver : BroadcastReceiver() {
         val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
             action = NotificationConstants.START_TIMER_ACTION
             putExtra("duration_minutes", durationMinutes)
-            putExtra("notas_habilitadas", notasHabilitadas)
         }
         
         val startTimerPendingIntent = PendingIntent.getBroadcast(
@@ -335,7 +361,7 @@ class NotificationReceiver : BroadcastReceiver() {
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-
+        /*
         val openNotesIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("route", "notas")
@@ -343,14 +369,14 @@ class NotificationReceiver : BroadcastReceiver() {
             addCategory(Intent.CATEGORY_LAUNCHER)
             action = Intent.ACTION_MAIN
         }
-        
+
         val openNotesPendingIntent = PendingIntent.getActivity(
             context,
             WritingNotificationService.NOTIFICATION_ID + diaSemana + 100,
             openNotesIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        
+        */
         val notification = NotificationCompat.Builder(context, WritingNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(WritingNotificationService().defaultTitle))
@@ -361,11 +387,6 @@ class NotificationReceiver : BroadcastReceiver() {
                 R.drawable.ic_timer,
                 context.getString(R.string.start_timer),
                 startTimerPendingIntent
-            )
-            .addAction(
-                R.drawable.ic_notification,
-                context.getString(R.string.notification_notes_button),
-                openNotesPendingIntent
             )
             .build()
         
@@ -403,7 +424,7 @@ class NotificationReceiver : BroadcastReceiver() {
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-
+        /*
         val openDisconnectIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("route", "desconexion")
@@ -418,7 +439,7 @@ class NotificationReceiver : BroadcastReceiver() {
             openDisconnectIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        
+        */
         val notification = NotificationCompat.Builder(context, DigitalDisconnectNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(DigitalDisconnectNotificationService().defaultTitle))
@@ -430,11 +451,13 @@ class NotificationReceiver : BroadcastReceiver() {
                 context.getString(R.string.start_timer),
                 startTimerPendingIntent
             )
+            /*
             .addAction(
                 R.drawable.ic_notification,
                 context.getString(R.string.notification_disconnect_button),
                 openDisconnectPendingIntent
             )
+            */
             .build()
         
         notificationManager.notify(DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana, notification)

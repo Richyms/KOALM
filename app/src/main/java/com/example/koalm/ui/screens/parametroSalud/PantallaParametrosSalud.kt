@@ -23,8 +23,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.koalm.R
+import com.example.koalm.services.obtenerMinutosLocales
+import com.example.koalm.services.obtenerCaloriasLocales
 import com.example.koalm.data.StepCounterRepository
 import com.example.koalm.ui.components.snapshotsAsState
 import com.example.koalm.ui.components.BarraNavegacionInferior
@@ -33,6 +37,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.time.LocalDate
+import android.util.Log
+import kotlinx.coroutines.tasks.await
 
 /* ----------  UI PRINCIPAL  ---------- */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +46,7 @@ import java.time.LocalDate
 fun PantallaParametrosSalud(
     navController: NavHostController
 ) {
+    val context = LocalContext.current
     val correo = FirebaseAuth.getInstance().currentUser?.email
     val metas = remember(correo) {
         Firebase.firestore.collection("usuarios")
@@ -47,17 +54,29 @@ fun PantallaParametrosSalud(
             .collection("metasSalud")
             .document("valores")
     }
+    val peso = remember { mutableStateOf(0f) }
+
+    // Recuperar el peso al iniciar la pantalla
+    LaunchedEffect(Unit) {
+        peso.value = recuperarPesoFirestore()
+    }
 
     val metaPasos by metas.snapshotsAsState { it?.getLong("metaPasos")?.toInt() ?: 10000 }
     val metaMinutos by metas.snapshotsAsState { it?.getLong("metaMinutos")?.toInt() ?: 100 }
     val metaCalorias by metas.snapshotsAsState { it?.getLong("metaCalorias")?.toInt() ?: 500 }
 
+
     val pasos by StepCounterRepository.steps.collectAsState()
-    val segundos by StepCounterRepository.activeSeconds.collectAsState()
-    val minutos = segundos / 60
+    val calorias = (pasos * peso.value * 0.0007).toInt()
+    //val segundos by StepCounterRepository.activeSeconds.collectAsState()
+    //val minutos = segundos / 60
+    //val pasos = remember { obtenerPasosLocales(context) }
+    val minutos = remember { obtenerMinutosLocales(context) }
+    //val calorias = remember { obtenerCaloriasLocales(context) }
+
 
     val today = LocalDate.now().toString()
-    val calorias: Int = if (correo != null) {
+    /*val calorias: Int = if (correo != null) {
         val doc = remember(correo, today) {
             Firebase.firestore.collection("usuarios")
                 .document(correo)
@@ -67,6 +86,7 @@ fun PantallaParametrosSalud(
         val c by doc.snapshotsAsState { it?.getLong("calorias")?.toInt() ?: 0 }
         c
     } else 0
+     */
 
     Scaffold(
         topBar = {
@@ -232,5 +252,28 @@ fun InfoCard(
                 }
             }
         }
+    }
+}
+
+suspend fun recuperarPesoFirestore(): Float {
+    val correo = FirebaseAuth.getInstance().currentUser?.email
+    val firestore = Firebase.firestore
+
+    return try {
+        if (correo != null) {
+            val snapshot = firestore.collection("usuarios")
+                .document(correo)
+                .get()
+                .await()
+
+            val peso = snapshot.getDouble("peso")?.toFloat() ?: 0f
+            Log.d("DEBUG_PESO", "Peso recuperado: $peso")
+            peso
+        } else {
+            0f
+        }
+    } catch (e: Exception) {
+        Log.e("DEBUG_PESO", "Error al recuperar peso", e)
+        0f
     }
 }

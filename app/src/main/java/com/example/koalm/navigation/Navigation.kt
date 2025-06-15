@@ -35,6 +35,7 @@ import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfiguracionHab
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoSueno
 import com.example.koalm.ui.screens.habitos.personalizados.PantallaConfigurarHabitoPersonalizado
 import com.example.koalm.ui.screens.habitos.personalizados.PantallaGestionHabitosPersonalizados
+import com.example.koalm.ui.screens.habitos.personalizados.PantallaNotificacionesPersonalizados
 import com.example.koalm.ui.screens.habitos.PantallaHabitos
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaLibros
 import com.example.koalm.ui.screens.PantallaMenuPrincipal
@@ -141,6 +142,7 @@ fun AppNavigation(
         screenWithSlide("privacidad") { PantallaPrivacidad(navController)}
         screenWithSlide("nosotros") { PantallaNosotros(navController)}
         screenWithSlide("ajustes") { PantallaAjustes(navController)}
+        screenWithSlide("notificaciones") { PantallaNotificacionesPersonalizados(navController)}
 
         composable(
             route = "resultado_ansiedad/{puntaje}",
