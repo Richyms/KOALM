@@ -231,7 +231,7 @@ fun InfoCard(
                 Text(titulo, fontWeight = FontWeight.Bold)
                 if (dato.isNotBlank()) Text(dato)
             }
-            if (progreso != null) {
+            /*if (progreso != null) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
                     CircularProgressIndicator(
                         progress = { progreso },
@@ -250,7 +250,7 @@ fun InfoCard(
                         )
                     }
                 }
-            }
+            }*/
         }
     }
 }
