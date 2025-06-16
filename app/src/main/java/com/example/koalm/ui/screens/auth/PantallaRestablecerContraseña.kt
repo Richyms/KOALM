@@ -80,7 +80,7 @@ fun ImagenKoalaCorreo() {
     Image(
         painter = painterResource(id = R.drawable.query), // Puedes usar otro como "mail", "koala_email", etc.
         contentDescription = "Koala correo enviado",
-        modifier = Modifier.size(200.dp),
-        colorFilter = ColorFilter.tint(tintColor)
+        modifier = Modifier.size(200.dp)/*,
+        colorFilter = ColorFilter.tint(tintColor)*/
     )
 }

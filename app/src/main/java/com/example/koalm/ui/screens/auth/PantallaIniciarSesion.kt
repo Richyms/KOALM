@@ -248,8 +248,9 @@ fun LoginLogo() {
     Image(
         painter = painterResource(id = R.drawable.login),
         contentDescription = "Koala",
-        modifier = Modifier.size(300.dp),
+        modifier = Modifier.size(300.dp)/*,
         colorFilter = ColorFilter.tint(tintColor)
+        */
     )
 }
 

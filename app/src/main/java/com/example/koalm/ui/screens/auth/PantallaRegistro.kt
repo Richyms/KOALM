@@ -168,8 +168,8 @@ fun LogoRegistro() {
     Image(
         painter = painterResource(id = R.drawable.greeting),
         contentDescription = "Koala registrarse",
-        modifier = Modifier.size(270.dp),
-        colorFilter = ColorFilter.tint(tintColor)
+        modifier = Modifier.size(270.dp)/*,
+        colorFilter = ColorFilter.tint(tintColor)*/
     )
 }
 
