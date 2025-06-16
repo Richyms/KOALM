@@ -587,7 +587,7 @@
 
         @Composable
         fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
-            val iconTint = if (isSystemInDarkTheme()) Color.White else Color.Black
+            val iconTint = if (isSystemInDarkTheme()) Color.Black else Color.Black
             OutlinedTextField(
                 value = value,
                 onValueChange = {},
