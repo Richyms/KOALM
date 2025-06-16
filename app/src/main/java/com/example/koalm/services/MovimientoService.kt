@@ -16,6 +16,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.koalm.R
 import com.example.koalm.data.StepCounterRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -136,8 +137,9 @@ class MovimientoService : Service(), SensorEventListener {
      *   prefs.edit().putString("correo", user.email).apply()
      */
     private fun getUserEmail(): String? {
-        val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
-        return prefs.getString("correo", null)
+        //val prefs = getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
+        //return prefs.getString("correo", null)
+        return FirebaseAuth.getInstance().currentUser?.email
     }
 
     /**
@@ -157,10 +159,16 @@ class MovimientoService : Service(), SensorEventListener {
 
         usuarioDoc.get()
             .addOnSuccessListener { document ->
+                //LOG: Verifica si Firestore devuelve algo
+                Log.d("KOALM_FIRESTORE", "Documento Firestore recibido: ${document.data}")
                 // Obtenemos “peso” para calcular calorías
                 val peso = document.getDouble("peso") ?: 0.0
+                //LOG: Muestra el peso recuperado
+                Log.d("KOALM_FIRESTORE", "Peso recuperado de Firestore: $peso")
                 // fórmula original: calorías = pasos * peso * 0.0007
                 val calorias = (pasos * peso * 0.0007).toInt()
+                //LOG: Muestra pasos y calorías calculadas
+                Log.d("KOALM_FIRESTORE", "Pasos: $pasos, Calorías calculadas: $calorias")
 
                 //guardado local
                 guardarDatosLocales(pasos, minutosActivos, calorias)
@@ -232,13 +240,6 @@ fun obtenerMinutosLocales(context: Context): Int {
     val minutos = prefs.getInt("minutos_activos", 0)
     Log.d("LocalStorage", "Minutos recuperados: $minutos")
     return minutos
-}
-
-fun obtenerCaloriasLocales(context: Context): Int {
-    val prefs = context.getSharedPreferences("koalm_prefs", Context.MODE_PRIVATE)
-    val calorias = prefs.getInt("calorias", 0)
-    Log.d("LocalStorage", "Calorías recuperadas: $calorias")
-    return calorias
 }
 
 
