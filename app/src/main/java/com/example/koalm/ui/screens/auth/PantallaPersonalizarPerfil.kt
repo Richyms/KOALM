@@ -316,7 +316,7 @@
         @Composable
         fun ImagenUsuario(imagenBase64: String?, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
             val isDark = isSystemInDarkTheme()
-            val tint = if (isDark) Color.White else Color.Black
+            val tint = if (isDark) Color.Black else Color.Black
 
             Box(
                 modifier = Modifier
@@ -353,7 +353,7 @@
                             contentDescription = "Usuario",
                             modifier = Modifier
                                 .fillMaxSize(),
-                            colorFilter = ColorFilter.tint(tint)
+                                colorFilter = ColorFilter.tint(tint)
                         )
                     }
                 }
@@ -587,7 +587,7 @@
 
         @Composable
         fun CampoFechaNacimiento(value: String, onClick: () -> Unit) {
-            val iconTint = if (isSystemInDarkTheme()) Color.White else Color.Black
+            val iconTint = if (isSystemInDarkTheme()) Color.Black else Color.Black
             OutlinedTextField(
                 value = value,
                 onValueChange = {},

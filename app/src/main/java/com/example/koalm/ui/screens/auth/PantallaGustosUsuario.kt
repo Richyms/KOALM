@@ -79,8 +79,8 @@ fun ImagenKoalaGustos() {
         contentDescription = "Koala haciendo ejercicio",
         modifier = Modifier
             .size(300.dp)
-            .padding(vertical = 24.dp),
-        colorFilter = ColorFilter.tint(tintColor)
+            .padding(vertical = 24.dp)/*,
+        colorFilter = ColorFilter.tint(tintColor)*/
     )
 }
 

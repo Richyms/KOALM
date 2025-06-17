@@ -28,7 +28,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.services.obtenerMinutosLocales
-import com.example.koalm.services.obtenerCaloriasLocales
 import com.example.koalm.data.StepCounterRepository
 import com.example.koalm.ui.components.snapshotsAsState
 import com.example.koalm.ui.components.BarraNavegacionInferior
@@ -70,9 +69,7 @@ fun PantallaParametrosSalud(
     val calorias = (pasos * peso.value * 0.0007).toInt()
     //val segundos by StepCounterRepository.activeSeconds.collectAsState()
     //val minutos = segundos / 60
-    //val pasos = remember { obtenerPasosLocales(context) }
     val minutos = remember { obtenerMinutosLocales(context) }
-    //val calorias = remember { obtenerCaloriasLocales(context) }
 
 
     val today = LocalDate.now().toString()

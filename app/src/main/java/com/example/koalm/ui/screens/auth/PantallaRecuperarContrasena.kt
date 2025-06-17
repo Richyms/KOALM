@@ -77,8 +77,8 @@ fun ImagenKoalaRecuperar() {
     Image(
         painter = painterResource(id = R.drawable.query),
         contentDescription = "Koala pregunta",
-        modifier = Modifier.size(300.dp),
-        colorFilter = ColorFilter.tint(tintColor)
+        modifier = Modifier.size(300.dp)/*,
+        colorFilter = ColorFilter.tint(tintColor)*/
     )
 }
 
