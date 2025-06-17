@@ -3,8 +3,10 @@ package com.example.koalm.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -157,7 +159,7 @@ fun GraficaSueno(datos: DatosSueno, modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp),
+                .padding(top = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             InfoCard(
@@ -245,15 +247,16 @@ fun BarrasDobleSueno(
         else -> Color(0xFFE57373)
     }
 
-    Box(
+    Row(
         modifier = Modifier
-            .width(32.dp)
-            .height(220.dp) // Altura fija para todas las barras
+            .height(220.dp)
+            .width(32.dp),// Altura fija para todas las barras
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.Bottom
     ) {
         // Barra del objetivo (siempre verde semi-transparente)
         Box(
             modifier = Modifier
-                .align(Alignment.BottomStart)
                 .width(12.dp)
                 .height((horasObjetivo / maxHoras * 220).dp)
                 .clip(RoundedCornerShape(4.dp))
@@ -263,7 +266,6 @@ fun BarrasDobleSueno(
         // Barra de horas reales
         Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
                 .width(12.dp)
                 .height((horasDormidas / maxHoras * 220).dp)
                 .clip(RoundedCornerShape(4.dp))
