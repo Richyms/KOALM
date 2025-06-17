@@ -38,6 +38,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.example.koalm.model.Usuario
 import com.google.firebase.firestore.SetOptions
 import androidx.compose.ui.draw.clip
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
+import com.example.koalm.ui.components.ValidacionesDialogoAnimado
+import kotlinx.coroutines.*
+import androidx.compose.runtime.*
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaRegistro(
@@ -55,6 +61,17 @@ fun PantallaRegistro(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
+
+    var mensajeValidacion by remember { mutableStateOf<String?>(null) }
+
+    if (mensajeValidacion != null) {
+        ValidacionesDialogoAnimado(
+            mensaje = mensajeValidacion!!,
+            onDismiss = {
+                mensajeValidacion = null
+            }
+        )
+    }
 
     //Verificar si el correo es válido
     var isValidEmail by remember { mutableStateOf(true) }
@@ -146,12 +163,17 @@ fun PantallaRegistro(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            CheckboxTerminos(termsAccepted) { termsAccepted = it }
+            CheckboxTerminos(
+                navController = navController,
+                checked = termsAccepted,
+                onCheckedChange = { termsAccepted = it }
+            )
             Spacer(modifier = Modifier.height(12.dp))
             BotonesRegistro(
                 email, username, password, confirmPassword,
                 isValidEmail, yaExisteCorreo,
                 termsAccepted, navController, context,
+                onMensajeValidacionChange = { mensajeValidacion = it },
                 onGoogleSignInClick = onGoogleSignInClick
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -464,7 +486,7 @@ fun CampoConfirmarContrasena(
 
 
 @Composable
-fun CheckboxTerminos(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+fun CheckboxTerminos(checked: Boolean, navController: NavController, onCheckedChange: (Boolean) -> Unit) {
     val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(0.97f),
@@ -492,7 +514,7 @@ fun CheckboxTerminos(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
             },
             fontSize = 14.sp,
             modifier = Modifier.clickable {
-                Toast.makeText(context, "Mostrando términos y condiciones", Toast.LENGTH_SHORT).show()
+                navController.navigate("TyC")
             }
         )
     }
@@ -508,11 +530,39 @@ fun BotonesRegistro(
     termsAccepted: Boolean,
     navController: NavController,
     context: Context,
+    onMensajeValidacionChange: (String?) -> Unit,
     onGoogleSignInClick: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val buttonModifier = Modifier.width(200.dp)
     var isLoading by remember { mutableStateOf(false) }
     val TAG = "Registro"
+
+    //Mensaje de exito de registro
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Registro exitoso! Hemos enviado un enlace de verificación a tu correo electrónico.",
+            onDismiss = {
+                mostrarDialogoExito = false
+                navController.navigate("iniciar") {
+                    popUpTo("registro") { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        )
+    }
+
+    //Mensaje de fallo de registro
+    var mostrarDialogoFallo by remember{ mutableStateOf(false) }
+    if (mostrarDialogoFallo) {
+        FalloDialogoGuardadoAnimado(
+            mensaje = "Hubo un error al enviar el enlace de verificación.",
+            onDismiss = {
+                mostrarDialogoFallo = false
+            }
+        )
+    }
 
     Button(
         onClick = {
@@ -542,31 +592,31 @@ fun BotonesRegistro(
             when {
                 email.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                     android.util.Log.w(TAG, "Campos vacíos detectados")
-                    Toast.makeText(context, "Por favor completa todos los campos.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange("Por favor completa todos los campos.")
                 }
                 !isValidEmail -> {
                     android.util.Log.w(TAG, "Email inválido")
-                    Toast.makeText(context, "El formato del correo no es válido.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange("El formato del correo no es válido.")
                 }
                 yaExisteCorreo -> {
                     android.util.Log.w(TAG, "Email ya existe en la base de datos")
-                    Toast.makeText(context, "El correo electrónico ya está en uso.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange("El correo electrónico ya está en uso.")
                 }
                 !valido -> {
                     android.util.Log.w(TAG, "Username inválido")
-                    Toast.makeText(context, "El nombre de usuario no cumple con los requisitos.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange("El nombre de usuario no cumple con los requisitos.")
                 }
                 !passwordRegex.matches(password) -> {
                     android.util.Log.w(TAG, "Password no cumple con los requisitos")
-                    Toast.makeText(context, "La contraseña no cumple con los requisitos.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange("La contraseña no cumple con los requisitos.")
                 }
                 password != confirmPassword -> {
                     android.util.Log.w(TAG, "Passwords no coinciden")
-                    Toast.makeText(context, "Las contraseñas no coinciden.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange("Las contraseñas no coinciden.")
                 }
                 !termsAccepted -> {
                     android.util.Log.w(TAG, "Términos no aceptados")
-                    Toast.makeText(context, "Debes aceptar los términos y condiciones.", Toast.LENGTH_SHORT).show()
+                    onMensajeValidacionChange( "Debes aceptar los términos y condiciones.")
                 }
                 else -> {
                     android.util.Log.d(TAG, "Todas las validaciones pasaron, iniciando registro en Firebase")
@@ -605,24 +655,12 @@ fun BotonesRegistro(
                                                 isLoading = false
                                                 if (verifyTask.isSuccessful) {
                                                     android.util.Log.d(TAG, "Correo de verificación enviado exitosamente")
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Se envió un correo de verificación a $email",
-                                                        Toast.LENGTH_LONG
-                                                    ).show()
-                                                    // 5) Navegar a login
-                                                    android.util.Log.d(TAG, "Navegando a pantalla de inicio de sesión")
-                                                    navController.navigate("iniciar") {
-                                                        popUpTo("registro") { inclusive = true }
-                                                        launchSingleTop = true
-                                                    }
+                                                    // Mostrar diálogo de éxito
+                                                    mostrarDialogoExito = true
+
                                                 } else {
                                                     android.util.Log.e(TAG, "Error al enviar correo de verificación", verifyTask.exception)
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Error al enviar verificación: ${verifyTask.exception?.localizedMessage}",
-                                                        Toast.LENGTH_LONG
-                                                    ).show()
+                                                    mostrarDialogoFallo = true
                                                 }
                                             }
                                     }

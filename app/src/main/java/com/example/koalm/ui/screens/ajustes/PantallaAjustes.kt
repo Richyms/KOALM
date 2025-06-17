@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.example.koalm.ui.viewmodels.InicioSesionPreferences
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,6 +73,7 @@ fun PantallaAjustes(navController: NavHostController) {
 @Suppress("DEPRECATION")
 fun cerrarSesion(context: Context, navController: NavHostController) {
     FirebaseAuth.getInstance().signOut()
+    InicioSesionPreferences(context).reiniciarAnimacion()
 
     @Suppress("DEPRECATION")
     Identity.getSignInClient(context)

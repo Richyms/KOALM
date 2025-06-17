@@ -268,10 +268,10 @@
                                 .mapValues { it.value as Any }            // Convertimos Any? → Any
                                 .toMutableMap()
 
-        // (c) Agregamos sólo día/mes/año bajo la clave "fechaCreacion"
+                            // (c) Agregamos sólo día/mes/año bajo la clave "fechaCreacion"
                             dataUsuario["fechaCreacion"] = fechaHoy
 
-        // (d) Guardamos en Firestore usando merge:
+                            // (d) Guardamos en Firestore usando merge:
                             FirebaseFirestore.getInstance()
                                 .collection("usuarios")
                                 .document(email)

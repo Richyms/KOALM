@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +109,11 @@ fun PantallaPrivacidad (navController: NavHostController){
                             "Conservamos tu información únicamente el tiempo necesario para cumplir con las finalidades señaladas." +
                             "\nPuedes solicitar la eliminación de tus datos en cualquier momento.\n" +
                             "Nos reservamos el derecho de modificar esta Política en cualquier momento. En caso de cambios sustanciales, notificaremos a través de la app o por correo electrónico.\n" +
-                            "Al usar KOALM, aceptas esta Política de Privacidad. Si no estás de acuerdo, por favor no utilices la aplicación.")
+                            "Al usar KOALM, aceptas esta Política de Privacidad. Si no estás de acuerdo, por favor no utilices la aplicación.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Justify,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
         }

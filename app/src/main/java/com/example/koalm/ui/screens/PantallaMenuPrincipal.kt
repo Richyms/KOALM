@@ -74,10 +74,13 @@ import com.example.koalm.ui.components.LogroDialogoAnimado
 import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 import com.example.koalm.ui.components.obtenerIconoPorNombre
 import com.example.koalm.ui.screens.habitos.personalizados.parseColorFromFirebase
+import com.example.koalm.ui.viewmodels.InicioSesionPreferences
 import com.example.koalm.ui.viewmodels.LogrosPreferences
 import com.google.firebase.firestore.FirebaseFirestore
+//import kotlinx.coroutines.flow.internal.NoOpContinuation.context
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
+//import kotlin.coroutines.jvm.internal.CompletedContinuation.context
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,16 +103,6 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
     val db = FirebaseFirestore.getInstance()
     var username by remember { mutableStateOf("") }
 
-    var mostrarDialogoBienvenida by rememberSaveable{ mutableStateOf(true) }
-    if (mostrarDialogoBienvenida) {
-        BienvenidoDialogoAnimado(
-            mensaje = "Bienvenid@ $username",
-            onDismiss = {
-                mostrarDialogoBienvenida = false
-            }
-
-        )
-    }
 
     LaunchedEffect(usuarioEmail) {
         if (usuarioEmail != null) {
@@ -126,6 +119,30 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
             }
         }
     }
+
+    val context = LocalContext.current
+    val prefs = remember { InicioSesionPreferences(context) }
+    var mostrarDialogoBienvenida by rememberSaveable { mutableStateOf(false) }
+
+    // Mostrar solo si no ha sido mostrada antes
+        LaunchedEffect(Unit) {
+            if (!prefs.fueMostradaAnimacion()) {
+                mostrarDialogoBienvenida = true
+            }
+        }
+
+    // Mostrar diálogo si el estado está en true
+        if (mostrarDialogoBienvenida) {
+            BienvenidoDialogoAnimado(
+                mensaje = "Bienvenid@ $username",
+                onDismiss = {
+                    mostrarDialogoBienvenida = false
+                    prefs.marcarAnimacionComoMostrada()
+                }
+            )
+        }
+
+
 
     ModalNavigationDrawer(
         drawerState = drawerState,

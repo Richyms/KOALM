@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -257,24 +258,27 @@ fun BienvenidoDialogoAnimado(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 // DotLottieAnimation
                 DotLottieAnimation(
-                    source = DotLottieSource.Url("https://lottie.host/ddb852e8-8d1b-41c0-8ea3-4652d2116b77/bie9VSzD3Q.lottie"),
+                    source = DotLottieSource.Url("https://lottie.host/9a1808be-0436-42cd-918c-55963c8e71a5/zCh5lTbX1N.lottie"),
                     autoplay = true,
-                    loop = true,
+                    loop = false,
                     speed = 1.5f,
                     useFrameInterpolation = false,
                     playMode = Mode.FORWARD,
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(200.dp)
                         .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        .pointerInput(Unit) {}
                 )
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = mensaje,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )

@@ -135,14 +135,6 @@ fun HabitoCategoriaCard(
             }
             
             Spacer(modifier = Modifier.weight(1f))
-            
-            IconButton(onClick = { /* Favoritos */ }) {
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorito",
-                    tint = GrisMedio
-                )
-            }
         }
     }
 } 

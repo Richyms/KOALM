@@ -24,6 +24,7 @@ import com.example.koalm.R
 import com.example.koalm.model.Usuario
 import com.example.koalm.ui.theme.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,7 +85,11 @@ fun PantallaTyC (navController: NavHostController){
                             "Nos reservamos el derecho de modificar estos términos en cualquier momento, en caso de cambios sustanciales, se notificará a los usuarios dentro de la app o por correo electrónico.\n" +
                             "Este documento se rige por las leyes mexicanas, incluyendo la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.\n" +
                             "Para dudas, aclaraciones o ejercicio de derechos ARCO (Acceso, Rectificación, Cancelación u Oposición), puedes contactarnos al correo:\n" +
-                            "adslatex@gmail.com")
+                            "adslatex@gmail.com",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Justify,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
         }

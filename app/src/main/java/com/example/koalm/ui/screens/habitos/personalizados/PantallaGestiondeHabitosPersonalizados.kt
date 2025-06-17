@@ -469,7 +469,7 @@ fun HabitoCardExpandible(
     }
 }
 
-//Cnfirmacion de eliminacion del habito
+//Confirmacion de eliminacion del habito
 @Composable
 fun ConfirmacionDialogoEliminarAnimado(
     habitoNombre: String,

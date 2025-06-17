@@ -33,6 +33,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.example.koalm.model.Usuario
+import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +44,17 @@ fun PantallaIniciarSesion(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+
+    var mensajeValidacion by remember { mutableStateOf<String?>(null) }
+
+    if (mensajeValidacion != null) {
+        ValidacionesDialogoAnimado(
+            mensaje = mensajeValidacion!!,
+            onDismiss = {
+                mensajeValidacion = null
+            }
+        )
+    }
 
     // Estados de input
     var email by remember { mutableStateOf("") }
@@ -107,11 +119,7 @@ fun PantallaIniciarSesion(
                                     if (task.isSuccessful) {
                                         val user = auth.currentUser!!
                                         if (!user.isEmailVerified) {
-                                            Toast.makeText(
-                                                context,
-                                                "Por favor verifica tu correo antes de iniciar sesión",
-                                                Toast.LENGTH_LONG
-                                            ).show()
+                                            mensajeValidacion = "Por favor verifica tu correo antes de iniciar sesión"
                                             return@addOnCompleteListener
                                         }
 
@@ -209,11 +217,12 @@ fun PantallaIniciarSesion(
                                     } else {
                                         // Si el inicio de sesión falla, se muestra un mensaje de error
                                         val err = task.exception
-                                        val msg = if (err is FirebaseAuthInvalidCredentialsException)
+                                        mensajeValidacion = if (err is FirebaseAuthInvalidCredentialsException)
                                             "Credenciales incorrectas"
-                                        else "Error: ${err?.localizedMessage}"
-                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                        else
+                                            "Error: ${err?.localizedMessage ?: "Ha ocurrido un error inesperado"}"
                                     }
+
                                 }
                         }
                     }
@@ -277,7 +286,7 @@ fun EmailField(
         ),
         supportingText = {
             Text(
-                text = "Solo servicios de correo electrónico permitidos..",
+                text = "Solo servicios de correo electrónico permitidos.",
                 color = GrisMedio,
                 fontSize = 12.sp
             )
@@ -359,6 +368,6 @@ fun LoginFooterText(navController: NavHostController) {
         fontSize = 14.sp,
         modifier = Modifier
             .clickable { navController.navigate("registro") }
-            .padding(bottom = 32.dp) // 👈 PADDING INFERIOR agregado aquí
+            .padding(bottom = 32.dp)
     )
 }

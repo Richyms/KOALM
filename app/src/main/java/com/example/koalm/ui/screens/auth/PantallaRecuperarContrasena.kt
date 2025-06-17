@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.koalm.R
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
 import com.example.koalm.ui.theme.*
 
 import com.google.firebase.auth.FirebaseAuth
@@ -124,6 +126,18 @@ fun BotonEnviarCorreo(
     var correoExiste by remember { mutableStateOf<Boolean?>(null) }
     var mostrarMensajeError by remember { mutableStateOf(false) }
 
+
+    //Mensaje de fallo
+    var mostrarDialogoFallo by remember{ mutableStateOf(false) }
+    if (mostrarDialogoFallo) {
+        FalloDialogoGuardadoAnimado(
+            mensaje = "No existe una cuenta asociada a este correo.",
+            onDismiss = {
+                mostrarDialogoFallo = false
+            }
+        )
+    }
+
     // Función de validación del correo
     fun validarCorreoExistente(correo: String) {
         FirebaseFirestore.getInstance()
@@ -143,11 +157,6 @@ fun BotonEnviarCorreo(
 
                     auth.sendPasswordResetEmail(correo, actionCodeSettings)
                         .addOnSuccessListener {
-                            Toast.makeText(
-                                context,
-                                "Revisa tu bandeja de entrada; te enviamos el enlace.",
-                                Toast.LENGTH_LONG
-                            ).show()
                             navController.navigate("restablecer")
                         }
                         .addOnFailureListener {
@@ -155,12 +164,7 @@ fun BotonEnviarCorreo(
                         }
                 } else {
                     // Si no existe, mostrar mensaje de error
-                    mostrarMensajeError = true
-                    Toast.makeText(
-                        context,
-                        "No existe una cuenta asociada a este correo.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    mostrarDialogoFallo = true
                 }
             }
             .addOnFailureListener {
