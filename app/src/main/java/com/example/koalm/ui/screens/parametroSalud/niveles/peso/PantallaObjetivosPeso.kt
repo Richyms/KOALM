@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
@@ -17,12 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.viewmodels.ObjetivosPesoViewModel
+
 
 @Composable
 fun PantallaObjetivosPeso(
@@ -35,6 +38,8 @@ fun PantallaObjetivosPeso(
     val pesoAct  by viewModel.pesoActual.collectAsState()
     val fechaAct by viewModel.fechaActual.collectAsState()
     val pesoObj  by viewModel.pesoObjetivo.collectAsState()
+    //Estandar de objetivo
+    val pesoRegex = Regex("^\\d{0,3}(\\.\\d{0,2})?$")
 
     val green = Color(0xFF4CAF50)
 
@@ -95,8 +100,10 @@ fun PantallaObjetivosPeso(
                 fecha = null,
                 editable = true,
                 onValueChange = { nuevoTexto ->
-                    nuevoTexto.toFloatOrNull()?.let { nuevo ->
-                        viewModel.setObjetivo(nuevo)
+                    if (nuevoTexto.isEmpty() || pesoRegex.matches(nuevoTexto)) {
+                        nuevoTexto.toFloatOrNull()?.let { nuevo ->
+                            viewModel.setObjetivo(nuevo)
+                        }
                     }
                 }
             )
