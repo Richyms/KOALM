@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -138,6 +140,7 @@ fun PantallaActualizarPeso(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Peso actual", fontSize = 16.sp, color = Color.Black)
+                val pesoRegex = Regex("^\\d{0,3}(\\.\\d{0,2})?$")
 
                 // recuadro para ingresar peso
                 Box(
@@ -151,11 +154,15 @@ fun PantallaActualizarPeso(
                 ) {
                     BasicTextField(
                         value = pesoText,
-                        onValueChange = {
-                            pesoText = it
+                        onValueChange = { newValue ->
+                            // Filtrar SOLO si pasa el regex O está vacío
+                            if (newValue.text.isEmpty() || pesoRegex.matches(newValue.text)) {
+                                pesoText = newValue
+                            }
                         },
                         singleLine = true,
-                        textStyle = TextStyle(fontSize = 16.sp)
+                        textStyle = TextStyle(fontSize = 16.sp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
 
