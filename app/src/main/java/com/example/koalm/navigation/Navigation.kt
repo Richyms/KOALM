@@ -19,10 +19,8 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
-/* Quitar comentario cuando se reemplacen las pantallas
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
+//import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
- */
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
@@ -62,6 +60,7 @@ import com.example.koalm.ui.screens.ajustes.PantallaPrivacidad
 import com.example.koalm.ui.screens.ajustes.PantallaNosotros
 import com.example.koalm.ui.screens.ajustes.PantallaAjustes
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaProgresoPeso
+import com.example.koalm.ui.screens.habitosKoalisticos.PantallaHabitosKoalisticos
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -120,7 +119,7 @@ fun AppNavigation(
         }
         screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
        // screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
+        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }
@@ -164,6 +163,15 @@ fun AppNavigation(
         ) { backStackEntry ->
             val duracion = backStackEntry.arguments?.getInt("duracion") ?: 15
             PantallaTemporizadorMeditacion(navController, duracion)
+        }
+
+        //HabitosKoalisticos
+        composable(
+            "pantalla_habitos_koalisticos/{tituloHabito}",
+            arguments = listOf(navArgument("tituloHabito") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val tituloHabito = backStackEntry.arguments?.getString("tituloHabito") ?: "Meditación koalística"
+            PantallaHabitosKoalisticos(navController, tituloHabito)
         }
     }
 }
