@@ -81,6 +81,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 //import kotlin.coroutines.jvm.internal.CompletedContinuation.context
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Badge
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -162,9 +165,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { navController.navigate("notificaciones") }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notificaciones")
-                        }
+                        IconoNotificacionesConBadge(navController)
                         IconButton(onClick = { navController.navigate("ajustes") }) {
                             Icon(Icons.Default.Settings, contentDescription = "Configuración")
                         }
@@ -941,6 +942,51 @@ fun HabitoCardPredeterminado(
     }
 }
 
+@Composable
+fun IconoNotificacionesConBadge(
+    navController: NavHostController
+) {
+    val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
+    val db = FirebaseFirestore.getInstance()
+
+    var notificacionesNoLeidas by remember { mutableStateOf(0) }
+
+    // Escuchar en tiempo real la cantidad de notificaciones no leídas
+    LaunchedEffect(usuarioEmail) {
+        if (usuarioEmail != null) {
+            db.collection("usuarios")
+                .document(usuarioEmail)
+                .collection("notificaciones")
+                .whereEqualTo("leido", false)
+                .addSnapshotListener { snapshots, e ->
+                    if (e != null) {
+                        notificacionesNoLeidas = 0
+                        return@addSnapshotListener
+                    }
+                    notificacionesNoLeidas = snapshots?.size() ?: 0
+                }
+        }
+    }
+
+    IconButton(onClick = { navController.navigate("notificaciones") }) {
+        if (notificacionesNoLeidas > 0) {
+            BadgedBox(
+                badge = {
+                    Badge {
+                        Text(notificacionesNoLeidas.toString())
+                    }
+                }
+            ) {
+                Icon(Icons.Default.Notifications, contentDescription = "Notificaciones")
+            }
+        } else {
+            Icon(Icons.Default.Notifications, contentDescription = "Notificaciones")
+        }
+    }
+
+}
+
+
 private fun formatearDuracion(minutos: Int): String {
     return if (minutos < 60) {
         "${minutos}min"
@@ -950,4 +996,6 @@ private fun formatearDuracion(minutos: Int): String {
         if (mins == 0) "${horas}h" else "${horas}h ${mins}min"
     }
 }
+
+
 

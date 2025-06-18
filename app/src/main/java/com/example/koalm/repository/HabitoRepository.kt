@@ -27,10 +27,12 @@ import java.time.format.DateTimeFormatter
 class HabitoRepository {
     private val TAG = "HabitoRepository"
     private val db = FirebaseFirestore.getInstance()
-    private val habitosCollection = db.collection("habitos")
 
     private val userEmail = FirebaseAuth.getInstance().currentUser?.email
         ?: throw IllegalStateException("Usuario no autenticado")
+
+    private val habitosCollection = db.collection("habitos").document(userEmail)
+        .collection("predeterminados")
 
     suspend fun crearHabito(habito: Habito): Result<String> = try {
         Log.d(TAG, "Iniciando creación de hábito: ${habito.titulo}")

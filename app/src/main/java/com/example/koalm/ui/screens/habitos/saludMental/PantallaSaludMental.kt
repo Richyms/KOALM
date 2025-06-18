@@ -168,7 +168,7 @@ fun PantallaSaludMental(navController: NavHostController) {
         ) {
             // Sección de plantilla de hábitos
             Text(
-                text = "Crea tu hábito",
+                text = "Configura tus hábitos",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -204,7 +204,7 @@ fun PantallaSaludMental(navController: NavHostController) {
                         )
                     }
                 } else {
-                    Log.d(TAG, "No hay hábitos activos para mostrar")
+                    Log.d(TAG, "No tienes hábitos mentales configurados")
                     Text(
                         text = "No tienes hábitos activos",
                         style = MaterialTheme.typography.bodyMedium,

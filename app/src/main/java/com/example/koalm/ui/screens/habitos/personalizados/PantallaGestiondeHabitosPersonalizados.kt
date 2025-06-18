@@ -1,6 +1,7 @@
 // PantallaGestionHabitosPersonalizados.kt
 package com.example.koalm.ui.screens.habitos.personalizados
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -50,11 +52,13 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.dotlottie.dlplayer.Mode
+import com.example.koalm.services.notifications.NotificationScheduler
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
+
     // Obtén el correo del usuario autenticado
     val usuarioEmail = FirebaseAuth.getInstance().currentUser?.email
     if (usuarioEmail.isNullOrBlank()) {
@@ -248,6 +252,7 @@ fun HabitoCardExpandible(
     onEliminarHabito: () -> Unit = {},
     colorPersonalizado: Color? = null // Se llama cuando el hábito es eliminado para actualizar la lista
 ) {
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
     var expandedMenu by remember { mutableStateOf(false) }
     var mostrarDialogoConfirmacion by remember { mutableStateOf(false) }
@@ -460,6 +465,7 @@ fun HabitoCardExpandible(
                 eliminarHabitoPersonalizado(
                     nombreHabito = habito.nombre,
                     usuarioEmail = FirebaseAuth.getInstance().currentUser?.email,
+                    context = context,
                     onSuccess = {
                         mostrarDialogoExito = true
                     }
@@ -553,56 +559,84 @@ fun ConfirmacionDialogoEliminarAnimado(
     }
 }
 
-//Eliminar el hábito
 fun eliminarHabitoPersonalizado(
     nombreHabito: String,
     usuarioEmail: String?,
+    context: Context,
     onSuccess: () -> Unit = {}
 ) {
     if (usuarioEmail == null) return
 
     val idDocumento = nombreHabito.replace(" ", "_")
-
     val db = FirebaseFirestore.getInstance()
 
-    val progresoRef = db.collection("habitos")
+    // 🔸 1. Obtener el hábito para acceder a los recordatorios
+    db.collection("habitos")
         .document(usuarioEmail)
         .collection("personalizados")
         .document(idDocumento)
-        .collection("progreso")
+        .get()
+        .addOnSuccessListener { documento ->
+            if (documento.exists()) {
+                val habit = documento.toObject(HabitoPersonalizado::class.java)
+                if (habit != null) {
+                    val totalHorarios = habit.recordatorios?.horas?.size
+                    val diasSeleccionados = habit.frecuencia
 
-    // Primero eliminamos los documentos de la subcolección "progreso"
-    progresoRef.get()
-        .addOnSuccessListener { snapshot ->
-            val batch = db.batch()
-            for (document in snapshot.documents) {
-                batch.delete(document.reference)
+                    // 🔸 2. Cancelar las notificaciones
+                    for (index in 0 until totalHorarios!!) {
+                        if (diasSeleccionados != null) {
+                            NotificationScheduler.cancelHabitReminder(
+                                context = context,
+                                habitId = idDocumento,
+                                reminderIndex = index,
+                                //diasSeleccionados = diasSeleccionados
+                            )
+                        }
+                    }
+                }
             }
 
-            // Ejecutar el batch para eliminar los documentos de "progreso"
-            batch.commit().addOnSuccessListener {
-                Log.d("Firestore", "Progreso eliminado correctamente.")
+            // 🔸 3. Eliminar subcolección "progreso"
+            val progresoRef = db.collection("habitos")
+                .document(usuarioEmail)
+                .collection("personalizados")
+                .document(idDocumento)
+                .collection("progreso")
 
-                // Ahora eliminamos el documento principal del hábito
-                db.collection("habitos")
-                    .document(usuarioEmail)
-                    .collection("personalizados")
-                    .document(idDocumento)
-                    .delete()
-                    .addOnSuccessListener {
-                        Log.d("Firestore", "Hábito eliminado correctamente.")
-                        onSuccess()
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Error al eliminar el hábito: ${e.message}")
+            progresoRef.get()
+                .addOnSuccessListener { snapshot ->
+                    val batch = db.batch()
+                    for (document in snapshot.documents) {
+                        batch.delete(document.reference)
                     }
 
-            }.addOnFailureListener { e ->
-                Log.e("Firestore", "Error al eliminar progreso: ${e.message}")
-            }
+                    batch.commit().addOnSuccessListener {
+                        Log.d("Firestore", "Progreso eliminado correctamente.")
+
+                        // 🔸 4. Eliminar el hábito principal
+                        db.collection("habitos")
+                            .document(usuarioEmail)
+                            .collection("personalizados")
+                            .document(idDocumento)
+                            .delete()
+                            .addOnSuccessListener {
+                                Log.d("Firestore", "Hábito eliminado correctamente.")
+                                onSuccess()
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("Firestore", "Error al eliminar el hábito: ${e.message}")
+                            }
+                    }.addOnFailureListener { e ->
+                        Log.e("Firestore", "Error al eliminar progreso: ${e.message}")
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Firestore", "Error al obtener progreso: ${e.message}")
+                }
         }
         .addOnFailureListener { e ->
-            Log.e("Firestore", "Error al obtener progreso: ${e.message}")
+            Log.e("Firestore", "Error al obtener el hábito: ${e.message}")
         }
 }
 

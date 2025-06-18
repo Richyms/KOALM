@@ -264,7 +264,7 @@ fun BienvenidoDialogoAnimado(
                     source = DotLottieSource.Url("https://lottie.host/9a1808be-0436-42cd-918c-55963c8e71a5/zCh5lTbX1N.lottie"),
                     autoplay = true,
                     loop = false,
-                    speed = 1.5f,
+                    speed = 1.8f,
                     useFrameInterpolation = false,
                     playMode = Mode.FORWARD,
                     modifier = Modifier

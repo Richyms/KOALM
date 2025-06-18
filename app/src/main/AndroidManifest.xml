@@ -94,6 +94,15 @@
             android:exported="false"
             android:foregroundServiceType="specialUse" />
 
+        <!-- NOTpers-->
+        <receiver
+            android:name=".services.timers.NotificationReceiverPers"
+            android:enabled="true"
+            android:exported="true"
+        />
+
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

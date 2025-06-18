@@ -234,60 +234,69 @@ private fun BotonesAjustes(navController: NavHostController) {
 
                     // Primero borramos metasSalud dentro del usuario
                     borrarSubcoleccion(usuarioDoc, "metasSalud", {
-                        // Luego borramos el documento usuario
-                        usuarioDoc.delete()
-                            .addOnSuccessListener {
-                                // Después borramos hábitos personalizados
-                                borrarHabitos(habitosDoc.collection("personalizados"), {
-                                    // Luego hábitos predeterminados
-                                    borrarHabitos(habitosDoc.collection("predeterminados"), {
-                                        // Finalmente borramos documento habitos
-                                        habitosDoc.delete()
-                                            .addOnSuccessListener {
-                                                // Y eliminamos usuario de Firebase Auth
-                                                user.delete()
-                                                    .addOnCompleteListener { task ->
-                                                        if (task.isSuccessful) {
-                                                            mostrarDialogoExito = true
-                                                        } else {
-                                                            val error = task.exception?.localizedMessage ?: "Error desconocido"
-                                                            Toast.makeText(
-                                                                context,
-                                                                "Error al eliminar autenticación: $error",
-                                                                Toast.LENGTH_LONG
-                                                            ).show()
+                        // Seguido borramos notificaciones dentro del usuario
+                        borrarSubcoleccion(usuarioDoc, "notificaciones", {
+                            // Luego borramos el documento usuario
+                            usuarioDoc.delete()
+                                .addOnSuccessListener {
+                                    // Después borramos hábitos personalizados
+                                    borrarHabitos(habitosDoc.collection("personalizados"), {
+                                        // Luego hábitos predeterminados
+                                        borrarHabitos(habitosDoc.collection("predeterminados"), {
+                                            // Finalmente borramos documento habitos
+                                            habitosDoc.delete()
+                                                .addOnSuccessListener {
+                                                    // Y eliminamos usuario de Firebase Auth
+                                                    user.delete()
+                                                        .addOnCompleteListener { task ->
+                                                            if (task.isSuccessful) {
+                                                                mostrarDialogoExito = true
+                                                            } else {
+                                                                val error = task.exception?.localizedMessage ?: "Error desconocido"
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Error al eliminar autenticación: $error",
+                                                                    Toast.LENGTH_LONG
+                                                                ).show()
+                                                            }
                                                         }
-                                                    }
-                                            }
-                                            .addOnFailureListener { e ->
-                                                Toast.makeText(
-                                                    context,
-                                                    "Error al eliminar documento habitos: ${e.localizedMessage}",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            }
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Error al eliminar documento habitos: ${e.localizedMessage}",
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                }
+                                        }, { e ->
+                                            Toast.makeText(
+                                                context,
+                                                "Error al eliminar habitos predeterminados: ${e.localizedMessage}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        })
                                     }, { e ->
                                         Toast.makeText(
                                             context,
-                                            "Error al eliminar habitos predeterminados: ${e.localizedMessage}",
+                                            "Error al eliminar habitos personalizados: ${e.localizedMessage}",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     })
-                                }, { e ->
+                                }
+                                .addOnFailureListener { e ->
                                     Toast.makeText(
                                         context,
-                                        "Error al eliminar habitos personalizados: ${e.localizedMessage}",
+                                        "Error al eliminar datos de usuario: ${e.localizedMessage}",
                                         Toast.LENGTH_LONG
                                     ).show()
-                                })
-                            }
-                            .addOnFailureListener { e ->
-                                Toast.makeText(
-                                    context,
-                                    "Error al eliminar datos de usuario: ${e.localizedMessage}",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                                }
+                        }, { e ->
+                            Toast.makeText(
+                                context,
+                                "Error al eliminar notificaciones: ${e.localizedMessage}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        })
                     }, { e ->
                         Toast.makeText(
                             context,
@@ -295,7 +304,6 @@ private fun BotonesAjustes(navController: NavHostController) {
                             Toast.LENGTH_LONG
                         ).show()
                     })
-
                 } ?: run {
                     Toast.makeText(context, "No se pudo obtener el correo del usuario", Toast.LENGTH_SHORT).show()
                 }
@@ -305,11 +313,6 @@ private fun BotonesAjustes(navController: NavHostController) {
             }
         )
     }
-
-
-
-
-
 
     Button(
         onClick = {

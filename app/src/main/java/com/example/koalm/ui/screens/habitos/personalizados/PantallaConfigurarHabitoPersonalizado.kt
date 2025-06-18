@@ -1,6 +1,8 @@
 package com.example.koalm.ui.screens.habitos.personalizados
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
@@ -65,6 +67,8 @@ import kotlinx.coroutines.tasks.await
 import java.time.DayOfWeek
 import java.time.temporal.ChronoUnit
 import androidx.compose.runtime.Composable
+import com.example.koalm.services.notifications.NotificationScheduler
+import com.example.koalm.services.timers.NotificationReceiverPers
 import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
 import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
 import com.example.koalm.ui.components.ValidacionesDialogoAnimado
@@ -930,10 +934,53 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
 
 
                                     // Guardar el hábito en Firestore bajo la subcolección "personalizados" del usuario
-                                    userHabitsRef.document(habitoId)  // Usando el nombre del hábito como ID
+                                    val isEditing = (idHabitoOriginal != null) // Variable que indica si es edición o nuevo
+                                    val habitIdToUse = idHabitoOriginal ?: habitoId
+
+                                    // 1. Si es edición, cancelar todas las alarmas antiguas (todas las del hábito)
+                                    if (isEditing) {
+                                        val originalReminderCount = habitoOriginal.value?.recordatorios?.horas?.size ?: 0
+                                        //val diasOriginales = habitoOriginal.value?.frecuencia ?: List(7) { false }
+
+                                        for (index in 0 until originalReminderCount) {
+                                            NotificationScheduler.cancelHabitReminder(
+                                                context = context,
+                                                habitId = habitIdToUse,
+                                                reminderIndex = index,
+                                            )
+                                        }
+                                    }
+
+
+
+                                    // 2. Guardar o actualizar en Firestore
+                                    userHabitsRef.document(habitIdToUse)
                                         .set(habitoMap)
                                         .addOnSuccessListener {
                                             mostrarDialogoExito = true
+
+                                            // 3.1 Programar nuevas alarmas para cada horario, pasando también la frecuencia (días seleccionados)
+                                            // Obtener lista de horarios (tanto si es personalizado como automático)
+
+                                            val listaHorarios = if (modoPersonalizado) {
+                                                horarios
+                                            } else {
+                                                HabitoPersonalizado.generarHorasAutomaticas().map {
+                                                    LocalTime.parse(it, DateTimeFormatter.ofPattern("HH:mm"))
+                                                }
+                                            }
+                                            listaHorarios.forEachIndexed { index, horario ->
+                                                NotificationScheduler.scheduleHabitReminder(
+                                                    context = context,
+                                                    habitId = habitIdToUse,
+                                                    habitName = nombreHabito,
+                                                    hour = horario.hour,
+                                                    minute = horario.minute,
+                                                    reminderIndex = index,
+                                                    frecuencia = diasSeleccionados
+                                                )
+                                            }
+
                                         }
                                         .addOnFailureListener { e ->
                                             Toast.makeText(
@@ -941,10 +988,10 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                                                 "Error al guardar el hábito: ${e.message}",
                                                 Toast.LENGTH_LONG
                                             ).show()
-                                            navController.navigateUp()
+                                            navController?.navigateUp()
                                         }
 
-                                        // Crear el objeto de progreso
+                                    // Crear el objeto de progreso
                                         val progreso = ProgresoDiario(
                                             realizados = if (!esEdicion) {
                                                     0
