@@ -212,8 +212,8 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                     }
                 }
 
-                SeccionTitulo("Estadísticas")
-                EstadisticasCard()
+                //SeccionTitulo("Estadísticas")
+                //EstadisticasCard()
             }
         }
     }

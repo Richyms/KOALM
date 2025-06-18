@@ -70,14 +70,7 @@ fun PantallaCambiarContrasena(navController: NavController){
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            ValidarContrasenaActual(navController = navController) {
-                // Aquí muestras el formulario para cambiar la contraseña nueva
-                // o navegas a otra pantalla
-            }
-
-            //MensajeExplicacionCambio()
-            //Spacer(modifier = Modifier.height(16.dp))
-            //BotonEnviarContrasena(password, navController, context)
+            ValidarContrasenaActual(navController = navController) {}
         }
 
     }

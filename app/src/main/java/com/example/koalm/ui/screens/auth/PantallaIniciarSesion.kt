@@ -33,6 +33,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.example.koalm.model.Usuario
+import com.example.koalm.ui.components.FalloDialogoGuardadoAnimado
 import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +53,16 @@ fun PantallaIniciarSesion(
             mensaje = mensajeValidacion!!,
             onDismiss = {
                 mensajeValidacion = null
+            }
+        )
+    }
+
+    var mostrarDialogoFallo by remember{ mutableStateOf(false) }
+    if (mostrarDialogoFallo) {
+        FalloDialogoGuardadoAnimado(
+            mensaje = "Usuario no registrado previamente.",
+            onDismiss = {
+                mostrarDialogoFallo = false
             }
         )
     }
@@ -211,7 +222,7 @@ fun PantallaIniciarSesion(
                                                         }
                                                 } else {
                                                     // Si el documento no existe, manejamos el caso comoo:
-                                                    Toast.makeText(context, "Usuario no registrado previamente.", Toast.LENGTH_SHORT).show()
+                                                    mostrarDialogoFallo = true
                                                 }
                                             }
                                     } else {
