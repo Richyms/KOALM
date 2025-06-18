@@ -207,19 +207,40 @@
 
     <!-- Habitos Koalisticos -->
     <string name="titulo_kdesconexion">Desconexión Digital</string>
-    <string name="mensaje_kdesconexion">a</string>
+    <string name="mensaje_kdesconexion">
+        Tomarte un respiro de las pantallas te ayuda a reconectar con el presente, reducir la ansiedad y disfrutar
+        más del mundo real, como un koala tranquilo en su árbol.
+    </string>
     <string name="titulo_kalimentacion">Alimentacion</string>
-    <string name="mensaje_kalimentacion">b</string>
+    <string name="mensaje_kalimentacion">
+        Comer de forma consciente fortalece tu cuerpo y mente. Cada bocado es una oportunidad para nutrirte y agradecer,
+        como un koala saboreando su eucalipto.
+    </string>
     <string name="titulo_kmeditacion">Meditación</string>
-    <string name="mensaje_kmeditacion">c</string>
+    <string name="mensaje_kmeditacion">
+        Dedicar unos minutos a meditar puede ayudarte a encontrar calma, claridad y balance interior. Una pausa profunda,
+        como la siesta de un koala sabio.
+    </string>
     <string name="titulo_khidratacion">Hidratación</string>
-    <string name="mensaje_khidratacion">d</string>
+    <string name="mensaje_khidratacion">
+        Beber agua a lo largo del día mantiene tu energía fluida, mejora tu concentración y cuida tu cuerpo. Hidrátate con la paz
+        de un koala al amanecer.
+    </string>
     <string name="titulo_kdescanso">Sueño</string>
-    <string name="mensaje_kdescanso">c</string>
+    <string name="mensaje_kdescanso">
+        Dormir bien no solo recupera tu cuerpo, también revitaliza tu mente y emociones. El descanso profundo es un regalo diario,
+        al estilo de un koala dormilón.
+    </string>
     <string name="titulo_kescritura">Escritura</string>
-    <string name="mensaje_kescritura">c</string>
+    <string name="mensaje_kescritura">
+        Escribir te permite liberar pensamientos, ordenar ideas y conocerte mejor. Un hábito sencillo que puede transformar tu mundo interior,
+        palabra a palabra.
+    </string>
     <string name="titulo_klectura">Lectura</string>
-    <string name="mensaje_klectura">c</string>
+    <string name="mensaje_klectura">
+        Leer abre puertas a nuevos mundos, mejora tu enfoque y enriquece tu mente. Un buen libro es como una rama alta:
+        te eleva y te da perspectiva.
+    </string>
 
     <!-- ========================================================================= -->
     <!-- GESTIÓN Y PERSONALIZACIÓN DE HÁBITOS -->

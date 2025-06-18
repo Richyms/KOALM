@@ -78,9 +78,9 @@ fun PantallaHabitosKoalisticos(navController: NavHostController, tituloHabito: S
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(horizontal = 24.dp, vertical = 32.dp)
+                .padding(horizontal = 24.dp, vertical = 30.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // BOX con toda la info
@@ -93,12 +93,12 @@ fun PantallaHabitosKoalisticos(navController: NavHostController, tituloHabito: S
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = stringResource(datos.titulo),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 28.sp),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Image(
                         painter = painterResource(id = datos.imagenResId),
@@ -106,7 +106,7 @@ fun PantallaHabitosKoalisticos(navController: NavHostController, tituloHabito: S
                         modifier = Modifier.size(400.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = stringResource(datos.mensaje),
