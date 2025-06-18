@@ -279,7 +279,22 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
         listOf("Salud física", "Salud mental", "Personalizados").forEach {
             NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
                 when (it) {
-                    //"Salud física" -> navController.navigate("estadisticas_salud_fisica")
+                    "Salud física" -> {
+                        scope.launch {
+                            val db = FirebaseFirestore.getInstance()
+                            val snapshot = db.collection("habitos")
+                                .document(userEmail)
+                                .collection("predeterminados")
+                                .get()
+                                .await()
+
+                            if (snapshot.isEmpty) {
+                                navController.navigate("salud_fisica")
+                            } else {
+                                navController.navigate("estadisticas_salud_fisica")
+                            }
+                        }
+                    }
                     //"Salud mental" -> navController.navigate("estadisticas_salud_mental")
                     "Personalizados" -> {
                         scope.launch {
