@@ -480,20 +480,19 @@ fun DashboardScreen(
             tipoCoincide && diaActivo
         }
 
-        val hayHabitos = habitosFiltradosPersonalizados.isNotEmpty() || habitosFiltradosPredeterminados.isNotEmpty()
+        val habitosActivosPersonalizados = habitosFiltradosPersonalizados.filter { it.estaActivo }
+        val hayHabitos = habitosActivosPersonalizados.isNotEmpty() || habitosFiltradosPredeterminados.isNotEmpty()
 
         if (hayHabitos) {
-            habitosFiltradosPersonalizados.forEach { habito ->
-                if (habito.estaActivo) {
-                    HabitoCardPersonalizado(
-                        habito = habito,
-                        progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
-                        onIncrementar = { valor ->
-                            viewModel.incrementarProgreso(usuarioEmail, habito, valor)
-                        },
-                        logrosPrefs = logrosPrefs
-                    )
-                }
+            habitosActivosPersonalizados.forEach { habito ->
+                HabitoCardPersonalizado(
+                    habito = habito,
+                    progreso = viewModel.progresos[habito.nombre.replace(" ", "_")],
+                    onIncrementar = { valor ->
+                        viewModel.incrementarProgreso(usuarioEmail, habito, valor)
+                    },
+                    logrosPrefs = logrosPrefs
+                )
             }
 
             habitosFiltradosPredeterminados.forEach { habito ->
