@@ -206,7 +206,7 @@ fun PantallaSaludMental(navController: NavHostController) {
                 } else {
                     Log.d(TAG, "No tienes hábitos mentales configurados")
                     Text(
-                        text = "No tienes hábitos activos",
+                        text = "No tienes hábitos mentales configurados",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)

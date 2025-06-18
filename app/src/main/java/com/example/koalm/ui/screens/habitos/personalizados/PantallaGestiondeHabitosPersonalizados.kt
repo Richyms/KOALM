@@ -570,7 +570,7 @@ fun eliminarHabitoPersonalizado(
     val idDocumento = nombreHabito.replace(" ", "_")
     val db = FirebaseFirestore.getInstance()
 
-    // 🔸 1. Obtener el hábito para acceder a los recordatorios
+    // 1. Obtener el hábito para acceder a los recordatorios
     db.collection("habitos")
         .document(usuarioEmail)
         .collection("personalizados")
@@ -583,21 +583,20 @@ fun eliminarHabitoPersonalizado(
                     val totalHorarios = habit.recordatorios?.horas?.size
                     val diasSeleccionados = habit.frecuencia
 
-                    // 🔸 2. Cancelar las notificaciones
+                    // 2. Cancelar las notificaciones
                     for (index in 0 until totalHorarios!!) {
                         if (diasSeleccionados != null) {
                             NotificationScheduler.cancelHabitReminder(
                                 context = context,
                                 habitId = idDocumento,
                                 reminderIndex = index,
-                                //diasSeleccionados = diasSeleccionados
                             )
                         }
                     }
                 }
             }
 
-            // 🔸 3. Eliminar subcolección "progreso"
+            // 3. Eliminar subcolección "progreso"
             val progresoRef = db.collection("habitos")
                 .document(usuarioEmail)
                 .collection("personalizados")
@@ -614,7 +613,7 @@ fun eliminarHabitoPersonalizado(
                     batch.commit().addOnSuccessListener {
                         Log.d("Firestore", "Progreso eliminado correctamente.")
 
-                        // 🔸 4. Eliminar el hábito principal
+                        // 4. Eliminar el hábito principal
                         db.collection("habitos")
                             .document(usuarioEmail)
                             .collection("personalizados")

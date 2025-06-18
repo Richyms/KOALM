@@ -19,86 +19,98 @@ import com.google.firebase.firestore.FirebaseFirestore
 class NotificationReceiverPers : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val habitId = intent.getStringExtra("habitId") ?: "recordatorio_habito"
+        val habitId = intent.getStringExtra("habitId") ?: return
         val habitName = intent.getStringExtra("habitName") ?: "Tu hábito"
         val reminderIndex = intent.getIntExtra("reminderIndex", 0)
         val hour = intent.getIntExtra("hour", -1)
         val minute = intent.getIntExtra("minute", -1)
         val frecuenciaArray = intent.getBooleanArrayExtra("frecuencia") ?: BooleanArray(7) { false }
-        Log.d("NotificationReceiverPers", "Alarm received for habitId=$habitId reminderIndex=$reminderIndex")
 
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        val habitDocRef = db.collection("habitos")
+            .document(userEmail)
+            .collection("personalizados")
+            .document(habitId)
 
-        val channelId = "habit_reminder_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Recordatorios de hábitos",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
+        // Verifica si el hábito sigue activo
+        habitDocRef.get().addOnSuccessListener { doc ->
+            if (doc.exists() && doc.getBoolean("estaActivo") == true) {
+                Log.d("NotificationReceiverPers", "Hábito activo, enviando notificación habitId=$habitId")
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("startDestination", "menu")
-        }
+                val notificationManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+                val channelId = "habit_reminder_channel"
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val channel = NotificationChannel(
+                        channelId,
+                        "Recordatorios de hábitos",
+                        NotificationManager.IMPORTANCE_HIGH
+                    )
+                    notificationManager.createNotificationChannel(channel)
+                }
 
+                val intentToMain = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    putExtra("startDestination", "menu")
+                }
 
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("🐨 ¡Hora del hábito!")
-            .setContentText("No olvides registrar tu progreso diario. ¡Es momento de \"$habitName\"! 🌿✨")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .addAction(
-                R.drawable.ic_notification,
-                "Ir al Dashboard",
-                pendingIntent
-            )
-            .build()
+                val pendingIntent = PendingIntent.getActivity(
+                    context,
+                    0,
+                    intentToMain,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
 
-        notificationManager.notify(habitId.hashCode() + reminderIndex, notification)
+                val notification = NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle("🐨 ¡Hora del hábito!")
+                    .setContentText("No olvides registrar tu progreso diario. ¡Es momento de \"$habitName\"! 🌿✨")
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .addAction(
+                        R.drawable.ic_notification,
+                        "Ir al Dashboard",
+                        pendingIntent
+                    )
+                    .build()
 
-        val userEmail = FirebaseAuth.getInstance().currentUser?.email
-        if (userEmail != null) {
-            val db = FirebaseFirestore.getInstance()
-            val notificacion = hashMapOf(
-                "habitId" to habitId,
-                "habitName" to habitName,
-                "mensaje" to "Es momento de \"$habitName\"",
-                "timestamp" to System.currentTimeMillis(),
-                "leido" to false
-            )
-            db.collection("usuarios")
-                .document(userEmail)
-                .collection("notificaciones")
-                .add(notificacion)
-        }
+                notificationManager.notify(habitId.hashCode() + reminderIndex, notification)
 
+                // Guardar notificación en Firestore
+                val notificacion = hashMapOf(
+                    "habitId" to habitId,
+                    "habitName" to habitName,
+                    "mensaje" to "Es momento de \"$habitName\"",
+                    "timestamp" to System.currentTimeMillis(),
+                    "leido" to false
+                )
+                db.collection("usuarios")
+                    .document(userEmail)
+                    .collection("notificaciones")
+                    .add(notificacion)
 
-        // Reprogramar la alarma para el siguiente día activo según la frecuencia y horario
-        if (hour >= 0 && minute >= 0) {
-            val frecuenciaList = frecuenciaArray.toList()
-            NotificationScheduler.scheduleHabitReminder(
-                context,
-                habitId,
-                habitName,
-                hour,
-                minute,
-                reminderIndex,
-                frecuenciaList
-            )
+            } else {
+                Log.d("NotificationReceiverPers", "Hábito inactivo o no encontrado, no se envía notificación habitId=$habitId")
+            }
+
+            // Reprogramar si es necesario
+            if (hour >= 0 && minute >= 0) {
+                val frecuenciaList = frecuenciaArray.toList()
+                NotificationScheduler.scheduleHabitReminder(
+                    context,
+                    habitId,
+                    habitName,
+                    hour,
+                    minute,
+                    reminderIndex,
+                    frecuenciaList
+                )
+            }
         }
     }
+
 
     /**
      * Si quieres poner esta función aquí para reutilizarla en otro lado:
