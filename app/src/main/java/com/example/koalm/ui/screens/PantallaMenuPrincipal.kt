@@ -95,9 +95,13 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
     val scope = rememberCoroutineScope()
 
     val habitosKoalisticos = listOf(
-        Triple("Meditación koalística", "Encuentra tu paz interior como un koala en su árbol favorito.", R.drawable.koala_naturaleza),
+        Triple("Desconexión koalística", "Encuentra tu paz interior como un koala en su árbol favorito.", R.drawable.koala_naturaleza),
         Triple("Alimentación consciente", "Disfruta cada hoja de eucalipto como si fuera la primera.", R.drawable.koala_comiendo),
-        Triple("Meditación koalística", "Meditar como un koala: profundo y reparador.", R.drawable.koala_meditando)
+        Triple("Meditación koalística", "Meditar como un koala: profundo y reparador.", R.drawable.koala_meditando),
+        Triple("Hidratación koalística", "Bebe agua como un koala saboreando el rocío de la mañana.", R.drawable.koala_bebiendo),
+        Triple("Descanso koalístico", "Duerme como un koala después de un día de abrazar árboles.", R.drawable.koala_durmiendo),
+        Triple("Escritura koalística", "Anota tranquilo, estilo koala.", R.drawable.koala_escribiendo),
+        Triple("Lectura koalística", "Sumérgete en las hojas de un buen libro como si fueran ramas de eucalipto.", R.drawable.koala_leyendo)
     )
 
     // Obtener el nombre de nuestro usuaio KOOL
@@ -202,7 +206,10 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 SeccionTitulo("Hábitos koalísticos")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     items(habitosKoalisticos) { (titulo, descripcion, imagenId) ->
-                        HabitoCarruselItem(titulo, descripcion, imagenId)
+                        HabitoCarruselItem(titulo, descripcion, imagenId,onClick = {
+                            // Manda el título como ID para el ejemplo
+                            navController.navigate("pantalla_habitos_koalisticos/${titulo}")
+                        })
                     }
                 }
 
@@ -353,12 +360,13 @@ fun FormatoRacha(dias: List<Pair<String, Boolean>>,  onClick: () -> Unit = {}
 }
 
 @Composable
-fun HabitoCarruselItem(titulo: String, descripcion: String, imagenId: Int) {
+fun HabitoCarruselItem(titulo: String, descripcion: String, imagenId: Int, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(width = 200.dp, height = 120.dp)
             .clip(RoundedCornerShape(16.dp))
             .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp))
+            .clickable { onClick() }
     ) {
         Image(
             painter = painterResource(id = imagenId),

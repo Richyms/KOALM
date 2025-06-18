@@ -205,6 +205,22 @@
     <string name="digital_disconnect_completion_title">¡Desconexión completada!</string>
     <string name="digital_disconnect_completion_text">Has completado tu tiempo de desconexión digital</string>
 
+    <!-- Habitos Koalisticos -->
+    <string name="titulo_kdesconexion">Desconexión Digital</string>
+    <string name="mensaje_kdesconexion">a</string>
+    <string name="titulo_kalimentacion">Alimentacion</string>
+    <string name="mensaje_kalimentacion">b</string>
+    <string name="titulo_kmeditacion">Meditación</string>
+    <string name="mensaje_kmeditacion">c</string>
+    <string name="titulo_khidratacion">Hidratación</string>
+    <string name="mensaje_khidratacion">d</string>
+    <string name="titulo_kdescanso">Sueño</string>
+    <string name="mensaje_kdescanso">c</string>
+    <string name="titulo_kescritura">Escritura</string>
+    <string name="mensaje_kescritura">c</string>
+    <string name="titulo_klectura">Lectura</string>
+    <string name="mensaje_klectura">c</string>
+
     <!-- ========================================================================= -->
     <!-- GESTIÓN Y PERSONALIZACIÓN DE HÁBITOS -->
     <!-- ========================================================================= -->

@@ -62,6 +62,7 @@ import com.example.koalm.ui.screens.ajustes.PantallaPrivacidad
 import com.example.koalm.ui.screens.ajustes.PantallaNosotros
 import com.example.koalm.ui.screens.ajustes.PantallaAjustes
 import com.example.koalm.ui.screens.parametroSalud.niveles.peso.PantallaProgresoPeso
+import com.example.koalm.ui.screens.habitosKoalisticos.PantallaHabitosKoalisticos
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -164,6 +165,15 @@ fun AppNavigation(
         ) { backStackEntry ->
             val duracion = backStackEntry.arguments?.getInt("duracion") ?: 15
             PantallaTemporizadorMeditacion(navController, duracion)
+        }
+
+        //HabitosKoalisticos
+        composable(
+            "pantalla_habitos_koalisticos/{tituloHabito}",
+            arguments = listOf(navArgument("tituloHabito") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val tituloHabito = backStackEntry.arguments?.getString("tituloHabito") ?: "Meditación koalística"
+            PantallaHabitosKoalisticos(navController, tituloHabito)
         }
     }
 }
