@@ -298,7 +298,7 @@ fun PantallaEstadisticasHabitoPersonalizado(
 
 
 @Composable
-fun IndicadorCircular(titulo: String, valor: Int, maximo: Int) {
+public fun IndicadorCircular(titulo: String, valor: Int, maximo: Int) {
     val progreso = if (maximo == 0) 0f else valor.toFloat() / maximo.toFloat()
     val colorProgreso = if (progreso == 0f) Color(0xFF9E9E9E) else Color(0xFF2F6B3A)
 
@@ -322,7 +322,7 @@ fun IndicadorCircular(titulo: String, valor: Int, maximo: Int) {
 }
 
 
-fun prepararDatosParaGrafica(
+public fun prepararDatosParaGrafica(
     progresoPorDia: Map<LocalDate, ProgresoDiario>,
     frecuenciaPorDefecto: List<Boolean>?,
     semanaReferencia: LocalDate
@@ -377,7 +377,7 @@ fun prepararDatosParaGrafica(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun GraficadorProgresoHabitoSwipe(
+public fun GraficadorProgresoHabitoSwipe(
     progresoPorDia: Map<LocalDate, ProgresoDiario>,
     frecuenciaPorDefecto: List<Boolean>?, // nombre actualizado
     colorHabito: Color,
@@ -544,7 +544,7 @@ fun GraficadorProgresoHabitoSwipe(
 }
 
 // Función de extensión para formatear la semana
-fun LocalDate.formatSemana(): String {
+public fun LocalDate.formatSemana(): String {
     val formatter = DateTimeFormatter.ofPattern("d MMM", Locale("es", "ES"))
     val lunes = this.with(DayOfWeek.MONDAY)
     val domingo = this.with(DayOfWeek.SUNDAY)
@@ -552,7 +552,7 @@ fun LocalDate.formatSemana(): String {
 }
 
 @Composable
-fun GraficadorProgreso(
+public fun GraficadorProgreso(
     valores: List<Pair<Float, Float>>,
     etiquetas: List<String>,
     colorHabito: Color,
@@ -664,7 +664,7 @@ fun GraficadorProgreso(
 }
 
 @Composable
-fun SelectorHabitosCentrado(
+public fun SelectorHabitosCentrado(
     habitos: List<HabitoPersonalizado>,
     selectedIndex: MutableState<Int>,
     onSelectedIndexChange: (Int) -> Unit
@@ -783,16 +783,16 @@ fun SelectorHabitosCentrado(
     }
 }
 
-fun obtenerDiasActivos(frecuencia: List<Boolean>?): List<Int> {
+public fun obtenerDiasActivos(frecuencia: List<Boolean>?): List<Int> {
     if (frecuencia == null) return emptyList()
     return frecuencia.mapIndexedNotNull { index, activo -> if (activo) index + 1 else null }
 }
 
-fun obtenerLunesDeLaSemana(fecha: LocalDate): LocalDate {
+public fun obtenerLunesDeLaSemana(fecha: LocalDate): LocalDate {
     return fecha.with(java.time.DayOfWeek.MONDAY)
 }
 
-fun obtenerFechasActivasDeSemana(fechaReferencia: LocalDate, frecuencia: List<Boolean>?): List<LocalDate> {
+public fun obtenerFechasActivasDeSemana(fechaReferencia: LocalDate, frecuencia: List<Boolean>?): List<LocalDate> {
     val lunes = obtenerLunesDeLaSemana(fechaReferencia)
     val diasActivos = obtenerDiasActivos(frecuencia)
     return diasActivos.map { diaSemana -> lunes.plusDays((diaSemana - 1).toLong()) }
