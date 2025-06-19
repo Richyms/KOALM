@@ -45,8 +45,17 @@ import kotlinx.coroutines.tasks.await
 fun PantallaParametrosSalud(
     navController: NavHostController
 ) {
+
     val context = LocalContext.current
     val correo = FirebaseAuth.getInstance().currentUser?.email
+
+
+    val ansiedad = remember(correo) {
+        Firebase.firestore.collection("resultadosAnsiedad")
+            .document(correo ?: "")
+            .collection("historial")
+            .document("Resultado 1")
+    }
     val metas = remember(correo) {
         Firebase.firestore.collection("usuarios")
             .document(correo ?: "")
@@ -63,6 +72,7 @@ fun PantallaParametrosSalud(
     val metaPasos by metas.snapshotsAsState { it?.getLong("metaPasos")?.toInt() ?: 10000 }
     val metaMinutos by metas.snapshotsAsState { it?.getLong("metaMinutos")?.toInt() ?: 100 }
     val metaCalorias by metas.snapshotsAsState { it?.getLong("metaCalorias")?.toInt() ?: 500 }
+    val ResAnsiedad by ansiedad.snapshotsAsState { it?.getString("nivel")?.toString()}
 
 
     val pasos by StepCounterRepository.steps.collectAsState()
@@ -156,7 +166,7 @@ fun PantallaParametrosSalud(
             InfoCard("Ritmo Cardíaco", "88 PPM", Icons.Default.Favorite) {
                 navController.navigate("ritmo-cardiaco")
             }
-            InfoCard("Estrés", "Moderado", Icons.Default.PsychologyAlt, 0.6f) {
+            InfoCard("Estrés", "${ResAnsiedad}", Icons.Default.PsychologyAlt, 0.6f) {
                 navController.navigate("nivel-de-estres")
             }
             InfoCard("Peso", "-2.5 kg", Icons.Default.MonitorWeight, 0.5f) {
