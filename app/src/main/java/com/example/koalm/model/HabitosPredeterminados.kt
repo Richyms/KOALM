@@ -15,7 +15,6 @@ data class Habito(
     val hora: String = "", // Hora principal (formato "HH:mm a")
     val horarios: List<String> = emptyList(), // Para hábitos con múltiples horarios como alimentación
     val duracionMinutos: Int = 15,
-    val notasHabilitadas: Boolean = false,
     val userId: String? = null,
     val fechaCreacion: String? = null,
     val fechaModificacion: String? = null,
@@ -25,7 +24,7 @@ data class Habito(
     // Métricas específicas por tipo de hábito
     val metricasEspecificas: MetricasHabito = MetricasHabito(),
     // Objetivos específicos por tipo de hábito
-    val objetivoPaginas: Int = 0, // Objetivo de páginas para hábitos de escritura
+    val objetivoPaginas: Int = 0, // Objetivo de páginas para hábitos de escritura/lectura
     val objetivoHorasSueno: Float = 8f // Objetivo de horas para hábitos de sueño
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
@@ -38,7 +37,6 @@ data class Habito(
         "hora" to hora,
         "horarios" to horarios,
         "duracionMinutos" to duracionMinutos,
-        "notasHabilitadas" to notasHabilitadas,
         "userId" to userId,
         "fechaCreacion" to fechaCreacion,
         "fechaModificacion" to fechaModificacion,

@@ -2,8 +2,10 @@ package com.example.koalm.data
 
 import android.annotation.SuppressLint
 import android.util.Log
+import com.example.koalm.model.Habito
 import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.model.ProgresoDiario
+import com.example.koalm.model.TipoHabito
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
@@ -68,7 +70,7 @@ object HabitosRepository {
         return false // No se rompió la racha
     }
 
-    // Incrementar el progreso de un hábito
+    // Incrementar el progreso de un hábito personalizado
     suspend fun incrementarProgresoHabito(email: String, habito: HabitoPersonalizado, valor: Int) {
         val idDocumento = habito.nombre.replace(" ", "_")
         val progresoRef = db.collection("habitos")
@@ -115,6 +117,40 @@ object HabitosRepository {
 
         Log.d("Firestore", "Progreso actualizado para el hábito: $idDocumento")
     }
+
+    suspend fun incrementarProgresoHabitoPre(email: String, habito: Habito, valor: Int) {
+        val progresoRef = db.collection("habitos")
+            .document(email)
+            .collection("predeterminados")
+            .document(habito.id)
+            .collection("progreso")
+            .document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+        val snapshot = progresoRef.get().await()
+        val progresoActual = snapshot.toObject(ProgresoDiario::class.java)
+
+        val totalObjetivo = when (habito.tipo) {
+            TipoHabito.LECTURA, TipoHabito.ESCRITURA -> habito.objetivoPaginas
+            TipoHabito.MEDITACION, TipoHabito.DESCONEXION_DIGITAL -> habito.duracionMinutos
+            else -> 1
+        }
+
+        val realizadosPrevios = progresoActual?.realizados ?: 0
+        val nuevosRealizados = (realizadosPrevios + valor).coerceAtMost(totalObjetivo)
+        val completado = nuevosRealizados >= totalObjetivo
+
+        val nuevoProgreso = ProgresoDiario(
+            realizados = nuevosRealizados,
+            completado = completado,
+            totalObjetivoDiario = totalObjetivo,
+            fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+            frecuencia = habito.diasSeleccionados
+        )
+
+        progresoRef.set(nuevoProgreso).await()
+    }
+
+
 
     //Actualizar la racha con días activos
     private fun actualizarRacha(habito: HabitoPersonalizado, progreso: ProgresoDiario) {

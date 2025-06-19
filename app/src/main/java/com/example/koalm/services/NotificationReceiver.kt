@@ -21,6 +21,8 @@ import com.example.koalm.services.timers.DigitalDisconnectTimerService
 import com.example.koalm.services.timers.MeditationTimerService
 import com.example.koalm.services.timers.ReadingTimerService
 import com.example.koalm.services.timers.WritingTimerService
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class NotificationReceiver : BroadcastReceiver() {
     companion object {
@@ -35,15 +37,16 @@ class NotificationReceiver : BroadcastReceiver() {
             NotificationConstants.START_TIMER_ACTION -> {
                 val duration = intent.getLongExtra("duration_minutes", 0)
                 val isAlimentation= intent.getBooleanExtra("is_alimentation",false)
+                val isWriting = intent.getBooleanExtra("is_writing", false)
                 val isReading = intent.getBooleanExtra("is_reading", false)
                 val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
                 val isSleeping = intent.getBooleanExtra("is_sleeping", false)
                 val descripcion = intent.getStringExtra("descripcion") ?: ""
                 val diaSemana = intent.getIntExtra("dia_semana", 0)
-                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+                //val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
                 val durationMinutes = intent.getLongExtra("duration_minutes", 0)
-                when {
+                /*when {
                     isSleeping -> showSleepNotification(context, descripcion, diaSemana)
                     isMeditation -> showMeditationNotification(context, descripcion, diaSemana, durationMinutes)
                     isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
@@ -52,6 +55,7 @@ class NotificationReceiver : BroadcastReceiver() {
                     else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
                 }
 
+                 */
 
                 Log.d(TAG, "Starting timer with duration: $duration, isReading: $isReading, isMeditation: $isMeditation, isDigitalDisconnect: $isDigitalDisconnect")
 
@@ -60,7 +64,7 @@ class NotificationReceiver : BroadcastReceiver() {
                         isReading -> startReadingTimer(context, duration)
                         isMeditation -> startMeditationTimer(context, duration)
                         isDigitalDisconnect -> startDigitalDisconnectTimer(context, duration)
-                        else -> startWritingTimer(context, duration)
+                        isWriting -> startWritingTimer(context, duration)
                     }
                 }
 
@@ -81,9 +85,10 @@ class NotificationReceiver : BroadcastReceiver() {
                 val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isReading = intent.getBooleanExtra("is_reading", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-                val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+                //val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
                 val isAlimentation = intent.getBooleanExtra("is_alimentation",false)
                 val isSleeping = intent.getBooleanExtra("is_sleeping", false)
+                val isWriting = intent.getBooleanExtra("is_writing", false)
 
                 Log.d(TAG, "Flags de tipo: isMeditation=$isMeditation, isReading=$isReading, isDigitalDisconnect=$isDigitalDisconnect")
 
@@ -93,7 +98,8 @@ class NotificationReceiver : BroadcastReceiver() {
                     isDigitalDisconnect -> "desconexión digital"
                     isSleeping->"sueno"
                     isAlimentation->"alimentation"
-                    else -> "escritura"
+                    isWriting -> "escritura"
+                    else -> "otro"
                 }
                 Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
 
@@ -102,7 +108,8 @@ class NotificationReceiver : BroadcastReceiver() {
                     isReading -> showReadingNotification(context, descripcion, diaSemana, durationMinutes)
                     isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
                     isSleeping->showSleepNotification(context,descripcion,diaSemana)
-                    else -> showWritingNotification(context, descripcion, diaSemana, durationMinutes, notasHabilitadas)
+                    isWriting -> showWritingNotification(context, descripcion, diaSemana, durationMinutes)
+                    else -> Log.w(TAG, "Tipo de notificación no reconocido. No se mostró ninguna.")
                 }
             }
         }
@@ -162,7 +169,17 @@ class NotificationReceiver : BroadcastReceiver() {
     ) {
         Log.d(TAG, "Mostrando notificación de sueño")
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu") // Esto es lo que usas para ir al Dashboard
+        }
 
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "sueño_habito",  // Usar el mismo channelId que definiste en sueñoNotificationService
@@ -192,7 +209,17 @@ class NotificationReceiver : BroadcastReceiver() {
     ) {
         Log.d(TAG, "Mostrando notificación de meditación")
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu") // Esto es lo que usas para ir al Dashboard
+        }
+
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 MeditationNotificationService().channelId,
@@ -237,25 +264,35 @@ class NotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, MeditationNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(MeditationNotificationService().defaultTitle))
-            .setContentText(descripcion)
+            .setContentText("No olvides registrar tu progreso diario. 🌿✨")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .addAction(
                 R.drawable.ic_timer,
-                context.getString(R.string.start_timer),
+                context.getString(R.string.start_timer), // Acción para temporizador
                 startTimerPendingIntent
             )
-            /*
             .addAction(
                 R.drawable.ic_notification,
-                context.getString(R.string.historial_meditacion),
-                historyPendingIntent
+                "Ir al Dashboard", // Acción para dashboard
+                openDashboardPendingIntent
             )
-             */
             .build()
         
         notificationManager.notify(MeditationNotificationService.NOTIFICATION_ID + diaSemana, notification)
         Log.d(TAG, "Notificación de meditación mostrada con ID: ${MeditationNotificationService.NOTIFICATION_ID + diaSemana}")
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        // Guardar notificación en Firestore
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de meditar!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
     }
 
     private fun showReadingNotification(
@@ -265,7 +302,17 @@ class NotificationReceiver : BroadcastReceiver() {
         durationMinutes: Long
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu") // Esto es lo que usas para ir al Dashboard
+        }
+
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 ReadingNotificationService().channelId,
@@ -310,35 +357,59 @@ class NotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, ReadingNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(ReadingNotificationService().defaultTitle))
-            .setContentText(descripcion)
+            .setContentText("No olvides registrar tu progreso diario. 🌿✨")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .addAction(
                 R.drawable.ic_timer,
-                context.getString(R.string.start_timer),
+                context.getString(R.string.start_timer), // Acción para temporizador
                 startTimerPendingIntent
             )
-            /*
-            .addAction(More actions
+            .addAction(
                 R.drawable.ic_notification,
-                context.getString(R.string.notification_books_button),
-                openBooksPendingIntent
+                "Ir al Dashboard",
+                openDashboardPendingIntent
             )
-            */
             .build()
         
         notificationManager.notify(ReadingNotificationService.NOTIFICATION_ID + diaSemana, notification)
+
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        // Guardar notificación en Firestore
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de leer!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
     }
 
     private fun showWritingNotification(
         context: Context,
         descripcion: String,
         diaSemana: Int,
-        durationMinutes: Long,
-        notasHabilitadas: Boolean
+        durationMinutes: Long
     ) {
+        Log.d(TAG, "Mostrando notificación de escritura")
+
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu") // Ir al Dashboard
+        }
+
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            WritingNotificationService.NOTIFICATION_ID + diaSemana + 200,
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 WritingNotificationService().channelId,
@@ -348,50 +419,58 @@ class NotificationReceiver : BroadcastReceiver() {
                 description = context.getString(WritingNotificationService().channelDescription)
             }
             notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "Canal de notificación de escritura creado")
         }
-        
+
         val startTimerIntent = Intent(context, NotificationReceiver::class.java).apply {
             action = NotificationConstants.START_TIMER_ACTION
             putExtra("duration_minutes", durationMinutes)
+            putExtra("is_writing", true)
         }
-        
+
         val startTimerPendingIntent = PendingIntent.getBroadcast(
             context,
             WritingNotificationService.NOTIFICATION_ID + diaSemana,
             startTimerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        /*
-        val openNotesIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("route", "notas")
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            addCategory(Intent.CATEGORY_LAUNCHER)
-            action = Intent.ACTION_MAIN
-        }
 
-        val openNotesPendingIntent = PendingIntent.getActivity(
-            context,
-            WritingNotificationService.NOTIFICATION_ID + diaSemana + 100,
-            openNotesIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        */
         val notification = NotificationCompat.Builder(context, WritingNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(WritingNotificationService().defaultTitle))
-            .setContentText(descripcion)
+            .setContentText("No olvides registrar tu progreso diario. 🌿✨")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .addAction(
                 R.drawable.ic_timer,
-                context.getString(R.string.start_timer),
+                context.getString(R.string.start_timer), // Acción para temporizador
                 startTimerPendingIntent
             )
+            .addAction(
+                R.drawable.ic_notification,
+                "Ir al Dashboard",
+                openDashboardPendingIntent
+            )
             .build()
-        
+
         notificationManager.notify(WritingNotificationService.NOTIFICATION_ID + diaSemana, notification)
+        Log.d(TAG, "Notificación de escritura mostrada con ID: ${WritingNotificationService.NOTIFICATION_ID + diaSemana}")
+
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de escribir!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
     }
+
 
     private fun showDigitalDisconnectNotification(
         context: Context,
@@ -399,8 +478,20 @@ class NotificationReceiver : BroadcastReceiver() {
         diaSemana: Int,
         durationMinutes: Long
     ) {
+
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu") // Esto es lo que usas para ir al Dashboard
+        }
+
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 DigitalDisconnectNotificationService().channelId,
@@ -443,24 +534,36 @@ class NotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, DigitalDisconnectNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(DigitalDisconnectNotificationService().defaultTitle))
-            .setContentText(descripcion)
+            .setContentText("No olvides registrar tu progreso diario. 🌿✨")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .addAction(
                 R.drawable.ic_timer,
-                context.getString(R.string.start_timer),
+                context.getString(R.string.start_timer), // Acción para temporizador
                 startTimerPendingIntent
             )
-            /*
             .addAction(
                 R.drawable.ic_notification,
-                context.getString(R.string.notification_disconnect_button),
-                openDisconnectPendingIntent
+                "Ir al Dashboard", // Acción para dashboard
+                openDashboardPendingIntent
             )
-            */
             .build()
-        
+
+
         notificationManager.notify(DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana, notification)
+
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        // Guardar notificación en Firestore
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de desconectarse!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
     }
 
     private fun startDigitalDisconnectTimer(context: Context, duration: Long) {

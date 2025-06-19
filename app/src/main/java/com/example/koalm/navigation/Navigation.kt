@@ -19,8 +19,7 @@ import com.example.koalm.ui.screens.auth.PantallaPersonalizarPerfil
 import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
-//import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
-import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
+import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
@@ -94,16 +93,16 @@ fun AppNavigation(
         screenWithSlide("tipos_habitos") { PantallaHabitos(navController) }
         screenWithSlide("salud_mental") { PantallaSaludMental(navController) }
         screenWithSlide("salud_fisica") { PantallaSaludFisica(navController) }
-        screenWithSlide("configurar_habito_escritura") { PantallaConfiguracionHabitoEscritura(navController) }
-        screenWithSlide("configurar_habito_meditacion") { PantallaConfiguracionHabitoMeditacion(navController) }
         screenWithSlide("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
         screenWithSlide("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
         screenWithSlide("configurar_habito_alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController) }
-        screenWithSlide("configurar_habito_lectura") { PantallaConfiguracionHabitoLectura(navController) }
         screenWithSlide("estadisticas") { PantallaParametrosSalud(navController) }
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         screenWithSlide("progreso-peso") { PantallaProgresoPeso(navController) }
+
+        // Configurar y editar(todo en la misma pantalla)
+        // Personzalizao
         composable(
             "configurar_habito_personalizado/{nombreHabitoEditar}",
             arguments = listOf(navArgument("nombreHabitoEditar") {
@@ -117,9 +116,104 @@ fun AppNavigation(
                 nombreHabitoEditar = backStackEntry.arguments?.getString("nombreHabitoEditar")
                 )
         }
-        screenWithSlide("configurar_habito_desconexion_digital") { PantallaConfigurarDesconexionDigital(navController) }
-       // screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
+
+        // Desconexión digital
+        // Editar habito
+        composable(
+            route = "configurar_habito_desconexion_digital/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            PantallaConfigurarDesconexionDigital(
+                navController = navController,
+                habitoId = backStackEntry.arguments?.getString("habitoId")
+            )
+        }
+
+        // Crear hábito
+        composable(
+            "configurar_habito_desconexion_digital",
+        ) {
+            PantallaConfigurarDesconexionDigital(navController, habitoId = null)
+        }
+
+        // Meditación
+        // Editar hábito
+        composable(
+            route = "configurar_habito_meditacion/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val habitoId = backStackEntry.arguments?.getString("habitoId")
+            PantallaConfiguracionHabitoMeditacion(navController, habitoId)
+        }
+
+        // Crear hábito
+        composable(
+            "configurar_habito_meditacion",
+        ) {
+            PantallaConfiguracionHabitoMeditacion(navController, habitoId = null)
+        }
+
+
+        // Escritura
+        // Editar habito
+        composable(
+            route = "configurar_habito_escritura/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val habitoId = backStackEntry.arguments?.getString("habitoId")
+            PantallaConfiguracionHabitoEscritura(navController, habitoId)
+        }
+
+        // Crear habito
+        composable(
+            "configurar_habito_escritura",
+        ) {
+            PantallaConfiguracionHabitoEscritura(navController, habitoId = null)
+        }
+
+        // Lectura
+        // Editar hábito
+        composable(
+            route = "configurar_habito_lectura/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val habitoId = backStackEntry.arguments?.getString("habitoId")
+            PantallaConfiguracionHabitoLectura(navController, habitoId)
+        }
+
+        // Crear hábito
+        composable(
+            "configurar_habito_lectura",
+        ) {
+            PantallaConfiguracionHabitoLectura(navController, habitoId = null)
+        }
+
+        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
+        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }

@@ -3,7 +3,6 @@ package com.example.koalm.ui.screens.habitos.saludMental
 
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
@@ -18,26 +17,27 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Schedule
+// import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+// import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.Nota
-import com.example.koalm.services.timers.WritingTimerService
-import com.example.koalm.services.notifications.NotificationConstants
+// import com.example.koalm.services.timers.WritingTimerService
+// import com.example.koalm.services.notifications.NotificationConstants
 import com.example.koalm.ui.components.BarraNavegacionInferior
 import com.example.koalm.ui.theme.VerdeBorde
 import com.example.koalm.ui.theme.VerdeContenedor
 import com.example.koalm.ui.theme.VerdePrincipal
-import com.example.koalm.ui.viewmodels.TimerViewModel
+// import com.example.koalm.ui.viewmodels.TimerViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
@@ -47,25 +47,26 @@ import java.text.SimpleDateFormat
 fun PantallaNotas(navController: NavHostController) {
     val context = LocalContext.current
     var notas by remember { mutableStateOf(listOf<Nota>()) }
-    
-    // Cargar la duración guardada del temporizador (por defecto 15 minutos)
+
+    /*
+    // Temporizador - comentado temporalmente
     val sharedPreferences = remember { context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE) }
-    val defaultDuration = 15L * 60 * 1000 // 15 minutos en milisegundos
-    val timerDuration = remember { 
+    val defaultDuration = 15L * 60 * 1000
+    val timerDuration = remember {
         mutableStateOf(sharedPreferences.getLong("writing_timer_duration", defaultDuration))
     }
-    
-    var mostrarDialogoNuevaNota by remember { mutableStateOf(false) }
-    var notaAEditar by remember { mutableStateOf<Nota?>(null) }
+
     val timerViewModel: TimerViewModel = viewModel()
-    
-    // Observar el estado del temporizador desde el ViewModel
     val tiempoRestante by timerViewModel.timeLeft.collectAsState()
     val timerActivo by timerViewModel.isRunning.collectAsState()
-    
+    */
+
+    var mostrarDialogoNuevaNota by remember { mutableStateOf(false) }
+    var notaAEditar by remember { mutableStateOf<Nota?>(null) }
+
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
-    
+
     Log.d("PantallaNotas", "Iniciando composición de PantallaNotas")
 
     // Cargar notas del usuario actual
@@ -81,9 +82,8 @@ fun PantallaNotas(navController: NavHostController) {
                     }
 
                     if (snapshot != null) {
-                        val nuevasNotas = mutableListOf<Nota>()
-                        for (doc in snapshot.documents) {
-                            val nota = Nota(
+                        val nuevasNotas = snapshot.documents.mapNotNull { doc ->
+                            Nota(
                                 id = doc.id,
                                 titulo = doc.getString("titulo") ?: "",
                                 contenido = doc.getString("contenido") ?: "",
@@ -91,7 +91,6 @@ fun PantallaNotas(navController: NavHostController) {
                                 fechaCreacion = doc.getString("fechaCreacion"),
                                 fechaModificacion = doc.getString("fechaModificacion")
                             )
-                            nuevasNotas.add(nota)
                         }
                         notas = nuevasNotas
                     }
@@ -99,17 +98,14 @@ fun PantallaNotas(navController: NavHostController) {
         }
     }
 
-    // Escuchar actualizaciones del temporizador del servicio
+    /*
+    // Escuchar actualizaciones del temporizador - Comentado
     DisposableEffect(Unit) {
-        Log.d("PantallaNotas", "Configurando receptor de actualizaciones del temporizador")
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 if (intent?.action == NotificationConstants.TIMER_UPDATE_ACTION) {
                     val isActive = intent.getBooleanExtra(NotificationConstants.EXTRA_IS_ACTIVE, false)
                     val remaining = intent.getLongExtra(NotificationConstants.EXTRA_REMAINING_TIME, 0)
-                    Log.d("PantallaNotas", "Actualización de temporizador recibida: isActive=$isActive, remaining=$remaining ms")
-                    
-                    // Actualizar el ViewModel
                     timerViewModel.updateTimeLeft(remaining)
                     timerViewModel.updateIsRunning(isActive)
                 }
@@ -120,19 +116,12 @@ fun PantallaNotas(navController: NavHostController) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
-            ContextCompat.registerReceiver(
-                context,
-                receiver,
-                filter,
-                ContextCompat.RECEIVER_NOT_EXPORTED
-            )
+            ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }
-        Log.d("PantallaNotas", "Receptor registrado para acción: ${NotificationConstants.TIMER_UPDATE_ACTION}")
 
         onDispose {
             try {
                 context.unregisterReceiver(receiver)
-                Log.d("PantallaNotas", "Receptor de temporizador desregistrado")
             } catch (e: Exception) {
                 Log.e("PantallaNotas", "Error al desregistrar receptor: ${e.message}")
             }
@@ -150,6 +139,7 @@ fun PantallaNotas(navController: NavHostController) {
             Log.e("PantallaNotas", "Error al verificar el temporizador: ${e.message}")
         }
     }
+    */
 
     Scaffold(
         topBar = {
@@ -186,27 +176,26 @@ fun PantallaNotas(navController: NavHostController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            /* ——————— Fila del temporizador ——————— */
+            /*
+            // Fila del temporizador - Comentada temporalmente
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                /* Botón que inicia la cuenta atrás */
                 Button(
                     onClick = {
                         val intent = Intent(context, WritingTimerService::class.java).apply {
                             action = NotificationConstants.START_TIMER_ACTION
-                            putExtra(NotificationConstants.EXTRA_DURATION, (timerDuration.value / (60 * 1000)).toLong())  // Convertir a minutos
+                            putExtra(NotificationConstants.EXTRA_DURATION, (timerDuration.value / (60 * 1000)).toLong())
                         }
-                        
+
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             context.startForegroundService(intent)
                         } else {
                             context.startService(intent)
                         }
-                        
-                        // Iniciar el temporizador en el ViewModel con la duración guardada
+
                         timerViewModel.start(timerDuration.value)
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -226,10 +215,10 @@ fun PantallaNotas(navController: NavHostController) {
                 Text(
                     text = if (timerActivo) formatTime(tiempoRestante) else "00:00",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = if (timerActivo) VerdePrincipal
-                            else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (timerActivo) VerdePrincipal else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            */
 
             // Lista de notas
             LazyColumn(
@@ -257,35 +246,18 @@ fun PantallaNotas(navController: NavHostController) {
                                     modifier = Modifier.weight(1f)
                                 )
                                 Row {
-                                    IconButton(
-                                        onClick = { notaAEditar = nota }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = "Editar",
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
+                                    IconButton(onClick = { notaAEditar = nota }) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
                                     }
-                                    IconButton(
-                                        onClick = {
-                                            nota.id?.let { id ->
-                                                db.collection("notas").document(id).delete()
-                                            }
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Eliminar",
-                                            tint = MaterialTheme.colorScheme.error
-                                        )
+                                    IconButton(onClick = {
+                                        nota.id?.let { id -> db.collection("notas").document(id).delete() }
+                                    }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red)
                                     }
                                 }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = nota.contenido,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Text(text = nota.contenido, style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Creada: ${nota.fechaCreacion ?: "Fecha no disponible"}",
@@ -305,17 +277,9 @@ fun PantallaNotas(navController: NavHostController) {
             onNotaCreada = { nuevaNota ->
                 val userId = auth.currentUser?.uid
                 if (userId != null) {
-                    // Crear un nuevo documento en Firestore
                     val docRef = db.collection("notas").document()
-                    val notaConId = nuevaNota.copy(id = docRef.id) // Asignar el ID antes de guardar
-                    
+                    val notaConId = nuevaNota.copy(id = docRef.id)
                     docRef.set(notaConId.toMap())
-                        .addOnSuccessListener {
-                            Log.d("PantallaNotas", "Nota creada con ID: ${docRef.id}")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.w("PantallaNotas", "Error creando nota", e)
-                        }
                 }
                 mostrarDialogoNuevaNota = false
             }
@@ -358,38 +322,54 @@ private fun DialogoEditarNota(
                 OutlinedTextField(
                     value = titulo,
                     onValueChange = { titulo = it },
-                    label = { Text(stringResource(R.string.titulo_nota)) },
+                    label = { Text("Título") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = contenido,
                     onValueChange = { contenido = it },
-                    label = { Text(stringResource(R.string.contenido_nota)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
+                    label = { Text("Contenido") },
+                    modifier = Modifier.fillMaxWidth().height(150.dp)
                 )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    if (titulo.isNotBlank() && contenido.isNotBlank()) {
-                        onNotaEditada(nota.copy(
-                            titulo = titulo,
-                            contenido = contenido,
-                            fechaModificacion = fechaActual
-                        ))
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                ) {
+                    Text(
+                        text = "Cancelar",
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
-            ) { Text("Guardar") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        if (titulo.isNotBlank() && contenido.isNotBlank()) {
+                            onNotaEditada(
+                                nota.copy(
+                                    titulo = titulo,
+                                    contenido = contenido,
+                                    fechaModificacion = fechaActual
+                                )
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Guardar")
+                }
             }
         }
+
     )
 }
 
@@ -406,51 +386,69 @@ private fun DialogoNuevaNota(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.nueva_nota)) },
+        title = { Text("Nueva Nota") },
         text = {
             Column {
                 OutlinedTextField(
                     value = titulo,
                     onValueChange = { titulo = it },
-                    label = { Text(stringResource(R.string.titulo_nota)) },
+                    label = { Text("Título") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = contenido,
                     onValueChange = { contenido = it },
-                    label = { Text(stringResource(R.string.contenido_nota)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
+                    label = { Text("Contenido") },
+                    modifier = Modifier.fillMaxWidth().height(150.dp)
                 )
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    if (titulo.isNotBlank() && contenido.isNotBlank() && userId != null) {
-                        onNotaCreada(Nota(
-                            titulo = titulo,
-                            contenido = contenido,
-                            userId = userId,
-                            fechaCreacion = fechaActual,
-                            fechaModificacion = fechaActual
-                        ))
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = onDismiss,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                ) {
+                    Text(
+                        text = "Cancelar",
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
-            ) { Text(stringResource(android.R.string.ok)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        if (titulo.isNotBlank() && contenido.isNotBlank() && userId != null) {
+                            onNotaCreada(
+                                Nota(
+                                    titulo = titulo,
+                                    contenido = contenido,
+                                    userId = userId,
+                                    fechaCreacion = fechaActual,
+                                    fechaModificacion = fechaActual
+                                )
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Guardar")
+                }
             }
         }
+
     )
 }
 
+/*
 private fun formatTime(millis: Long): String {
     val minutes = millis / 60_000
     val seconds = (millis % 60_000) / 1_000
     return String.format("%02d:%02d", minutes, seconds)
 }
+*/

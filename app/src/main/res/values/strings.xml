@@ -18,7 +18,7 @@
     </string>
 
     <string name="hint_duracion">
-    Selecciona el tiempo que quieres que dure tu escritura
+    Selecciona el tiempo que quieres que dure tu escritura.
     </string>
 
 
@@ -28,24 +28,32 @@
     <string name="label_duracion_escritura">Duración de escritura</string>
 
     <!-- Notificaciones -->
-    <string name="notification_channel_name">Notificaciones de escritura</string>
-    <string name="notification_channel_description">Canal para notificaciones del hábito de escritura</string>
-    <string name="meditation_notification_channel_name">Notificaciones de meditación</string>
-    <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación</string>
-    <string name="reading_notification_channel_name">Notificaciones de lectura</string>
-    <string name="reading_notification_channel_description">Canal para notificaciones del hábito de lectura</string>
-    <string name="notification_start_timer">Iniciar temporizador</string>
-    <string name="notification_title">¡Hora de escribir!</string>
-    <string name="meditation_notification_title">¡Hora de meditar!</string>
-    <string name="reading_notification_title">¡Hora de leer!</string>
-    <string name="notification_default_text">Es hora de practicar tu hábito de escritura</string>
-    <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación</string>
-    <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura</string>
-    <string name="notification_notes_button">Abrir Notas</string>
-    <string name="notification_books_button">Mis Libros</string>
-    <string name="error_no_days_selected">Selecciona al menos un día</string>
-    <string name="error_notification_permission">Se requieren permisos de notificación</string>
-    <string name="success_notifications_scheduled">Notificaciones programadas</string>
+    <string name="notification_channel_name">📝 Notificaciones de escritura</string>
+    <string name="notification_channel_description">Canal para notificaciones del hábito de escritura ✍️</string>
+
+    <string name="meditation_notification_channel_name">🧘‍♀️ Notificaciones de meditación</string>
+    <string name="meditation_notification_channel_description">Canal para notificaciones del hábito de meditación 🧘</string>
+
+    <string name="reading_notification_channel_name">📖 Notificaciones de lectura</string>
+    <string name="reading_notification_channel_description">Canal para notificaciones del hábito de lectura 📚</string>
+
+    <string name="notification_start_timer">⏱️ Iniciar temporizador</string>
+
+    <string name="notification_title">📝 ¡Hora de escribir!</string>
+    <string name="meditation_notification_title">🧘 ¡Hora de meditar!</string>
+    <string name="reading_notification_title">📖 ¡Hora de leer!</string>
+
+    <string name="notification_default_text">Es hora de practicar tu hábito de escritura ✍️</string>
+    <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación 🧘</string>
+    <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura 📚</string>
+
+    <string name="notification_notes_button">🗒️ Abrir Notas</string>
+    <string name="notification_books_button">📚 Mis Libros</string>
+
+    <string name="error_no_days_selected">❗ Selecciona al menos un día</string>
+    <string name="error_notification_permission">⚠️ Se requieren permisos de notificación</string>
+    <string name="success_notifications_scheduled">✅ Notificaciones programadas</string>
+
 
     <!-- Temporizador -->
 
@@ -55,9 +63,9 @@
     <string name="timer_channel_description">Canal para el temporizador de escritura</string>
     <string name="timer_notification_title">Temporizador de escritura</string>
     <string name="timer_notification_text">Comenzar sesión de %d minutos</string>
-    <string name="timer_remaining_text">Tiempo restante: %s</string>
-    <string name="timer_completion_title">¡Tiempo completado!</string>
-    <string name="timer_completion_text">Has completado tu sesión de escritura</string>
+    <string name="timer_remaining_text">⏳ Tiempo restante: %s</string>
+    <string name="timer_completion_title">✅ ¡Tiempo completado!</string>
+    <string name="timer_completion_text">🎉 Has completado tu sesión de escritura</string>
     <string name="start_writing_action">Comenzar %d min</string>
     <string name="open_notes_action">Abrir notas</string>
     <string name="start_timer">Iniciar temporizador</string>
@@ -112,12 +120,12 @@
     <string name="meditation_timer_channel_name">Temporizador de meditación</string>
     <string name="meditation_timer_channel_description">Canal para el temporizador de meditación</string>
     <string name="meditation_timer_notification_title">Temporizador de meditación</string>
-    <string name="meditation_timer_completion_title">¡Tiempo completado!</string>
-    <string name="meditation_timer_completion_text">Has completado tu sesión de meditación</string>
+    <string name="meditation_timer_completion_title">✅¡Tiempo completado!</string>
+    <string name="meditation_timer_completion_text">🎉 Has completado tu sesión de meditación</string>
     <string name="titulo_config_meditacion">Configurar hábito de meditación</string>
     <string name="historial_meditacion">Historial de meditación</string>
     <string name="placeholder_descripcion_meditacion"> Es sano darte un tiempo para ti y para tu mente.</string>
-    <string name="label_duracion_meditacion">Duración de la Meditación</string>
+    <string name="label_duracion_meditacion">Duración de la meditación: *</string>
     <string name="label_sonidos">Sonidos ambientales durante la meditación.</string>
     <string name="label_respiracion">Recordatorio de ejercicios de respiración previos.</string>
     <!-- Modificar Meditación -->
@@ -131,10 +139,10 @@
     <string name="reading_timer_channel_description">Canal para el temporizador de lectura</string>
     <string name="reading_timer_notification_title">Temporizador de lectura</string>
     <string name="reading_timer_notification_text">Comenzar sesión de %d minutos</string>
-    <string name="reading_timer_completion_title">¡Tiempo completado!</string>
-    <string name="reading_timer_completion_text">Has completado tu sesión de lectura</string>
+    <string name="reading_timer_completion_title">¡✅ Tiempo completado!</string>
+    <string name="reading_timer_completion_text">🎉 Has completado tu sesión de lectura</string>
     <string name="placeholder_descripcion_lectura">Leer es como viajar... pero sin hacer fila en el aeropuerto.</string>
-    <string name="label_duracion_lectura">Duración de Lectura</string>
+    <string name="label_duracion_lectura">Duración de lectura</string>
 
 
     <!-- Pantalla Gestión de hábitos personalizados -->
@@ -190,20 +198,22 @@
     <string name="mensaje_guardado">¡Hábito guardado exitosamente!</string>
 
     <!-- Desconexion Digital Notification -->
-    <string name="digital_disconnect_timer_channel_name">Temporizador de desconexión digital</string>
-    <string name="digital_disconnect_timer_channel_description">Canal para el temporizador de desconexión digital</string>
-    <string name="digital_disconnect_timer_text">Comenzar sesión de %d minutos</string>
-    <string name="digital_disconnect_timer_remaining_text">Tiempo restante: %s</string>
-    <string name="digital_disconnect_timer_completion_title">¡Tiempo completado!</string>
-    <string name="digital_disconnect_timer_completion_text">Has completado tu sesión de desconexión digital</string>
-    <string name="digital_disconnect_notification_channel_name">Desconexión Digital</string>
-    <string name="digital_disconnect_notification_channel_description">Notificaciones para recordar tu tiempo de desconexión digital</string>
-    <string name="digital_disconnect_notification_title">¡Hora de desconectar!</string>
-    <string name="digital_disconnect_notification_default_text">Es hora de tomar un descanso digital</string>
-    <string name="digital_disconnect_timer_title">Desconexión Digital en progreso</string>
-    <string name="notification_disconnect_button">Ir a Desconexión</string>
-    <string name="digital_disconnect_completion_title">¡Desconexión completada!</string>
-    <string name="digital_disconnect_completion_text">Has completado tu tiempo de desconexión digital</string>
+    <string name="digital_disconnect_timer_channel_name">⏱️ Temporizador de desconexión digital</string>
+    <string name="digital_disconnect_timer_channel_description">📵 Canal para el temporizador de desconexión digital</string>
+    <string name="digital_disconnect_timer_text">🕐 Comenzar sesión de %d minutos</string>
+    <string name="digital_disconnect_timer_remaining_text">⏳ Tiempo restante: %s</string>
+    <string name="digital_disconnect_timer_completion_title">✅ ¡Tiempo completado!</string>
+    <string name="digital_disconnect_timer_completion_text">🎉 Has completado tu sesión de desconexión digital</string>
+
+    <string name="digital_disconnect_notification_channel_name">📴 Desconexión Digital</string>
+    <string name="digital_disconnect_notification_channel_description">🔔 Notificaciones para recordar tu tiempo de desconexión digital</string>
+    <string name="digital_disconnect_notification_title">📵 ¡Hora de desconectar!</string>
+    <string name="digital_disconnect_notification_default_text"> Es hora de tomar un descanso digital 📵</string>
+
+    <string name="digital_disconnect_timer_title">🔒 Desconexión Digital en progreso</string>
+    <string name="notification_disconnect_button">➡️ Ir a Desconexión</string>
+    <string name="digital_disconnect_completion_title">🎯 ¡Desconexión completada!</string>
+    <string name="digital_disconnect_completion_text">👏 Has completado tu tiempo de desconexión digital</string>
 
     <!-- Habitos Koalisticos -->
     <string name="titulo_kdesconexion">Desconexión Digital</string>
@@ -211,7 +221,7 @@
         Tomarte un respiro de las pantallas te ayuda a reconectar con el presente, reducir la ansiedad y disfrutar
         más del mundo real, como un koala tranquilo en su árbol.
     </string>
-    <string name="titulo_kalimentacion">Alimentacion</string>
+    <string name="titulo_kalimentacion">Alimentación</string>
     <string name="mensaje_kalimentacion">
         Comer de forma consciente fortalece tu cuerpo y mente. Cada bocado es una oportunidad para nutrirte y agradecer,
         como un koala saboreando su eucalipto.

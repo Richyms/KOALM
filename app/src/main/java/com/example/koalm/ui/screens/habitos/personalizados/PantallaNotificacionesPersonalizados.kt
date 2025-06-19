@@ -68,7 +68,7 @@ fun PantallaNotificacionesPersonalizados(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Notificaciones de hábitos personalizados") },
+                title = { Text("Notificaciones de hábitos") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -94,7 +94,7 @@ fun PantallaNotificacionesPersonalizados(navController: NavHostController) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(notificaciones.size) { index ->
                         val noti = notificaciones[index]
-                        val habitName = noti["habitName"] as? String ?: "Hábito"
+                        val habitName = noti["habitName"] as? String ?: "Hábito koalístico"
                         val mensaje = noti["mensaje"] as? String ?: "Tienes un nuevo recordatorio"
                         val timestamp = noti["timestamp"] as? Long
                         val fecha = timestamp?.let {

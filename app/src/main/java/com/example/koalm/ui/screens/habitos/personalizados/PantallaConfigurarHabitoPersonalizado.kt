@@ -442,7 +442,7 @@ fun PantallaConfigurarHabitoPersonalizado(navController: NavHostController, nomb
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            listOf("L", "M", "M", "J", "V", "S", "D").forEachIndexed { index, dia ->
+                            listOf("L", "M", "X", "J", "V", "S", "D").forEachIndexed { index, dia ->
                                 DiaCircle(
                                     label = dia,
                                     selected = diasSeleccionados[index],
@@ -1358,7 +1358,7 @@ fun TooltipDialogAyuda(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = mensaje,
-                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp,  textAlign = TextAlign.Justify),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }

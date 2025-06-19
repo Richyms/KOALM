@@ -2,9 +2,11 @@ package com.example.koalm.ui.screens.habitos.saludMental
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -29,8 +31,19 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.dotlottie.dlplayer.Mode
+import com.example.koalm.R
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.screens.habitos.personalizados.eliminarHabitoPersonalizado
 import com.google.firebase.auth.FirebaseAuth
 import com.example.koalm.utils.TimeUtils
+import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
+import com.lottiefiles.dotlottie.core.util.DotLottieSource
 
 private const val TAG = "PantallaSaludMental"
 
@@ -132,7 +145,7 @@ fun PantallaSaludMental(navController: NavHostController) {
         ),
         Habito(
             titulo = "Escritura",
-            descripcion = "Tomate un tiempo para ti y tu cuaderno",
+            descripcion = "Tomate un tiempo para ti y tu cuaderno.",
             tipo = TipoHabito.ESCRITURA
         )
     )
@@ -319,41 +332,21 @@ private fun HabitoActivoCardMental(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    var mostrarDialogoConfirmacion by remember { mutableStateOf(false) }
 
-    Card(
-        onClick = {
-            try {
-                when (habito.tipo) {
-                    TipoHabito.ESCRITURA -> navController.navigate("configurar_habito_escritura/${habito.id}") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    TipoHabito.MEDITACION -> navController.navigate("configurar_habito_meditacion/${habito.id}") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    TipoHabito.DESCONEXION_DIGITAL -> navController.navigate("configurar_habito_desconexion_digital/${habito.id}") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    TipoHabito.LECTURA -> navController.navigate("configurar_habito_lectura/${habito.id}") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    else -> {
-                        // Manejar otros tipos o no hacer nada
-                        Log.w(TAG, "Tipo de hábito no manejado en salud mental: ${habito.tipo}")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("PantallaSaludMental", "Error al navegar: ${e.message}", e)
-                Toast.makeText(
-                    context,
-                    "Error al abrir la configuración: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+    //Mensaje de exito
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Hábito eliminado con éxito!",
+            onDismiss = {
+                mostrarDialogoExito = false
+                onHabitDeleted()
             }
-        },
+        )
+    }
+    Card(
+        onClick = {},
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp)),
@@ -434,47 +427,130 @@ private fun HabitoActivoCardMental(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
+
                     Text(
-                        text = formatearDuracion(habito.duracionMinutos),
+                        text = if (habito.tipo == TipoHabito.ESCRITURA || habito.tipo == TipoHabito.LECTURA ) {
+                            "${formatearDuracion(habito.duracionMinutos)} · ${habito.objetivoPaginas} pág/día"
+                        } else {
+                            formatearDuracion(habito.duracionMinutos)
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+
+
                 }
             }
 
-            IconButton(
-                onClick = { showMenu = true }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Más opciones",
-                    tint = GrisMedio
-                )
+            // Menú de opciones
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Opciones")
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    if (habito.tipo == TipoHabito.MEDITACION) {
+                        DropdownMenuItem(
+                            text = { Text("Temporizador") },
+                            onClick = {
+                                showMenu = false
+                                navController.navigate("temporizador_meditacion/${habito.duracionMinutos}")
+                            }
+                        )
+                        Divider()
+                    }
+
+                    if (habito.tipo == TipoHabito.ESCRITURA) {
+                        DropdownMenuItem(
+                            text = { Text("Mis notas") },
+                            onClick = {
+                                showMenu = false
+                                navController.navigate("notas")
+                            }
+                        )
+                        Divider()
+                    }
+
+                    if (habito.tipo == TipoHabito.LECTURA) {
+                        DropdownMenuItem(
+                            text = { Text("Mis libros") },
+                            onClick = {
+                                showMenu = false
+                                navController.navigate("libros")
+                            }
+                        )
+                        Divider()
+                    }
+
+                    DropdownMenuItem(
+                        text = { Text("Editar") },
+                        onClick = {
+                            showMenu = false
+                            when (habito.tipo) {
+                                TipoHabito.MEDITACION -> {
+                                    navController.navigate("configurar_habito_meditacion/${habito.id}")
+                                }
+                                TipoHabito.LECTURA -> {
+                                    navController.navigate("configurar_habito_lectura/${habito.id}")
+                                }
+                                TipoHabito.ESCRITURA -> {
+                                    navController.navigate("configurar_habito_escritura/${habito.id}")
+                                }
+                                TipoHabito.DESCONEXION_DIGITAL -> {
+                                    navController.navigate("configurar_habito_desconexion_digital/${habito.id}")
+                                }
+                                else -> {
+                                    Log.w("EditarHabito", "Tipo no soportado: ${habito.tipo}")
+                                }
+                            }
+                        }
+                    )
+
+                    DropdownMenuItem(
+                        text = { Text("Eliminar") },
+                        onClick = {
+                            showMenu = false
+                            mostrarDialogoConfirmacion = true
+                        }
+                    )
+                }
+
+
             }
         }
     }
-
-    if (showMenu) {
-        AlertDialog(
-            onDismissRequest = { showMenu = false },
-            title = { Text("Opciones del hábito") },
-            text = {
-                Column {
-                    TextButton(
-                        onClick = {
-                            showMenu = false
-                            showDeleteDialog = true
+    // Diálogo de confirmación
+    if (mostrarDialogoConfirmacion) {
+        ConfirmacionDialogoEliminarAnimado(
+            onCancelar = { mostrarDialogoConfirmacion = false },
+            onConfirmar = {
+                mostrarDialogoConfirmacion = false
+                scope.launch {
+                    try {
+                        val result = habitosRepository.eliminarHabito(habito.id)
+                        result.onSuccess {
+                            mostrarDialogoExito = true
+                        }.onFailure { e ->
+                            Log.e("PantallaSaludMental", "Error al eliminar hábito: ${e.message}", e)
+                            Toast.makeText(
+                                context,
+                                "Error al eliminar hábito: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                    ) {
-                        Text("Eliminar hábito")
+                    } catch (e: Exception) {
+                        Log.e("PantallaSaludMental", "Error inesperado: ${e.message}", e)
+                        Toast.makeText(
+                            context,
+                            "Error inesperado: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } finally {
+                        isProcessing = false
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { showMenu = false }
-                ) {
-                    Text("Cancelar")
                 }
             }
         )
@@ -532,5 +608,88 @@ private fun HabitoActivoCardMental(
                 }
             }
         )
+    }
+}
+
+//Confirmacion de eliminacion del habito
+@Composable
+fun ConfirmacionDialogoEliminarAnimado(
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { /* Evitar cierre automático */ },
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Lottie de advertencia
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/039fc5d3-fdaa-4025-9051-c2843ff5eab4/1RvypHYH4i.lottie"),
+                    autoplay = true,
+                    loop = true,
+                    speed = 1f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "¿Eliminar hábito?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "¿Estás seguro de que deseas eliminar este hábito? Esta acción no se puede deshacer.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onCancelar,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                    ) {
+                        Text(
+                            stringResource(R.string.boton_cancelar_modificaciones),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onConfirmar
+                    ) {
+                        Text("Eliminar")
+                    }
+                }
+            }
+        }
     }
 }

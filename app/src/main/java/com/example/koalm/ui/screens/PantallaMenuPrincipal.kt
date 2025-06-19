@@ -295,7 +295,22 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
                             }
                         }
                     }
-                    //"Salud mental" -> navController.navigate("estadisticas_salud_mental")
+                    "Salud mental" -> {
+                        scope.launch {
+                            val db = FirebaseFirestore.getInstance()
+                            val snapshot = db.collection("habitos")
+                                .document(userEmail)
+                                .collection("predeterminados")
+                                .get()
+                                .await()
+
+                            if (snapshot.isEmpty) {
+                                navController.navigate("salud_mental")
+                            } else {
+                                navController.navigate("estadisticas_salud_mental")
+                            }
+                        }
+                    }
                     "Personalizados" -> {
                         scope.launch {
                             val db = FirebaseFirestore.getInstance()
@@ -752,11 +767,11 @@ fun HabitoCardPredeterminado(
             title = {
                 Text(
                     when (habito.tipo) {
-                        TipoHabito.LECTURA -> "¿Cuántos minutos leíste?"
+                        TipoHabito.LECTURA -> "¿Cuántas páginas leíste?"
                         TipoHabito.ESCRITURA -> "¿Cuántas páginas escribiste?"
                         TipoHabito.MEDITACION -> "¿Cuántos minutos meditaste?"
                         TipoHabito.DESCONEXION_DIGITAL -> "¿Cuántos minutos estuviste desconectado?"
-                        TipoHabito.SUEÑO -> "¿Cuántas horas dormiste?"
+                        //TipoHabito.SUEÑO -> "¿Cuántas horas dormiste?"
                         else -> "Ingresa el progreso"
                     }
                 )
@@ -768,11 +783,11 @@ fun HabitoCardPredeterminado(
                     label = {
                         Text(
                             when (habito.tipo) {
-                                TipoHabito.LECTURA -> "Minutos"
+                                TipoHabito.LECTURA -> "Páginas"
                                 TipoHabito.ESCRITURA -> "Páginas"
                                 TipoHabito.MEDITACION -> "Minutos"
                                 TipoHabito.DESCONEXION_DIGITAL -> "Minutos"
-                                TipoHabito.SUEÑO -> "Horas"
+                                //TipoHabito.SUEÑO -> "Horas"
                                 else -> "Cantidad"
                             }
                         )
@@ -827,25 +842,30 @@ fun HabitoCardPredeterminado(
 
     // Visualizar recordatorios y métricas específicas según el tipo de hábito
     val progresoText = when (habito.tipo) {
+        //Hábitos mentales
         TipoHabito.ESCRITURA -> {
             val paginasEscritas = realizados
             if (completado) "Completado: $paginasEscritas páginas" else "Objetivo: $paginasEscritas/${habito.objetivoPaginas} páginas"
         }
+        TipoHabito.LECTURA -> {
+            val paginasLeidas = realizados
+            if (completado) "Completado: $paginasLeidas páginas" else "Objetivo: $paginasLeidas/${habito.objetivoPaginas} páginas"
+        }
+        TipoHabito.MEDITACION -> {
+            val minutosMeditados = realizados
+            if (completado) "Completado: $minutosMeditados minutos" else "Objetivo: $minutosMeditados/${habito.duracionMinutos} minutos"
+        }
+        TipoHabito.DESCONEXION_DIGITAL -> {
+            val minutosDesconectado = realizados
+            if (completado) "Completado: $minutosDesconectado minutos" else "Objetivo: $minutosDesconectado/${habito.duracionMinutos} minutos"
+        }
+
+        //Hábitos de salud
         TipoHabito.SUEÑO -> {
             val horasDormidas = realizados
             if (completado) "Completado: $horasDormidas horas" else "Objetivo: $horasDormidas/${habito.objetivoHorasSueno} horas"
         }
-        TipoHabito.LECTURA -> {
-            val minutosLeidos = realizados
-            if (completado) "Completado: $minutosLeidos minutos" else "Objetivo: $minutosLeidos minutos"
-        }
-        TipoHabito.MEDITACION -> {
-            val minutosMeditados = realizados
-            if (completado) "Completado: $minutosMeditados minutos" else "Objetivo: $minutosMeditados minutos"
-        }
-        TipoHabito.DESCONEXION_DIGITAL -> {
-            if (completado) "Completado" else "Pendiente"
-        }
+
         TipoHabito.ALIMENTACION -> {
             val comidasRealizadas = realizados
             if (completado) "Completado: $comidasRealizadas comidas" else "Pendientes: ${totalRecordatoriosxDia - comidasRealizadas} comidas"

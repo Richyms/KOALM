@@ -41,7 +41,7 @@ fun PantallaTemporizadorMeditacion(
     val totalTime = (duracionMinutos * 60).toFloat()
     var isMusicPlaying by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val mediaPlayer = remember { MediaPlayer.create(context, R.raw.meditation_music) }
+    val mediaPlayer = remember { MediaPlayer.create(context, R.raw.meditacion_musica) }
     
     // Obtener el color primario fuera del Canvas
     val primaryColor = MaterialTheme.colorScheme.primary

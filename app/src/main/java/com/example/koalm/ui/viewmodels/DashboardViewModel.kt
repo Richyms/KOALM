@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.koalm.data.HabitosRepository
+import com.example.koalm.data.HabitosRepository.incrementarProgresoHabitoPre
 import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.model.Habito
 import com.example.koalm.model.ProgresoDiario
@@ -159,10 +160,11 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
+
     fun incrementarProgresoPre(email: String, habito: Habito, valor: Int) {
         viewModelScope.launch {
             try {
-                HabitoRepository.incrementarProgresoHabito(email, habito, valor)
+                incrementarProgresoHabitoPre(email, habito, valor)
                 cargarProgresosPre(email, habitosPre)
                 cargarRachaSemanal(email)
             } catch (e: Exception) {

@@ -88,7 +88,6 @@ class HabitoRepository {
                         diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
                         hora = data["hora"] as? String ?: "",
                         duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
-                        notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
                         userId = data["userId"] as? String,
                         fechaCreacion = data["fechaCreacion"] as? String,
                         fechaModificacion = data["fechaModificacion"] as? String,
@@ -158,7 +157,6 @@ class HabitoRepository {
                         diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
                         hora = data["hora"] as? String ?: "",
                         duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
-                        notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
                         userId = data["userId"] as? String,
                         fechaCreacion = data["fechaCreacion"] as? String,
                         fechaModificacion = data["fechaModificacion"] as? String,
@@ -206,6 +204,26 @@ class HabitoRepository {
         Result.failure(e)
     }
 
+    suspend fun actualizarHabitoO(habitoId: String, habito: Habito): Result<Unit> {
+        return try {
+            val user = FirebaseAuth.getInstance().currentUser
+                ?: return Result.failure(Exception("Usuario no autenticado"))
+
+            val docRef = FirebaseFirestore.getInstance()
+                .collection("habitos")
+                .document(user.email!!)
+                .collection("predeterminados")
+                .document(habitoId)
+
+            docRef.set(habito.toMap()).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
     suspend fun obtenerHabito(habitoId: String): Result<Habito> {
         return try {
             Log.d(TAG, "Obteniendo hábito con ID: $habitoId")
@@ -241,7 +259,6 @@ class HabitoRepository {
                 diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
                 hora = data["hora"] as? String ?: "",
                 duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
-                notasHabilitadas = data["notasHabilitadas"] as? Boolean ?: false,
                 userId = data["userId"] as? String,
                 fechaCreacion = data["fechaCreacion"] as? String,
                 fechaModificacion = data["fechaModificacion"] as? String,

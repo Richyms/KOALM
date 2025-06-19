@@ -53,7 +53,12 @@ import kotlinx.coroutines.launch
 /* foundation */
 // import androidx.compose.foundation.Canvas          // ←  dibujar el track
 import androidx.compose.foundation.clickable       // ←  .clickable() que reporta error
+import androidx.compose.ui.graphics.Color
 import com.example.koalm.model.ProgresoDiario
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.components.ValidacionesDialogoAnimado
+import com.example.koalm.ui.screens.habitos.personalizados.DiasSeleccionadosResumen
+import com.example.koalm.ui.screens.habitos.personalizados.TooltipDialogAyuda
 import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalDate
 
@@ -61,17 +66,46 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
+fun PantallaConfiguracionHabitoMeditacion(
+    navController: NavHostController,
+    habitoId: String? = null
+) {
     val context = LocalContext.current
     val TAG = "PantallaConfiguracionHabitoMeditacion"
     val habitosRepository = remember { HabitoRepository() }
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
     val userEmail = FirebaseAuth.getInstance().currentUser?.email
+    val esEdicion = habitoId != null
+
+    var mensajeValidacion by remember { mutableStateOf<String?>(null) }
+
+    if (mensajeValidacion != null) {
+        ValidacionesDialogoAnimado(
+            mensaje = mensajeValidacion!!,
+            onDismiss = {
+                mensajeValidacion = null
+            }
+        )
+    }
+
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Hábito configurado correctamente!",
+            onDismiss = {
+                mostrarDialogoExito = false
+                navController.navigate("salud_mental") {
+                    popUpTo("salud_mental") { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        )
+    }
     
     //------------------------------ Estados -------------------------------------
     var descripcion         by remember { mutableStateOf("") }
-    val diasSemana          = listOf("L","M","M","J","V","S","D")
+    val diasSemana          = listOf("L","M","X","J","V","S","D")
     var diasSeleccionados   by remember { mutableStateOf(List(7){false})}
 
     /* Hora */
@@ -86,134 +120,214 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
     var duracionMin by remember { mutableStateOf(15f) }    // 1‑180 min
     val rangoDuracion = 1f..180f
 
+    val habitoEditando = remember { mutableStateOf<Habito?>(null) }
+
+    LaunchedEffect(habitoId) {
+        if (habitoId != null) {
+            val resultado = habitosRepository.obtenerHabito(habitoId)
+            resultado.fold(
+                onSuccess = { habito ->
+                    habitoEditando.value = habito
+                    descripcion = habito.descripcion
+                    diasSeleccionados = habito.diasSeleccionados
+                    horaRecordatorio = try {
+                        LocalTime.parse(habito.hora)
+                    } catch (e: Exception) {
+                        LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
+                    }
+                    duracionMin = habito.duracionMinutos.toFloat()
+                },
+                onFailure = {
+                    Log.e(TAG, "No se pudo cargar el hábito con ID: $habitoId")
+                }
+            )
+        }
+    }
+
+
+
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                mensajeValidacion = "Debes iniciar sesión para crear un hábito"
+                return@rememberLauncherForActivityResult
+            }
+
             scope.launch {
-                val currentUser = auth.currentUser
-                if (currentUser == null) {
-                    Log.e(TAG, "No hay usuario autenticado")
-                    Toast.makeText(
-                        context,
-                        "Debes iniciar sesión para crear un hábito",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@launch
-                }
-
-                // Crear el hábito en Firebase
-                val habito = Habito(
-                    titulo = "Meditación",
-                    descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
-                    clase = ClaseHabito.MENTAL,
-                    tipo = TipoHabito.MEDITACION,
-                    diasSeleccionados = diasSeleccionados,
-                    hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
-                    duracionMinutos = duracionMin.toInt(),
-                    notasHabilitadas = false,
-                    userId = currentUser.uid
-                )
-
-                habitosRepository.crearHabito(habito).onSuccess { habitoId ->
-                    Log.d(TAG, "Hábito creado exitosamente con ID: $habitoId")
-                    Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
-                    
-                    // Programar notificación con el ID real del hábito
-                    val notificationService = MeditationNotificationService()
-                    val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
-
-                    Log.d(TAG, "Iniciando servicio de notificaciones")
-                    context.startService(Intent(context, MeditationNotificationService::class.java))
-
-                    notificationService.scheduleNotification(
-                        context = context,
+                try {
+                    val habito = Habito(
+                        id = habitoId ?: "",  // Para edición o creación nueva
+                        titulo = "Meditación",
+                        descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
+                        clase = ClaseHabito.MENTAL,
+                        tipo = TipoHabito.MEDITACION,
                         diasSeleccionados = diasSeleccionados,
-                        hora = notificationTime,
-                        descripcion = descripcion.ifEmpty {
-                            context.getString(R.string.meditation_notification_default_text)
-                        },
-                        durationMinutes = duracionMin.toLong(),
-                        additionalData = mapOf(
-                            "habito_id" to habitoId,
-                            "is_meditation" to true,
-                            "is_reading" to false,
-                            "is_digital_disconnect" to false,
-                            "notas_habilitadas" to false,
-                            "sonidos_habilitados" to false,
-                            "ejercicio_respiracion" to false
+                        hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        duracionMinutos = duracionMin.toInt(),
+                        userId = currentUser.uid
+                    )
+
+                    if (habitoId != null) {
+                        // EDICIÓN
+                        habitosRepository.actualizarHabitoO(habitoId, habito).fold(
+                            onSuccess = {
+                                Log.d(TAG, "Hábito actualizado exitosamente con ID: $habitoId")
+                                Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+
+                                val notificationService = MeditationNotificationService()
+                                val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                                notificationService.cancelNotifications(context)
+                                notificationService.scheduleNotification(
+                                    context = context,
+                                    diasSeleccionados = diasSeleccionados,
+                                    hora = notificationTime,
+                                    descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
+                                    durationMinutes = duracionMin.toLong(),
+                                    additionalData = mapOf(
+                                        "habito_id" to habitoId,
+                                        "is_meditation" to true,
+                                        "is_reading" to false,
+                                        "is_digital_disconnect" to false,
+                                        "notas_habilitadas" to false,
+                                        "sonidos_habilitados" to false,
+                                        "ejercicio_respiracion" to false
+                                    )
+                                )
+
+                                // Referencias para guardar progreso
+                                val db = FirebaseFirestore.getInstance()
+                                val userHabitsRef = userEmail?.let {
+                                    db.collection("habitos").document(it)
+                                        .collection("predeterminados")
+                                }
+
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalObjetivoDiario = duracionMin.toInt()
+                                )
+
+                                val progresoRef = userHabitsRef?.document(habitoId)
+                                    ?.collection("progreso")
+                                    ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                    Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el progreso: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+
+                                mostrarDialogoExito = true
+                            },
+                            onFailure = { error ->
+                                Log.e(TAG, "Error al actualizar hábito: ${error.message}", error)
+                                Toast.makeText(
+                                    context,
+                                    "Error al actualizar hábito: ${error.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         )
-                    )
-                    // Obtener la referencia al usuario actual en Firebase Authentication
-                    val db = FirebaseFirestore.getInstance()
-                    val userHabitsRef = userEmail?.let {
-                        db.collection("habitos").document(it)
-                            .collection("predeterminados")
+                    } else {
+                        // CREACIÓN
+                        habitosRepository.crearHabito(habito).fold(
+                            onSuccess = { nuevoHabitoId ->
+                                Log.d(TAG, "Hábito creado exitosamente con ID: $nuevoHabitoId")
+                                Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
+
+                                val notificationService = MeditationNotificationService()
+                                val notificationTime = LocalDateTime.of(LocalDateTime.now().toLocalDate(), horaRecordatorio)
+
+                                Log.d(TAG, "Iniciando servicio de notificaciones")
+                                context.startService(Intent(context, MeditationNotificationService::class.java))
+
+                                notificationService.scheduleNotification(
+                                    context = context,
+                                    diasSeleccionados = diasSeleccionados,
+                                    hora = notificationTime,
+                                    descripcion = descripcion.ifEmpty { context.getString(R.string.meditation_notification_default_text) },
+                                    durationMinutes = duracionMin.toLong(),
+                                    additionalData = mapOf(
+                                        "habito_id" to nuevoHabitoId,
+                                        "is_meditation" to true,
+                                        "is_reading" to false,
+                                        "is_digital_disconnect" to false,
+                                        "notas_habilitadas" to false,
+                                        "sonidos_habilitados" to false,
+                                        "ejercicio_respiracion" to false
+                                    )
+                                )
+
+                                // Referencias para guardar progreso
+                                val db = FirebaseFirestore.getInstance()
+                                val userHabitsRef = userEmail?.let {
+                                    db.collection("habitos").document(it)
+                                        .collection("predeterminados")
+                                }
+
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalObjetivoDiario = duracionMin.toInt()
+                                )
+
+                                val progresoRef = userHabitsRef?.document(nuevoHabitoId)
+                                    ?.collection("progreso")
+                                    ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                    Log.d(TAG, "Guardando progreso para hábito ID: $nuevoHabitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el progreso: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+
+                                mostrarDialogoExito = true
+                            },
+                            onFailure = { error ->
+                                Log.e(TAG, "Error al crear el hábito: ${error.message}", error)
+                                Toast.makeText(
+                                    context,
+                                    "Error al crear el hábito: ${error.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        )
                     }
-
-                    // Crear el objeto de progreso
-                    val progreso = ProgresoDiario(
-                        realizados = 0,
-                        completado = false,
-                        totalObjetivoDiario = 1
-                    )
-
-                    // Referenciar al documento de progreso usando la fecha actual como ID
-                    val progresoRef = userHabitsRef?.document(habitoId)
-                        ?.collection("progreso")
-                        ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-
-                    // Guardar en Firestore usando el .toMap()
-                    progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
-                        Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
-                        Toast.makeText(
-                            context,
-                            "Progreso diario guardado",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        navController.navigate("salud_mental") {
-                            popUpTo("salud_mental") { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }?.addOnFailureListener { e ->
-                        Toast.makeText(
-                            context,
-                            "Error al guardar el progreso: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        navController.navigate("salud_mental") {
-                            popUpTo("salud_mental") { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error inesperado: ${e.message}", e)
                     Toast.makeText(
                         context,
-                        context.getString(R.string.success_notifications_scheduled),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    navController.navigate("salud_mental") {
-                        popUpTo("salud_mental") { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }.onFailure { error ->
-                    Log.e(TAG, "Error al crear el hábito: ${error.message}")
-                    Toast.makeText(
-                        context,
-                        "Error al crear el hábito",
-                        Toast.LENGTH_SHORT
+                        "Error inesperado: ${e.message}",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
             }
         } else {
-            Toast.makeText(
-                context,
-                context.getString(R.string.error_notification_permission),
-                Toast.LENGTH_LONG
-            ).show()
+            mensajeValidacion = "Se requieren permisos de notificaciones"
         }
     }
+
 
     //------------------------------ UI ------------------------------------------
     Scaffold(
@@ -261,44 +375,75 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                     )
 
                     /*  Días  */
-                    Text(
-                        text = stringResource(R.string.label_frecuencia),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
                     Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        diasSemana.forEachIndexed { i, d ->
-                            DiaCircle(
-                                label = d,
-                                selected = diasSeleccionados[i],
-                                onClick = {
-                                    diasSeleccionados = diasSeleccionados.toMutableList()
-                                        .also { it[i] = !it[i] }
-                                }
-                            )
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ){
+                        Text(
+                            text = stringResource(R.string.label_frecuencia),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        TooltipDialogAyuda(
+                            titulo = "Frecuencia",
+                            mensaje = "Selecciona los días de la semana en los que deseas mantener activo tu hábito."
+                        )
+                    }
+                    Column {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            diasSemana.forEachIndexed { i, d ->
+                                DiaCircle(
+                                    label = d,
+                                    selected = diasSeleccionados[i],
+                                    onClick = {
+                                        diasSeleccionados = diasSeleccionados.toMutableList()
+                                            .also { it[i] = !it[i] }
+                                    }
+                                )
+                            }
                         }
+                        DiasSeleccionadosResumen(diasSeleccionados)
                     }
 
                     /*  Hora  */
-                    Text(
-                        text = stringResource(R.string.label_hora),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ){
+                        Text(
+                            text = stringResource(R.string.label_hora),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        TooltipDialogAyuda(
+                            titulo = "Recordatorio",
+                            mensaje = "Establece una notificación personalizada para ayudarte a cumplir tu hábito."
+                        )
+                    }
+
                     HoraField(horaRecordatorio) { mostrarTimePicker = true }
 
 
                     /*  Duración (Slider personalizado)  */
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = stringResource(R.string.label_duracion_meditacion),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ){
+                            Text(
+                                text = stringResource(R.string.label_duracion_meditacion),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            TooltipDialogAyuda(
+                                titulo = "Duración de la meditación",
+                                mensaje = "Configura cuánto tiempo deseas meditar. Al llegar la hora establecida, recibirás una notificación para ayudarte a cumplir con tu hábito."
+                            )
+                        }
                         Text(
                             text = TimeUtils.formatearDuracion(duracionMin.roundToInt()),
                             style = MaterialTheme.typography.bodyMedium,
@@ -312,7 +457,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = "Selecciona el tiempo que quieres que dure tu hábito de meditación",
+                            text = "Selecciona el tiempo que quieres que dure tu hábito de meditación.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -321,6 +466,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
             }
 
             /* ----------------------------  Card de Meditación  --------------------------- */
+            /*
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -365,6 +511,7 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                     )
                 }
             }
+            */
 
             Spacer(Modifier.weight(1f))
 
@@ -373,25 +520,49 @@ fun PantallaConfiguracionHabitoMeditacion(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Button(
-                    onClick = {
-                        if (diasSeleccionados.any { it }) {
-                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            Toast.makeText(
-                                context,
-                                "Selecciona al menos un día",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
+                Row(
                     modifier = Modifier
-                        .width(200.dp)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+                    Button(
+                        onClick = {
+                            if (diasSeleccionados.any { it }) {
+                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                mensajeValidacion = "Por favor, selecciona al menos un día de la semana."
+                                return@Button
+                            }
+                        },
+                        modifier = Modifier
+                            .width(180.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text(stringResource(R.string.boton_guardar), color = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    if (esEdicion) {
+                        // Boton de Cancelar
+                        Button(
+                            onClick = {
+                                navController.navigateUp()
+                            },
+                            modifier = Modifier
+                                .width(180.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                        ) {
+                            Text(
+                                stringResource(R.string.boton_cancelar_modificaciones),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+
+                        }
+                    }
                 }
             }
         }
