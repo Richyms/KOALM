@@ -18,7 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.koalm.ui.components.BarraNavegacionInferior
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import android.util.Log
 import com.example.koalm.ui.theme.*
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
 data class ResultadoAnsiedad(
     val nivel: String,
@@ -49,7 +55,7 @@ fun obtenerResultadoAnsiedad(puntaje: Int): ResultadoAnsiedad {
         )
         else -> ResultadoAnsiedad(
             nivel = "Ansiedad Severa",
-            descripcion = "Los síntomas indican un nivel severo de ansiedad que requiere atención profesional.",
+            descripcion = "Los síntomas indican un nivel severo d e ansiedad que requiere atención profesional.",
             recomendaciones = "• Busca ayuda profesional inmediata\n• Mantén contacto regular con tu red de apoyo\n• Aprende técnicas de manejo de crisis\n• Sigue un plan de tratamiento estructurado",
             color = Color(0xFFF44336)
         )
@@ -63,6 +69,39 @@ fun PantallaResultadoAnsiedad(
     puntaje: Int
 ) {
     val resultado = obtenerResultadoAnsiedad(puntaje)
+    val firestore = FirebaseFirestore.getInstance()
+    val auth = FirebaseAuth.getInstance()
+    val userEmail = auth.currentUser?.email
+
+    LaunchedEffect(Unit) {
+        if (userEmail != null) {
+            try {
+                val datos = mapOf(
+                    "nivel" to resultado.nivel,
+                    "puntaje" to puntaje,
+                    "timestamp" to com.google.firebase.Timestamp.now()
+                )
+                val Guardado = firestore.collection("resultadosAnsiedad")
+                    .document(userEmail)
+                    .collection("historial")
+
+                try {
+                    val Anteriores = Guardado.get().await()
+
+                    val conteo = Anteriores.size() + 1
+                    val IdPerso = "Resultado $conteo"
+
+                    Guardado.document(IdPerso) // Genera ID automático
+                        .set(datos)
+                    Log.d("Firebase", "Resultado guardado con éxito con Id:$IdPerso")
+                } catch (e: Exception) {
+                    Log.e("Firebase", "Error al guardar resultado: ${e.message}")
+                }
+            } catch (e: Exception) {
+                Log.e("Firebase", "Usuario no autenticado")
+            }
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -182,4 +221,4 @@ fun PantallaResultadoAnsiedad(
             }
         }
     }
-} 
+}
