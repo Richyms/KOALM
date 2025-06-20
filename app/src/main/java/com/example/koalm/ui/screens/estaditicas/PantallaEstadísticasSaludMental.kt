@@ -55,94 +55,123 @@ import com.example.koalm.ui.components.BarraNavegacionInferior
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import android.graphics.Typeface
+import android.widget.Toast
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import com.example.koalm.model.Habito
+import com.example.koalm.repository.HabitoRepository
+import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
+import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaEstadísticasSaludMental(
     navController: NavHostController
 ) {
-    val habitos = remember { mutableStateListOf<HabitoPersonalizado>() }
+    //val habitos = remember { mutableStateListOf<HabitoPersonalizado>() }
     val progresoPorHabito = remember { mutableStateMapOf<String, Map<LocalDate, ProgresoDiario>>() }
-    val selectedIndex = remember { mutableStateOf(0) }
-    val userEmail = FirebaseAuth.getInstance().currentUser?.email
     val db = FirebaseFirestore.getInstance()
+    val habitoRepository = remember { HabitoRepository() }
+    val habitosMentales = remember { mutableStateListOf<Habito>() }
+    val selectedIndex = remember { mutableStateOf(0) }
+    val contexto = LocalContext.current
+    val userEmail = FirebaseAuth.getInstance().currentUser?.email
 
+
+    // Estado de la UI
+    var isLoading by remember { mutableStateOf(true) }
 
     // Cargar hábitos desde Firestore
-    LaunchedEffect(Unit) {
-        Log.d("Graficador", "Iniciando cargaaaa")
-        val habitosSnapshot = userEmail?.let {
-            db.collection("habitos")
-                .document(it)
-                .collection("predeterminados")
-                .get()
-                .await()
-        }
-        val listaHabitos = habitosSnapshot?.documents?.mapNotNull { doc ->
-            doc.toObject(HabitoPersonalizado::class.java)?.copy(nombre = doc.getString("nombre") ?: "")
-        }
-        habitos.clear()
-        if (listaHabitos != null) {
-            habitos.addAll(listaHabitos)
-        }
+    LaunchedEffect(userEmail) {
+        if (userEmail == null) return@LaunchedEffect
 
-        Log.d("Graficador", "Hábitos cargados (${listaHabitos?.size}):")
-        listaHabitos?.forEach {
-            Log.d("Graficador", " - ${it.nombre}")
-        }
+        try {
+            Log.d("Graficador", "Iniciando carga de hábitos mentales")
 
-        // Para cada hábito, cargar su progreso diario
-        listaHabitos?.forEach { habito ->
-            val idDoc = habito.nombre.replace(" ", "_")
-            val progresoSnapshot = db.collection("habitos")
-                .document(userEmail)
-                .collection("personalizados")
-                .document(idDoc)
-                .collection("progreso")
-                .get().await()
+            // 1. Obtener hábitos mentales
+            val resultado = habitoRepository.obtenerHabitosMentalesKary(userEmail)
+            if (resultado.isSuccess) {
+                val listaHabitos = resultado.getOrNull().orEmpty()
+                habitosMentales.clear()
+                habitosMentales.addAll(listaHabitos)
 
-            val progresoMap = progresoSnapshot.documents.mapNotNull { doc ->
-                val fechaStr = doc.getString("fecha") ?: return@mapNotNull null
-                val progreso = doc.toObject(ProgresoDiario::class.java) ?: return@mapNotNull null
-                Log.d("Graficador", "Progreso cargado para fecha $fechaStr: $progreso")
-                try {
-                    val fecha = LocalDate.parse(fechaStr)
-                    fecha to progreso
-                } catch (e: Exception) {
-                    null
+                Log.d("Graficador", "Hábitos mentales cargados (${listaHabitos.size}):")
+                listaHabitos.forEach {
+                    Log.d("Graficador", " - ${it.titulo} (${it.id})")
                 }
-            }.toMap()
 
-            progresoPorHabito[habito.nombre] = progresoMap
+                // 2. Obtener progreso por cada hábito
+                progresoPorHabito.clear()
+
+                listaHabitos.forEach { habito ->
+                    val progresoSnapshot = db.collection("habitos")
+                        .document(userEmail)
+                        .collection("predeterminados")
+                        .document(habito.id)
+                        .collection("progreso")
+                        .get()
+                        .await()
+
+                    val progresoMap = progresoSnapshot.documents.mapNotNull { doc ->
+                        val fechaStr = doc.id // El ID del documento es la fecha (yyyy-MM-dd)
+                        val progreso = doc.toObject(ProgresoDiario::class.java)
+                        if (progreso != null && fechaStr.isNotBlank()) {
+                            try {
+                                val fecha = LocalDate.parse(fechaStr)
+                                Log.d("Graficador", "Progreso cargado para ${habito.titulo} en $fechaStr")
+                                fecha to progreso
+                            } catch (e: Exception) {
+                                Log.e("Graficador", "Error al parsear fecha: $fechaStr", e)
+                                null
+                            }
+                        } else {
+                            null
+                        }
+                    }.toMap()
+
+                    progresoPorHabito[habito.titulo] = progresoMap
+                }
+            } else {
+                Log.e("Graficador", "Error cargando hábitos mentales: ${resultado.exceptionOrNull()?.message}")
+            }
+
+        } catch (e: Exception) {
+            Log.e("Graficador", "Error inesperado al cargar hábitos mentales: ${e.message}", e)
+        } finally {
+            isLoading = false
         }
     }
 
-    if (habitos.isEmpty()) {
+
+    if (habitosMentales.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Cargando hábitos...")
+            //navController?.navigate("salud_mental")
+            Text("No hay hábitos mentales disponibles")
         }
         return
     }
 
-    val habitoActual = habitos.getOrNull(selectedIndex.value) ?: habitos.first()
-    val progresoActual = progresoPorHabito[habitoActual.nombre] ?: emptyMap()
-    val colorHabito = parseColorFromFirebase(habitoActual.colorEtiqueta)
+    val habitoActual = habitosMentales[selectedIndex.value.coerceIn(habitosMentales.indices)]
+    val progresoActual = progresoPorHabito[habitoActual.titulo] ?: emptyMap()
+    val colorHabito = Color(0xFFF6FBF2)
+
 
     Log.d("Graficador", "progresoActual size: ${progresoActual.size}")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Estadísticas hábitos personalizados") },
+                title = { Text("Estadísticas hábitos mentales") },
                 navigationIcon = {
                     IconButton(onClick = {
                         navController?.navigate("menu")
@@ -177,7 +206,7 @@ fun PantallaEstadísticasSaludMental(
                 progresoActual[fechaAnterior]?.frecuencia?.let { return it }
             }
             // Si no hay ningún progreso previo, fallback a frecuencia del hábito general
-            return habitoActual.frecuencia
+            return habitoActual.diasSeleccionados
         }
 
         val diasPlaneados = diasSemana.count { dia ->
@@ -236,11 +265,11 @@ fun PantallaEstadísticasSaludMental(
                         .height(90.dp)
                 ) {
                     SelectorHabitosCentrado(
-                        habitos = habitos,
+                        habitos = habitosMentales,
                         selectedIndex = selectedIndex,
                         onSelectedIndexChange = { nuevoIndice ->
-                            val nuevoHabito = habitos[nuevoIndice]
-                            val fechaInicio = nuevoHabito.fechaInicio?.let {
+                            val nuevoHabito = habitosMentales[nuevoIndice]
+                            val fechaInicio = nuevoHabito.fechaCreacion?.let {
                                 LocalDate.parse(it).with(DayOfWeek.MONDAY)
                             } ?: LocalDate.now().with(DayOfWeek.MONDAY)
 
@@ -275,9 +304,9 @@ fun PantallaEstadísticasSaludMental(
 
             GraficadorProgresoHabitoSwipe(
                 progresoPorDia = progresoActual,
-                frecuenciaPorDefecto = habitoActual.frecuencia,
+                frecuenciaPorDefecto = habitoActual.diasSeleccionados,
                 colorHabito = colorHabito,
-                fechaInicioHabito = habitoActual.fechaInicio,
+                fechaInicioHabito = habitoActual.fechaCreacion,
                 semanaReferencia = semanaVisible,
                 onSemanaChange = { nuevaSemana -> semanaVisible = nuevaSemana }
             )
@@ -295,4 +324,127 @@ fun PantallaEstadísticasSaludMental(
 
     }
 }
+
+
+/*-----------------Composables--------------------*/
+@Composable
+public fun SelectorHabitosCentrado(
+    habitos: List<Habito>,
+    selectedIndex: MutableState<Int>,
+    onSelectedIndexChange: (Int) -> Unit
+) {
+    if (habitos.isEmpty()) return
+
+    val itemHeight = 40.dp
+    val visibleItems = 3
+    val listState = rememberLazyListState()
+
+    val density = LocalDensity.current
+    val centerOffsetPx = with(density) { (itemHeight * visibleItems / 2).toPx() }
+
+    val centeredIndex by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val center = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
+            val closest = layoutInfo.visibleItemsInfo.minByOrNull { item ->
+                kotlin.math.abs((item.offset + item.size / 2) - center)
+            }
+            closest?.index ?: selectedIndex.value
+        }
+    }
+
+    // Actualiza cuando el ítem centrado cambia
+    LaunchedEffect(centeredIndex) {
+        if (selectedIndex.value != centeredIndex) {
+            selectedIndex.value = centeredIndex
+            onSelectedIndexChange(centeredIndex)
+        }
+    }
+
+    // Anima scroll cuando el valor externo cambia
+    LaunchedEffect(selectedIndex.value) {
+        listState.animateScrollToItem(selectedIndex.value)
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Selecciona un hábito",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.DarkGray,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .height(itemHeight * visibleItems)
+                .fillMaxWidth()
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = PaddingValues(vertical = itemHeight)
+            ) {
+                itemsIndexed(habitos) { index, habito ->
+                    val layoutInfo = listState.layoutInfo
+                    val itemInfo = layoutInfo.visibleItemsInfo.find { it.index == index }
+                    val center = layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset / 2
+
+                    val itemCenter = itemInfo?.let { it.offset + it.size / 2 } ?: 0
+                    val distanceFromCenter = kotlin.math.abs(itemCenter - center).toFloat()
+
+                    // Controla escala y transparencia
+                    val maxDistance = centerOffsetPx
+                    val scaleFactor = 1f - (distanceFromCenter / maxDistance).coerceIn(0f, 0.5f)
+                    val alpha = 1f - (distanceFromCenter / maxDistance).coerceIn(0f, 0.6f)
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(itemHeight)
+                            .graphicsLayer {
+                                scaleX = scaleFactor
+                                scaleY = scaleFactor
+                                this.alpha = alpha
+                            }
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (index == selectedIndex.value)
+                                    Color(0xFF81C784).copy(alpha = 0.3f)
+                                else Color.Transparent
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = habito.titulo,
+                            fontSize = 16.sp,
+                            fontWeight = if (index == selectedIndex.value) FontWeight.SemiBold else FontWeight.Normal,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+
+            // Gradiente arriba y abajo para profundidad
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.White,
+                            0.15f to Color.Transparent,
+                            0.85f to Color.Transparent,
+                            1f to Color.White
+                        )
+                    )
+
+            )
+        }
+    }
+}
+
 

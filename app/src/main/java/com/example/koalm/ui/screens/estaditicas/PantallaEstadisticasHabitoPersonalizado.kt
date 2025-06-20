@@ -557,7 +557,7 @@ public fun GraficadorProgreso(
     etiquetas: List<String>,
     colorHabito: Color,
     meta: Int,
-    labelEjeY: String = "Objetivo (veces por día)",
+    labelEjeY: String = "Objetivo",
     labelEjeX: String = "Días activos del hábito"
 ){
     Canvas(
@@ -571,6 +571,12 @@ public fun GraficadorProgreso(
 
         val barWidth = size.width / valores.size
         val nivelMaximo = meta.coerceAtLeast(1)
+        val stepLabel = when {
+            nivelMaximo <= 10 -> 1
+            nivelMaximo <= 30 -> 5
+            nivelMaximo <= 100 -> 10
+            else -> 20
+        }
         val stepY = size.height / nivelMaximo.toFloat()
 
         val paintY = android.graphics.Paint().apply {
@@ -600,7 +606,7 @@ public fun GraficadorProgreso(
         }
 
         // Dibujar líneas y etiquetas en eje Y
-        for (i in 0..nivelMaximo) {
+        for (i in 0..nivelMaximo step stepLabel) {
             val y = size.height - i * stepY
             drawLine(
                 color = Color.LightGray.copy(alpha = 0.4f),

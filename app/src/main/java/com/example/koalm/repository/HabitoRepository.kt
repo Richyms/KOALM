@@ -122,6 +122,120 @@ class HabitoRepository {
         return obtenerHabitosPorClase(userId, ClaseHabito.FISICO)
     }
 
+    suspend fun obtenerHabitosMentalesKary(usuarioEmail: String): Result<List<Habito>> {
+        val habitosList = mutableListOf<Habito>()
+        return try {
+            val snapshot = db.collection("habitos")
+                .document(usuarioEmail)
+                .collection("predeterminados")
+                .get()
+                .await()
+
+            for (document in snapshot.documents) {
+                try {
+                    val data = document.data
+                    if (data != null) {
+                        val habito = Habito(
+                            id = document.id,  // Usamos el ID generado por Firebase
+                            titulo = data["titulo"] as? String ?: "",
+                            descripcion = data["descripcion"] as? String ?: "",
+                            clase = try {
+                                ClaseHabito.valueOf(data["clase"] as? String ?: ClaseHabito.MENTAL.name)
+                            } catch (e: Exception) {
+                                ClaseHabito.MENTAL
+                            },
+                            tipo = try {
+                                TipoHabito.valueOf(data["tipo"] as? String ?: TipoHabito.ESCRITURA.name)
+                            } catch (e: Exception) {
+                                TipoHabito.ESCRITURA
+                            },
+                            diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
+                            hora = data["hora"] as? String ?: "",
+                            horarios = (data["horarios"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+                            duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
+                            userId = data["userId"] as? String,
+                            fechaCreacion = data["fechaCreacion"] as? String,
+                            fechaModificacion = data["fechaModificacion"] as? String,
+                            objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
+                            objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
+                            metricasEspecificas = MetricasHabito()
+                        )
+
+                        // Filtro explícito por clase mental
+                        if (habito.clase == ClaseHabito.MENTAL) {
+                            habitosList.add(habito)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("HabitoRepository", "Error procesando documento ${document.id}: ${e.message}", e)
+                }
+            }
+
+            Log.d("HabitoRepository", "Hábitos mentales obtenidos: ${habitosList.size}")
+            Result.success(habitosList)
+        } catch (e: Exception) {
+            Log.e("HabitoRepository", "Error al obtener hábitos mentales: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun obtenerHabitosFisicosKary(usuarioEmail: String): Result<List<Habito>> {
+        val habitosList = mutableListOf<Habito>()
+        return try {
+            val snapshot = db.collection("habitos")
+                .document(usuarioEmail)
+                .collection("predeterminados")
+                .get()
+                .await()
+
+            for (document in snapshot.documents) {
+                try {
+                    val data = document.data
+                    if (data != null) {
+                        val habito = Habito(
+                            id = document.id,  // Usamos el ID generado por Firebase
+                            titulo = data["titulo"] as? String ?: "",
+                            descripcion = data["descripcion"] as? String ?: "",
+                            clase = try {
+                                ClaseHabito.valueOf(data["clase"] as? String ?: ClaseHabito.FISICO.name)
+                            } catch (e: Exception) {
+                                ClaseHabito.FISICO
+                            },
+                            tipo = try {
+                                TipoHabito.valueOf(data["tipo"] as? String ?: TipoHabito.SUEÑO.name)
+                            } catch (e: Exception) {
+                                TipoHabito.SUEÑO
+                            },
+                            diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
+                            hora = data["hora"] as? String ?: "",
+                            horarios = (data["horarios"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+                            duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
+                            userId = data["userId"] as? String,
+                            fechaCreacion = data["fechaCreacion"] as? String,
+                            fechaModificacion = data["fechaModificacion"] as? String,
+                            objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
+                            objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
+                            metricasEspecificas = MetricasHabito()
+                        )
+
+                        // Filtro explícito por clase mental
+                        if (habito.clase == ClaseHabito.FISICO) {
+                            habitosList.add(habito)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("HabitoRepository", "Error procesando documento ${document.id}: ${e.message}", e)
+                }
+            }
+
+            Log.d("HabitoRepository", "Hábitos mentales obtenidos: ${habitosList.size}")
+            Result.success(habitosList)
+        } catch (e: Exception) {
+            Log.e("HabitoRepository", "Error al obtener hábitos mentales: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
     private suspend fun obtenerHabitosPorClase(userId: String, clase: ClaseHabito): Result<List<Habito>> {
         return try {
             Log.d(TAG, "Buscando hábitos de clase ${clase.name} para userId: $userId")

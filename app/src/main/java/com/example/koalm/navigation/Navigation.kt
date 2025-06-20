@@ -20,10 +20,10 @@ import com.example.koalm.ui.screens.auth.PantallaRecuperarContrasena
 import com.example.koalm.ui.screens.auth.PantallaRegistro
 import com.example.koalm.ui.screens.auth.PantallaRestablecerContrasena
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadísticasSaludMental
+import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasSaludFisica
 import com.example.koalm.ui.screens.estaditicas.PantallaEstadisticasHabitoPersonalizado
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaSaludMental
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaSaludFisica
-
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoAlimentacion
 import com.example.koalm.ui.screens.habitos.saludMental.PantallaConfiguracionHabitoEscritura
 import com.example.koalm.ui.screens.habitos.saludFisica.PantallaConfiguracionHabitoHidratacion
@@ -98,7 +98,7 @@ fun AppNavigation(
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         screenWithSlide("progreso-peso") { PantallaProgresoPeso(navController) }
         screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
+        screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
         screenWithSlide("notas") { PantallaNotas(navController) }
         screenWithSlide("libros") { PantallaLibros(navController) }
         screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }

@@ -18,6 +18,7 @@ data class Habito(
     val userId: String? = null,
     val fechaCreacion: String? = null,
     val fechaModificacion: String? = null,
+    // Racha
     var rachaActual: Int = 0,
     var rachaMaxima: Int = 0,
     var ultimoDiaCompletado: String? = null,
