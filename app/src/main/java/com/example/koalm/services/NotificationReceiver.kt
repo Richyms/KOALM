@@ -17,6 +17,9 @@ import com.example.koalm.services.notifications.NotificationConstants
 import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
+import com.example.koalm.services.notifications.suenoNotificationService
+import com.example.koalm.services.notifications.AlimentationNotificationService
+import com.example.koalm.services.notifications.HydrationNotificationService
 import com.example.koalm.services.timers.DigitalDisconnectTimerService
 import com.example.koalm.services.timers.MeditationTimerService
 import com.example.koalm.services.timers.ReadingTimerService
@@ -42,6 +45,7 @@ class NotificationReceiver : BroadcastReceiver() {
                 val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
                 val isSleeping = intent.getBooleanExtra("is_sleeping", false)
+                val isHydration = intent.getBooleanExtra("is_hydration", false)
                 val descripcion = intent.getStringExtra("descripcion") ?: ""
                 val diaSemana = intent.getIntExtra("dia_semana", 0)
                 //val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
@@ -85,7 +89,7 @@ class NotificationReceiver : BroadcastReceiver() {
                 val isMeditation = intent.getBooleanExtra("is_meditation", false)
                 val isReading = intent.getBooleanExtra("is_reading", false)
                 val isDigitalDisconnect = intent.getBooleanExtra("is_digital_disconnect", false)
-                //val notasHabilitadas = intent.getBooleanExtra("notas_habilitadas", false)
+                val isHydration = intent.getBooleanExtra("is_hydration", false)
                 val isAlimentation = intent.getBooleanExtra("is_alimentation",false)
                 val isSleeping = intent.getBooleanExtra("is_sleeping", false)
                 val isWriting = intent.getBooleanExtra("is_writing", false)
@@ -99,6 +103,7 @@ class NotificationReceiver : BroadcastReceiver() {
                     isSleeping->"sueno"
                     isAlimentation->"alimentation"
                     isWriting -> "escritura"
+                    isHydration -> "hydration"
                     else -> "otro"
                 }
                 Log.d(TAG, "Tipo de notificación determinado: $tipoNotificacion")
@@ -109,32 +114,62 @@ class NotificationReceiver : BroadcastReceiver() {
                     isDigitalDisconnect -> showDigitalDisconnectNotification(context, descripcion, diaSemana, durationMinutes)
                     isSleeping->showSleepNotification(context,descripcion,diaSemana)
                     isWriting -> showWritingNotification(context, descripcion, diaSemana, durationMinutes)
+                    isAlimentation-> showAlimentationNotification(
+                        context = context,
+                        descripcion = descripcion,
+                        notificationId = AlimentationNotificationService.NOTIFICATION_ID + diaSemana
+                    )
+                    isHydration-> showHydrationNotification(
+                        context = context,
+                        descripcion = descripcion,
+                        notificationId = HydrationNotificationService.NOTIFICATION_ID + diaSemana
+                    )
+
                     else -> Log.w(TAG, "Tipo de notificación no reconocido. No se mostró ninguna.")
                 }
             }
         }
     }
+    // Mostrar notificaciones de hábitos de salud física
     private fun showAlimentationNotification(
         context: Context,
-        descripcion: String
+        descripcion: String,
+        notificationId: Int = AlimentationNotificationService.NOTIFICATION_ID // ID dinámico si necesitas varios
     ) {
         Log.d(TAG, "Mostrando notificación de alimentación")
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val channelId = "alimentation_habito"
-        val channelName = "Recordatorio de alimentación"
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // Intento para abrir el Dashboard
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu")
+        }
+
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId + 100, // ID único por cada acción
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val channelId = AlimentationNotificationService().channelId
+        val channelName = context.getString(AlimentationNotificationService().channelName)
+
+        // Crear canal de notificación (solo API 26+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
                 channelName,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notificaciones para hábitos de alimentación"
+                description = context.getString(AlimentationNotificationService().channelDescription)
             }
             notificationManager.createNotificationChannel(channel)
         }
 
+        // Intento para abrir directamente sección de alimentación
         val openIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("route", "alimentation")
@@ -145,21 +180,127 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val openPendingIntent = PendingIntent.getActivity(
             context,
-            16,  // ID arbitrario para alimentación
+            notificationId + 200, // ID diferente
             openIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        // Construcción de la notificación
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Hora de alimentarse")
-            .setContentText(descripcion)
+            .setContentTitle(context.getString(AlimentationNotificationService().defaultTitle))
+            .setContentText( "No olvides registrar tu progreso diario. 🌿✨" )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_notification,
+                "Ir al Dashboard",
+                openDashboardPendingIntent
+            )
             .setContentIntent(openPendingIntent)
             .build()
 
-        notificationManager.notify(900, notification)
+        notificationManager.notify(notificationId, notification)
+        Log.d(TAG, "Notificación de alimentación mostrada con ID: $notificationId")
+
+        // Guardar notificación en Firestore
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de alimentarse!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
+    }
+
+    private fun showHydrationNotification(
+        context: Context,
+        descripcion: String,
+        notificationId: Int = HydrationNotificationService.NOTIFICATION_ID // ID dinámico si necesitas varios
+    ) {
+        Log.d(TAG, "Mostrando notificación de hidratación")
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Intento para abrir el Dashboard
+        val openDashboardIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("startDestination", "menu")
+        }
+
+        val openDashboardPendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId + 100, // ID único por cada acción
+            openDashboardIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val channelId = HydrationNotificationService().channelId
+        val channelName = context.getString(HydrationNotificationService().channelName)
+
+        // Crear canal de notificación (solo API 26+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(HydrationNotificationService().channelDescription)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        // Intento para abrir directamente sección de alimentación
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("route", "hydration")
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            action = Intent.ACTION_MAIN
+        }
+
+        val openPendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId + 200, // ID diferente
+            openIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Construcción de la notificación
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(HydrationNotificationService().defaultTitle))
+            .setContentText( "No olvides registrar tu progreso diario. 🌿✨" )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_notification,
+                "Ir al Dashboard",
+                openDashboardPendingIntent
+            )
+            .setContentIntent(openPendingIntent)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+        Log.d(TAG, "Notificación de hidratación mostrada con ID: $notificationId")
+
+        // Guardar notificación en Firestore
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de hidratarse!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
     }
 
     private fun showSleepNotification(
@@ -176,31 +317,53 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val openDashboardPendingIntent = PendingIntent.getActivity(
             context,
-            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            suenoNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
             openDashboardIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "sueño_habito",  // Usar el mismo channelId que definiste en sueñoNotificationService
-                "Recordatorio de sueño",
+                suenoNotificationService().channelId,
+                context.getString(suenoNotificationService().channelName),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notificaciones para hábitos de sueño"
+                description = context.getString(suenoNotificationService().channelDescription)
             }
             notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "Canal de notificación de sueño creado")
         }
 
-        val notification = NotificationCompat.Builder(context, "sueño_habito")
+
+
+        val notification = NotificationCompat.Builder(context,suenoNotificationService().channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Es hora de dormir")
-            .setContentText(descripcion)
+            .setContentTitle(context.getString(suenoNotificationService().defaultTitle))
+            .setContentText("No olvides registrar tu progreso diario. 🌿✨")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .addAction(
+                R.drawable.ic_notification,
+                "Ir al Dashboard", // Acción para dashboard
+                openDashboardPendingIntent
+            )
             .build()
-
-        notificationManager.notify(8 + diaSemana, notification)  // Usar el mismo ID base que en sueñoNotificationService
+        notificationManager.notify(suenoNotificationService.NOTIFICATION_ID + diaSemana, notification) // Usar el mismo ID base que en sueñoNotificationService
+        Log.d(TAG, "Notificación de sueño mostrada con ID: ${suenoNotificationService.NOTIFICATION_ID + diaSemana}")
+        val userEmail = FirebaseAuth.getInstance().currentUser?.email ?: return
+        val db = FirebaseFirestore.getInstance()
+        // Guardar notificación en Firestore
+        val notificacion = hashMapOf(
+            "mensaje" to "¡Hora de dormir!",
+            "timestamp" to System.currentTimeMillis(),
+            "leido" to false
+        )
+        db.collection("usuarios")
+            .document(userEmail)
+            .collection("notificaciones")
+            .add(notificacion)
     }
+
+    // Mostrar notificaciones de hábitos se salud mental
     private fun showMeditationNotification(
         context: Context,
         descripcion: String,
@@ -216,7 +379,7 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val openDashboardPendingIntent = PendingIntent.getActivity(
             context,
-            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            MeditationNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
             openDashboardIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -309,7 +472,7 @@ class NotificationReceiver : BroadcastReceiver() {
 
         val openDashboardPendingIntent = PendingIntent.getActivity(
             context,
-            DigitalDisconnectNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
+            ReadingNotificationService.NOTIFICATION_ID + diaSemana + 200, // ID diferente al del timer
             openDashboardIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )

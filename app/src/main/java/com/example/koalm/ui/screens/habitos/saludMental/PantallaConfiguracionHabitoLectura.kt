@@ -102,7 +102,7 @@ fun PantallaConfiguracionHabitoLectura(
     val rangoDuracion = 1f..180f
 
     var descripcion by remember { mutableStateOf("") }
-    val diasSemana = listOf("L", "M", "M", "J", "V", "S", "D")
+    val diasSemana = listOf("L", "M", "X", "J", "V", "S", "D")
     var diasSeleccionados by remember { mutableStateOf(List(7) { false }) }
 
     var horaRecordatorio by remember { 
@@ -219,6 +219,36 @@ fun PantallaConfiguracionHabitoLectura(
                                         "is_digital_disconnect" to false
                                     )
                                 )
+                                // Referencias para guardar progreso
+                                val db = FirebaseFirestore.getInstance()
+                                val userHabitsRef = userEmail?.let {
+                                    db.collection("habitos").document(it)
+                                        .collection("predeterminados")
+                                }
+
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalObjetivoDiario = objetivoPaginas
+                                )
+
+                                val progresoRef = userHabitsRef?.document(habitoId)
+                                    ?.collection("progreso")
+                                    ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                    Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el progreso: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
                                 mostrarDialogoExito = true
                             },
                             onFailure = { error ->
@@ -257,6 +287,36 @@ fun PantallaConfiguracionHabitoLectura(
                                         "is_digital_disconnect" to false
                                     )
                                 )
+                                // Referencias para guardar progreso
+                                val db = FirebaseFirestore.getInstance()
+                                val userHabitsRef = userEmail?.let {
+                                    db.collection("habitos").document(it)
+                                        .collection("predeterminados")
+                                }
+
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalObjetivoDiario = objetivoPaginas
+                                )
+
+                                val progresoRef = userHabitsRef?.document(nuevoHabitoId)
+                                    ?.collection("progreso")
+                                    ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                    Log.d(TAG, "Guardando progreso para hábito ID: $nuevoHabitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el progreso: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
                                 mostrarDialogoExito = true
                             },
                             onFailure = { error ->

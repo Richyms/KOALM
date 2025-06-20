@@ -17,9 +17,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.example.koalm.model.Libro
 import com.example.koalm.ui.components.BarraNavegacionInferior
@@ -30,6 +33,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
+import com.lottiefiles.dotlottie.core.util.DotLottieSource
+import com.dotlottie.dlplayer.Mode
+import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -158,7 +164,7 @@ fun PantallaLibros(navController: NavHostController) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
                                         contentDescription = "Eliminar",
-                                        tint = MaterialTheme.colorScheme.error
+                                        tint = Color.Red
                                     )
                                 }
                             }
@@ -236,41 +242,69 @@ private fun DialogoNuevoLibro(
     var calificacion by remember { mutableStateOf(0) }
     var terminado by remember { mutableStateOf(false) }
     val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-    val auth = FirebaseAuth.getInstance()
-    val userId = auth.currentUser?.uid
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nuevo Libro") },
-        text = {
-            Column {
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Nuevo Libro", style = MaterialTheme.typography.titleLarge)
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/ba5a17b7-771e-43c6-9bfa-48463eff1329/qTB40s07mC.lottie"),
+                    autoplay = true,
+                    loop = false,
+                    speed = 1.5f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(150.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = titulo,
                     onValueChange = { titulo = it },
                     label = { Text("Título del libro") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = autor,
                     onValueChange = { autor = it },
                     label = { Text("Autor") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = paginaActual,
                     onValueChange = { paginaActual = it },
                     label = { Text("Página actual") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Text("Calificación:")
                 Row {
                     repeat(5) { index ->
-                        IconButton(
-                            onClick = { calificacion = index + 1 }
-                        ) {
+                        IconButton(onClick = { calificacion = index + 1 }) {
                             Icon(
                                 imageVector = if (index < calificacion) Icons.Filled.Star else Icons.Outlined.Star,
                                 contentDescription = null,
@@ -279,42 +313,55 @@ private fun DialogoNuevoLibro(
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = terminado,
-                        onCheckedChange = { terminado = it }
-                    )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = terminado, onCheckedChange = { terminado = it })
                     Text("Libro terminado")
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (titulo.isNotBlank() && autor.isNotBlank() && paginaActual.isNotBlank() && userId != null) {
-                        onLibroCreado(Libro(
-                            titulo = titulo,
-                            autor = autor,
-                            paginaActual = paginaActual.toIntOrNull() ?: 0,
-                            calificacion = calificacion,
-                            terminado = terminado,
-                            userId = userId,
-                            fechaCreacion = fechaActual,
-                            fechaModificacion = fechaActual
-                        ))
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                    ) {
+                        Text("Cancelar", color = MaterialTheme.colorScheme.onPrimary)
+                    }
+
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (titulo.isNotBlank() && autor.isNotBlank() && paginaActual.isNotBlank() && userId != null) {
+                                onLibroCreado(
+                                    Libro(
+                                        titulo = titulo,
+                                        autor = autor,
+                                        paginaActual = paginaActual.toIntOrNull() ?: 0,
+                                        calificacion = calificacion,
+                                        terminado = terminado,
+                                        userId = userId,
+                                        fechaCreacion = fechaActual,
+                                        fechaModificacion = fechaActual
+                                    )
+                                )
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Guardar")
                     }
                 }
-            ) { Text("Guardar") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -328,34 +375,44 @@ private fun DialogoEditarLibro(
     var terminado by remember { mutableStateOf(libro.terminado) }
     val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar Libro") },
-        text = {
-            Column {
-                Text(
-                    text = libro.titulo,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = libro.autor,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Editar Libro", style = MaterialTheme.typography.titleLarge)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(libro.titulo, style = MaterialTheme.typography.titleMedium)
+                Text(libro.autor, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = paginaActual,
                     onValueChange = { paginaActual = it },
                     label = { Text("Página actual") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Text("Calificación:")
                 Row {
                     repeat(5) { index ->
-                        IconButton(
-                            onClick = { calificacion = index + 1 }
-                        ) {
+                        IconButton(onClick = { calificacion = index + 1 }) {
                             Icon(
                                 imageVector = if (index < calificacion) Icons.Filled.Star else Icons.Outlined.Star,
                                 contentDescription = null,
@@ -364,35 +421,48 @@ private fun DialogoEditarLibro(
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = terminado,
-                        onCheckedChange = { terminado = it }
-                    )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = terminado, onCheckedChange = { terminado = it })
                     Text("Libro terminado")
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val nuevaPagina = paginaActual.toIntOrNull() ?: libro.paginaActual
-                    onLibroEditado(libro.copy(
-                        paginaActual = nuevaPagina,
-                        calificacion = calificacion,
-                        terminado = terminado,
-                        fechaModificacion = fechaActual
-                    ))
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                    ) {
+                        Text("Cancelar", color = MaterialTheme.colorScheme.onPrimary)
+                    }
+
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            val nuevaPagina = paginaActual.toIntOrNull() ?: libro.paginaActual
+                            onLibroEditado(
+                                libro.copy(
+                                    paginaActual = nuevaPagina,
+                                    calificacion = calificacion,
+                                    terminado = terminado,
+                                    fechaModificacion = fechaActual
+                                )
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Guardar")
+                    }
                 }
-            ) { Text("Guardar") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
             }
         }
-    )
-} 
+    }
+}

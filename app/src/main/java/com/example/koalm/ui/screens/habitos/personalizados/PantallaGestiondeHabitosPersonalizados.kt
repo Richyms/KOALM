@@ -119,8 +119,9 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+            //horizontalAlignment = Alignment.CenterHorizontally,
+            //verticalArrangement = Arrangement.Center
         ) {
             //Variables para habitos activos y finalizados
             val habitosActivos = habitos.value.filter { it.estaActivo }
@@ -130,13 +131,18 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
                 CircularProgressIndicator(modifier = Modifier.size(40.dp))
             } else if (habitos.value.isEmpty()) {
                 // Si no hay hábitos, muestra el mensaje y el botón de agregar
-                Image(
-                    painter = painterResource(id = R.drawable.koala_triste),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(200.dp)
-                        .padding(bottom = 16.dp)
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.koala_triste),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(200.dp)
+                            .padding(bottom = 16.dp)
+                    )
+                }
 
                 Text(
                     text = stringResource(R.string.mensaje_no_habitos),
@@ -170,8 +176,7 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
             } else {
                 val coroutineScope = rememberCoroutineScope()
 
-                Text("Hábitos Activos", style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(8.dp))
+                Text("Mis hábitos activos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,)
 
                 if (habitosActivos.isEmpty()) {
                     Text(
@@ -195,15 +200,17 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
                     }
                 }
 
+
                 if (habitosFinalizados.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Text("Hábitos Finalizados", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider()
+
+                    Text("Mis hábitos finalizados", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,)
+
                     Text(
                         text = "Para reactivar un hábito, edita la fecha de fin desde la opción Editar.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
                     habitosFinalizados.forEach { habito ->
                         HabitoCardExpandible(
@@ -508,7 +515,7 @@ fun ConfirmacionDialogoEliminarAnimado(
                     playMode = Mode.FORWARD,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

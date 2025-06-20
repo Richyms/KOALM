@@ -1430,37 +1430,6 @@ fun DiaCircle(label: String, selected: Boolean, enabled: Boolean = true, onClick
 }
 
 @Composable
-fun HoraField(hora: LocalTime, enabled: Boolean = true, onClick: () -> Unit) {
-    Surface(
-        tonalElevation = 0.dp,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text  = hora.format(DateTimeFormatter.ofPattern("hh:mm a")),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.Default.Schedule, contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
-}
-
-@Composable
 fun HorarioItem(hora: String, onEditar: () -> Unit) {
     Surface(
         tonalElevation = 0.dp,

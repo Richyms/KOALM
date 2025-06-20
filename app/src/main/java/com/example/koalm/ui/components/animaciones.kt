@@ -56,7 +56,7 @@ fun ExitoDialogoGuardadoAnimado(
                     playMode = Mode.FORWARD,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -109,7 +109,7 @@ fun FalloDialogoGuardadoAnimado(
                     playMode = Mode.FORWARD,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -162,7 +162,7 @@ fun LogroDialogoAnimado(
                     playMode = Mode.FORWARD,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -215,7 +215,7 @@ fun ValidacionesDialogoAnimado(
                     playMode = Mode.FORWARD,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

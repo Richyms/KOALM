@@ -46,7 +46,7 @@
     <string name="notification_default_text">Es hora de practicar tu hábito de escritura ✍️</string>
     <string name="meditation_notification_default_text">Es hora de practicar tu hábito de meditación 🧘</string>
     <string name="reading_notification_default_text">Es hora de practicar tu hábito de lectura 📚</string>
-
+    <string name="alimentationn_notification_default_text">Es hora de practicar tu hábito de alimentación 😋</string>
     <string name="notification_notes_button">🗒️ Abrir Notas</string>
     <string name="notification_books_button">📚 Mis Libros</string>
 
@@ -90,11 +90,11 @@
     <string name="contenido_nota">Contenido</string>
     
     <!-- Sueño -->
-    <string name="titulo_config_sueno">Configurar hábito de sueño</string>
+    <string name="titulo_config_sueno">Es hora de practicar tu hábito de sueño 💤 </string>
     <string name="placeholder_descripcion_sueño">Dormir bien transforma tu energía, tu salud y tu bienestar mental.</string>
     <string name="sleeping_notification_channel_name">Canal notificacion de sueno</string>
     <string name="sleeping_notification_channel_description">Canal notificacion de sueno</string>
-    <string name="sleeping_notification_title">Notificacion de sueno</string>
+    <string name="sleeping_notification_title">💤 ¡Hora de dormir!</string>
     <string name="sleeping_notification_default_text">Notificacion de sueno</string>
 
     <!-- Alimentación -->
@@ -103,9 +103,12 @@
     <string name="alimentation_notification_channel_name">Canal notificacion de alimentacion</string>
     <string name="alimentation_notification_channel_description">Canal notificacion de alimentacion</string>
     <string name="alimentation_notification_title">Notificacion de alimentacion</string>
-    <string name="alimentation_notification_default_text">Notificacion de alimentacion</string>
+    <string name="alimentation_notification_default_text">😋 ¡Hora de comer!</string>
 
     <!-- Hidratación -->
+    <string name="hidratacion_notification_default_text">💧 ¡Hora de tomar agua!</string>
+    <string name="hidratacion_notification_channel_description">Canal notificacion de hidratacion</string>
+    <string name="hidratacion_notification_channel_name">Canal notificacion de hidratación</string>
     <string name="titulo_config_hidratacion">Configurar hábito de hidratación</string>
     <string name="placeholder_descripcion_hidratacion">Los koalas toman agua de las hojas, ¡pero tú no eres un koala! ¡Hidrátate!</string>
     <string name="label_cantidad_litros">Objetivo de hidratación diario: *</string>
@@ -114,6 +117,8 @@
     <string name="label_recordatorios_agua">recordatorios de 1 L</string>
     <string name="label_recordatorio_hidratación_f">Frecuencia de recordatorios (opcional)</string>
     <string name="label_recordatorio_hidratación_t">En otro caso, se harán 10 recordatorios de forma aleatoria.</string>
+    <string name="hidratacionn_notification_default_text">Es hora de practicar tu hábito de hidratación 💧</string>
+
     <!-- Modificar Hidratación -->
     <string name="titulo_modificacion_hidratación">Modificar hábito de hidratación</string>
     <!-- Meditación -->

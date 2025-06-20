@@ -25,7 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 // import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -40,7 +43,12 @@ import com.example.koalm.ui.theme.VerdePrincipal
 // import com.example.koalm.ui.viewmodels.TimerViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.lottiefiles.dotlottie.core.util.DotLottieSource
 import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import com.dotlottie.dlplayer.Mode
+import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -312,66 +320,91 @@ private fun DialogoEditarNota(
 ) {
     var titulo by remember { mutableStateOf(nota.titulo) }
     var contenido by remember { mutableStateOf(nota.contenido) }
-    val fechaActual = SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+    val fechaActual = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar Nota") },
-        text = {
-            Column {
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Editar Nota",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = titulo,
                     onValueChange = { titulo = it },
                     label = { Text("Título") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = contenido,
                     onValueChange = { contenido = it },
                     label = { Text("Contenido") },
-                    modifier = Modifier.fillMaxWidth().height(150.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
                 )
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = onDismiss,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = "Cancelar",
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        if (titulo.isNotBlank() && contenido.isNotBlank()) {
-                            onNotaEditada(
-                                nota.copy(
-                                    titulo = titulo,
-                                    contenido = contenido,
-                                    fechaModificacion = fechaActual
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                    ) {
+                        Text("Cancelar", color = MaterialTheme.colorScheme.onPrimary)
+                    }
+
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (titulo.isNotBlank() && contenido.isNotBlank()) {
+                                onNotaEditada(
+                                    nota.copy(
+                                        titulo = titulo,
+                                        contenido = contenido,
+                                        fechaModificacion = fechaActual
+                                    )
                                 )
-                            )
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Guardar")
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Guardar")
+                    }
                 }
             }
         }
-
-    )
+    }
 }
+
 
 @Composable
 private fun DialogoNuevaNota(
@@ -380,70 +413,105 @@ private fun DialogoNuevaNota(
 ) {
     var titulo by remember { mutableStateOf("") }
     var contenido by remember { mutableStateOf("") }
-    val fechaActual = SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+    val fechaActual = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
     val auth = FirebaseAuth.getInstance()
     val userId = auth.currentUser?.uid
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nueva Nota") },
-        text = {
-            Column {
+        properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp,
+            modifier = Modifier
+                .padding(16.dp)
+                .wrapContentSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Nueva Nota",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+                DotLottieAnimation(
+                    source = DotLottieSource.Url("https://lottie.host/728adeae-262f-4cc0-9a9b-52c40b22fa2a/RFqvnHMyXX.lottie"),
+                    autoplay = true,
+                    loop = false,
+                    speed = 1.5f,
+                    useFrameInterpolation = false,
+                    playMode = Mode.FORWARD,
+                    modifier = Modifier
+                        .size(150.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = titulo,
                     onValueChange = { titulo = it },
                     label = { Text("Título") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = contenido,
                     onValueChange = { contenido = it },
                     label = { Text("Contenido") },
-                    modifier = Modifier.fillMaxWidth().height(150.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
                 )
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = onDismiss,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = "Cancelar",
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Button(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        if (titulo.isNotBlank() && contenido.isNotBlank() && userId != null) {
-                            onNotaCreada(
-                                Nota(
-                                    titulo = titulo,
-                                    contenido = contenido,
-                                    userId = userId,
-                                    fechaCreacion = fechaActual,
-                                    fechaModificacion = fechaActual
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                    ) {
+                        Text("Cancelar", color = MaterialTheme.colorScheme.onPrimary)
+                    }
+
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            if (titulo.isNotBlank() && contenido.isNotBlank() && userId != null) {
+                                onNotaCreada(
+                                    Nota(
+                                        titulo = titulo,
+                                        contenido = contenido,
+                                        userId = userId,
+                                        fechaCreacion = fechaActual,
+                                        fechaModificacion = fechaActual
+                                    )
                                 )
-                            )
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Guardar")
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Guardar")
+                    }
                 }
             }
         }
-
-    )
+    }
 }
+
 
 /*
 private fun formatTime(millis: Long): String {

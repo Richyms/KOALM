@@ -93,13 +93,37 @@ fun AppNavigation(
         screenWithSlide("tipos_habitos") { PantallaHabitos(navController) }
         screenWithSlide("salud_mental") { PantallaSaludMental(navController) }
         screenWithSlide("salud_fisica") { PantallaSaludFisica(navController) }
-        screenWithSlide("configurar_habito_sueno") { PantallaConfiguracionHabitoSueno(navController) }
-        screenWithSlide("configurar_habito_hidratacion") { PantallaConfiguracionHabitoHidratacion(navController) }
-        screenWithSlide("configurar_habito_alimentacion") { PantallaConfiguracionHabitoAlimentacion(navController) }
         screenWithSlide("estadisticas") { PantallaParametrosSalud(navController) }
         screenWithSlide("gestion_habitos_personalizados") { PantallaGestionHabitosPersonalizados(navController) }
         screenWithSlide("configurar_habito_personalizado") { PantallaConfigurarHabitoPersonalizado(navController) }
         screenWithSlide("progreso-peso") { PantallaProgresoPeso(navController) }
+        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
+        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
+        screenWithSlide("notas") { PantallaNotas(navController) }
+        screenWithSlide("libros") { PantallaLibros(navController) }
+        screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }
+        screenWithSlide("sueño-de-anoche") { PantallaSueno(navController) }
+        screenWithSlide("nivel-de-estres") { PantallaEstres(navController) }
+        screenWithSlide("objetivos-peso") { PantallaObjetivosPeso(navController) }
+        screenWithSlide("actividad-diaria") { PantallaActividadDiaria(navController) }
+        screenWithSlide("objetivos-peso") { PantallaObjetivosPeso(navController) }
+        screenWithSlide("control-peso") { PantallaControlPeso(navController) }
+        screenWithSlide("actualizar-peso") { PantallaActualizarPeso(navController) }
+        screenWithSlide("meta-diaria-pasos") { PantallaMetaPasos(navController) }
+        screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
+        screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
+        screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
+        screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
+        screenWithSlide("estadisticas_habito_perzonalizado") { PantallaEstadisticasHabitoPersonalizado(navController)}
+        screenWithSlide("cambiar_contrasena") { PantallaCambiarContrasena(navController)}
+        screenWithSlide("TyC") { PantallaTyC(navController)}
+        screenWithSlide("privacidad") { PantallaPrivacidad(navController)}
+        screenWithSlide("nosotros") { PantallaNosotros(navController)}
+        screenWithSlide("ajustes") { PantallaAjustes(navController)}
+        screenWithSlide("notificaciones") { PantallaNotificacionesPersonalizados(navController)}
+
+
+
 
         // Configurar y editar(todo en la misma pantalla)
         // Personzalizao
@@ -212,31 +236,76 @@ fun AppNavigation(
             PantallaConfiguracionHabitoLectura(navController, habitoId = null)
         }
 
-        screenWithSlide("estadisticas_salud_mental") { PantallaEstadísticasSaludMental(navController) }
-        //screenWithSlide("estadisticas_salud_fisica") { PantallaEstadisticasSaludFisica(navController) }
-        screenWithSlide("notas") { PantallaNotas(navController) }
-        screenWithSlide("libros") { PantallaLibros(navController) }
-        screenWithSlide("ritmo-cardiaco") { PantallaRitmoCardiaco(navController) }
-        screenWithSlide("sueño-de-anoche") { PantallaSueno(navController) }
-        screenWithSlide("nivel-de-estres") { PantallaEstres(navController) }
-        screenWithSlide("objetivos-peso") { PantallaObjetivosPeso(navController) }
-        screenWithSlide("actividad-diaria") { PantallaActividadDiaria(navController) }
-        screenWithSlide("objetivos-peso") { PantallaObjetivosPeso(navController) }
-        screenWithSlide("control-peso") { PantallaControlPeso(navController) }
-        screenWithSlide("actualizar-peso") { PantallaActualizarPeso(navController) }
-        screenWithSlide("meta-diaria-pasos") { PantallaMetaPasos(navController) }
-        screenWithSlide("meta-diaria-movimiento") { PantallaMetaMovimiento(navController) }
-        screenWithSlide("meta-diaria-calorias") { PantallaMetaCalorias(navController) }
-        screenWithSlide("racha_habitos") { PantallaRachaHabitos(navController) }
-        screenWithSlide("test_de_ansiedad") { PantallaTestAnsiedad(navController) }
-        screenWithSlide("estadisticas_habito_perzonalizado") { PantallaEstadisticasHabitoPersonalizado(navController)}
-        screenWithSlide("cambiar_contrasena") { PantallaCambiarContrasena(navController)}
-        screenWithSlide("TyC") { PantallaTyC(navController)}
-        screenWithSlide("privacidad") { PantallaPrivacidad(navController)}
-        screenWithSlide("nosotros") { PantallaNosotros(navController)}
-        screenWithSlide("ajustes") { PantallaAjustes(navController)}
-        screenWithSlide("notificaciones") { PantallaNotificacionesPersonalizados(navController)}
+        // Sueño
+        // Editar hábito
+        composable(
+            route = "configurar_habito_sueno/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val habitoId = backStackEntry.arguments?.getString("habitoId")
+            PantallaConfiguracionHabitoSueno(navController, habitoId)
+        }
 
+        // Crear hábito
+        composable(
+            "configurar_habito_sueno",
+        ) {
+            PantallaConfiguracionHabitoSueno(navController, habitoId = null)
+        }
+
+        // Hidratación
+        // Editar hábito
+        composable(
+            route = "configurar_habito_hidratacion/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val habitoId = backStackEntry.arguments?.getString("habitoId")
+            PantallaConfiguracionHabitoHidratacion(navController, habitoId)
+        }
+
+        // Crear hábito
+        composable(
+            "configurar_habito_hidratacion",
+        ) {
+            PantallaConfiguracionHabitoHidratacion(navController, habitoId = null)
+        }
+
+        // Alimentación
+        // Editar hábito
+        composable(
+            route = "configurar_habito_alimentacion/{habitoId}",
+            arguments = listOf(
+                navArgument("habitoId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val habitoId = backStackEntry.arguments?.getString("habitoId")
+            PantallaConfiguracionHabitoAlimentacion(navController, habitoId)
+        }
+
+        // Crear hábito
+        composable(
+            "configurar_habito_alimentacion",
+        ) {
+            PantallaConfiguracionHabitoAlimentacion(navController, habitoId = null)
+        }
+
+//------------------------------------------------------------------------------------
         composable(
             route = "resultado_ansiedad/{puntaje}",
             arguments = listOf(navArgument("puntaje") {

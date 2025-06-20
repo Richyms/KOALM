@@ -46,12 +46,15 @@ fun PantallaAjustes(navController: NavHostController) {
             navController.popBackStack()
         },
         title = {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier
+                .fillMaxWidth(),
+                contentAlignment = Alignment.Center) {
                 // Título
                 Text(
                     text = "Ajustes",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    fontSize = 20.sp,
+
                 )
                 // Botón "X" para cerrar
                 IconButton(
@@ -353,7 +356,7 @@ fun ConfirmacionDialogoEliminarCuenta(
                     loop = true,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

@@ -39,7 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import com.example.koalm.R
+import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
+import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
 import com.example.koalm.repository.HabitoRepository
 import com.example.koalm.services.notifications.DigitalDisconnectNotificationService
@@ -57,6 +59,8 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import com.example.koalm.utils.TimeUtils
+import com.google.firebase.firestore.FirebaseFirestore
+import java.time.LocalDate
 
 private const val TAG = "PantallaConfiguracionDesconexion"
 
@@ -162,6 +166,7 @@ fun PantallaConfigurarDesconexionDigital(
                         id = habitoId ?: "",  // Si estás editando, ya tienes un ID
                         titulo = titulo.ifEmpty { "Desconexión Digital" },
                         descripcion = descripcion.ifEmpty { context.getString(R.string.digital_disconnect_notification_default_text) },
+                        clase = ClaseHabito.MENTAL,
                         tipo = TipoHabito.DESCONEXION_DIGITAL,
                         hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
                         diasSeleccionados = diasSeleccionados,
@@ -187,9 +192,45 @@ fun PantallaConfigurarDesconexionDigital(
                                     durationMinutes = duracionMin.toLong(),
                                     additionalData = mapOf(
                                         "habitoId" to habitoId,
-                                        "titulo" to habito.titulo
+                                        "titulo" to habito.titulo,
+                                        "is_meditation" to false,
+                                        "is_reading" to false,
+                                        "is_writing" to false,
+                                        "is_digital_disconnect" to true
                                     )
                                 )
+
+                                // Referencias para guardar progreso
+                                val db = FirebaseFirestore.getInstance()
+                                val userHabitsRef = userEmail?.let {
+                                    db.collection("habitos").document(it)
+                                        .collection("predeterminados")
+                                }
+
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalObjetivoDiario = duracionMin.toInt()
+                                )
+
+                                val progresoRef = userHabitsRef?.document(habitoId)
+                                    ?.collection("progreso")
+                                    ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                    Log.d(TAG, "Guardando progreso para hábito ID: $habitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el progreso: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+
                                 mostrarDialogoExito = true
                             },
                             onFailure = { error ->
@@ -218,9 +259,45 @@ fun PantallaConfigurarDesconexionDigital(
                                     durationMinutes = duracionMin.toLong(),
                                     additionalData = mapOf(
                                         "habitoId" to nuevoHabitoId,
-                                        "titulo" to habito.titulo
+                                        "titulo" to habito.titulo,
+                                        "is_meditation" to false,
+                                        "is_reading" to false,
+                                        "is_writing" to false,
+                                        "is_digital_disconnect" to true
                                     )
                                 )
+
+                                // Referencias para guardar progreso
+                                val db = FirebaseFirestore.getInstance()
+                                val userHabitsRef = userEmail?.let {
+                                    db.collection("habitos").document(it)
+                                        .collection("predeterminados")
+                                }
+
+                                val progreso = ProgresoDiario(
+                                    realizados = 0,
+                                    completado = false,
+                                    totalObjetivoDiario = duracionMin.toInt()
+                                )
+
+                                val progresoRef = userHabitsRef?.document(nuevoHabitoId)
+                                    ?.collection("progreso")
+                                    ?.document(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+
+                                progresoRef?.set(progreso.toMap())?.addOnSuccessListener {
+                                    Log.d(TAG, "Guardando progreso para hábito ID: $nuevoHabitoId, fecha: ${LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))}")
+                                }?.addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Error al guardar el progreso: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    navController.navigate("salud_mental") {
+                                        popUpTo("salud_mental") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+
                                 mostrarDialogoExito = true
                             },
                             onFailure = { error ->
@@ -366,7 +443,7 @@ fun PantallaConfigurarDesconexionDigital(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = "Selecciona el tiempo que quieres que dure tu hábito de desconexión digital.",
+                            text = "Selecciona el tiempo que quieres que dure tu desconexión digital.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

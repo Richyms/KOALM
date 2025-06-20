@@ -16,7 +16,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 
-class AlimentationNotificationService : NotificationBase() {
+class HydrationNotificationService : NotificationBase() {
     companion object {
         private const val TAG = "KOALM_NOTIFICATIONS"
         const val NOTIFICATION_ID = 16  // Cambia el ID para que no choque con sueño
@@ -25,12 +25,11 @@ class AlimentationNotificationService : NotificationBase() {
     override val notificationId: Int
         get() = NOTIFICATION_ID
 
-    override val channelId = "alimentation_habito"
-    override val channelName = R.string.alimentation_notification_channel_name
-    override val channelDescription = R.string.alimentation_notification_channel_description
-    override val defaultTitle = R.string.alimentation_notification_default_text
-    override val defaultText = R.string.alimentation_notification_default_text
-
+    override val channelId = "hidratacion_habito"
+    override val channelName = R.string.hidratacion_notification_channel_name
+    override val channelDescription = R.string.hidratacion_notification_channel_description
+    override val defaultTitle = R.string.hidratacion_notification_default_text
+    override val defaultText = R.string.hidratacion_notification_default_text
 
 
     fun scheduleNotification(
@@ -40,7 +39,7 @@ class AlimentationNotificationService : NotificationBase() {
         durationMinutes: Long,
         additionalData: Map<String, Any>
     ) {
-        Log.d(TAG, "AlimentacionNotificationService: Iniciando programación de notificación")
+        Log.d(TAG, "HidatacionNotificationService: Iniciando programación de notificación")
 
         cancelNotifications(context)
 
@@ -71,9 +70,9 @@ class AlimentationNotificationService : NotificationBase() {
             val intent = Intent(context, NotificationReceiver::class.java).apply {
                 action = NotificationConstants.NOTIFICATION_ACTION
                 putExtra("descripcion", descripcion.ifEmpty { context.getString(defaultText) })
-                putExtra("is_alimentation", true)
+                putExtra("is_alimentation", false)
                 putExtra("is_sleeping", false)
-                putExtra("is_hidratation", false)
+                putExtra("is_hydration", true)
             }
 
             val pendingIntent = PendingIntent.getBroadcast(
@@ -109,16 +108,16 @@ class AlimentationNotificationService : NotificationBase() {
             }
         }
 
-        Log.d(TAG, "Se programaron $notificationCount notificaciones de alimentación.")
+        Log.d(TAG, "Se programaron $notificationCount notificaciones de hidrataciónn.")
     }
 
     override fun cancelNotifications(context: Context) {
-        Log.d(TAG, "AlimentacionNotificationService: Iniciando cancelación de notificaciones")
+        Log.d(TAG, "HidratacionNotificationService: Iniciando cancelación de notificaciones")
 
         try {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancelAll()
-            Log.d(TAG, "AlimentacionNotificationService: Todas las notificaciones canceladas")
+            Log.d(TAG, "HidratacionNotificationService: Todas las notificaciones canceladas")
 
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
@@ -126,7 +125,7 @@ class AlimentationNotificationService : NotificationBase() {
             for (i in 0..5) {
                 val intent = Intent(context, NotificationReceiver::class.java).apply {
                     action = NotificationConstants.NOTIFICATION_ACTION
-                    putExtra("is_alimentation", true)
+                    putExtra("is_hydration", true)
                 }
 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -139,9 +138,9 @@ class AlimentationNotificationService : NotificationBase() {
                 try {
                     alarmManager.cancel(pendingIntent)
                     pendingIntent.cancel()
-                    Log.d(TAG, "AlimentacionNotificationService: Alarma cancelada con ID ${NOTIFICATION_ID + i}")
+                    Log.d(TAG, "HidratacionNotificationService: Alarma cancelada con ID ${NOTIFICATION_ID + i}")
                 } catch (e: Exception) {
-                    Log.e(TAG, "AlimentacionNotificationService: Error al cancelar alarma ${NOTIFICATION_ID + i}: ${e.message}")
+                    Log.e(TAG, "HidratacionNotificationService: Error al cancelar alarma ${NOTIFICATION_ID + i}: ${e.message}")
                 }
             }
 
@@ -149,7 +148,7 @@ class AlimentationNotificationService : NotificationBase() {
             for (i in 0..5) {
                 val intent = Intent(context, NotificationReceiver::class.java).apply {
                     action = NotificationConstants.START_TIMER_ACTION
-                    putExtra("is_alimentation", true)
+                    putExtra("is_hydration", true)
                 }
 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -162,15 +161,15 @@ class AlimentationNotificationService : NotificationBase() {
                 try {
                     alarmManager.cancel(pendingIntent)
                     pendingIntent.cancel()
-                    Log.d(TAG, "AlimentacionNotificationService: Alarma de acción cancelada con ID ${NOTIFICATION_ID + i + 100}")
+                    Log.d(TAG, "HidratacionNotificationService: Alarma de acción cancelada con ID ${NOTIFICATION_ID + i + 100}")
                 } catch (e: Exception) {
-                    Log.e(TAG, "AlimentacionNotificationService: Error al cancelar alarma de acción ${NOTIFICATION_ID + i + 100}: ${e.message}")
+                    Log.e(TAG, "HidratacionNotificationService: Error al cancelar alarma de acción ${NOTIFICATION_ID + i + 100}: ${e.message}")
                 }
             }
 
-            Log.d(TAG, "AlimentacionNotificationService: Cancelación de notificaciones completada exitosamente")
+            Log.d(TAG, "HidratacionNotificationService: Cancelación de notificaciones completada exitosamente")
         } catch (e: Exception) {
-            Log.e(TAG, "AlimentacionNotificationService: Error al cancelar notificaciones: ${e.message}", e)
+            Log.e(TAG, "HidratacionNotificationService: Error al cancelar notificaciones: ${e.message}", e)
         }
     }
 

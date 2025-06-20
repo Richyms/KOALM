@@ -191,6 +191,8 @@ fun PantallaSaludMental(navController: NavHostController) {
                 HabitoPlantillaCard(habito, navController)
             }
 
+            HorizontalDivider()
+
             // Sección de hábitos activos
             if (isLoading) {
                 Box(
@@ -555,60 +557,6 @@ private fun HabitoActivoCardMental(
             }
         )
     }
-
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Eliminar hábito") },
-            text = { Text("¿Estás seguro de que deseas eliminar este hábito?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        isProcessing = true
-                        scope.launch {
-                            try {
-                                val result = habitosRepository.eliminarHabito(habito.id)
-                                result.onSuccess {
-                                    Toast.makeText(
-                                        context,
-                                        "Hábito eliminado exitosamente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    onHabitDeleted()
-                                }.onFailure { e ->
-                                    Log.e("PantallaSaludMental", "Error al eliminar hábito: ${e.message}", e)
-                                    Toast.makeText(
-                                        context,
-                                        "Error al eliminar hábito: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            } catch (e: Exception) {
-                                Log.e("PantallaSaludMental", "Error inesperado: ${e.message}", e)
-                                Toast.makeText(
-                                    context,
-                                    "Error inesperado: ${e.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } finally {
-                                isProcessing = false
-                            }
-                        }
-                    }
-                ) {
-                    Text("Eliminar")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
-                ) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
 }
 
 //Confirmacion de eliminacion del habito
@@ -643,7 +591,7 @@ fun ConfirmacionDialogoEliminarAnimado(
                     playMode = Mode.FORWARD,
                     modifier = Modifier
                         .size(120.dp)
-                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
+                        //.background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

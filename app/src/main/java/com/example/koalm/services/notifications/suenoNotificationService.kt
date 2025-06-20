@@ -15,7 +15,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 
-class SuenoNotificationService : NotificationBase() {
+class suenoNotificationService : NotificationBase() {
     companion object {
         private const val TAG = "KOALM_NOTIFICATIONS"
         const val NOTIFICATION_ID = 8

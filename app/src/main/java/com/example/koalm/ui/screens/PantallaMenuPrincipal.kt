@@ -41,7 +41,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.AddAlert
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.LocalDrink
+import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -83,7 +87,10 @@ import java.time.LocalDate
 //import kotlin.coroutines.jvm.internal.CompletedContinuation.context
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
-
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.koalm.ui.screens.habitos.saludMental.PantallaLibros
+import com.example.koalm.ui.screens.habitos.saludMental.PantallaNotas
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -199,7 +206,7 @@ fun PantallaMenuPrincipal(navController: NavHostController) {
                 FormatoRacha(
                     dias = racha,
                     onClick = {
-                        navController.navigate("racha_habitos")
+                        //navController.navigate("racha_habitos")
                         }
                 )
 
@@ -331,6 +338,21 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
                 }
             })
         }
+
+        HorizontalDivider()
+        Text("Rincón creativo", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleSmall)
+        listOf("Mis notas", "Mis libros").forEach {
+            NavigationDrawerItem(label = { Text(it) }, selected = false, onClick = {
+                when (it) {
+                    "Mis notas" -> {
+                        navController.navigate("notas")
+                    }
+                    "Mis libros" -> {
+                        navController.navigate("libros")
+                    }
+                }
+            })
+        }
     }
 }
 
@@ -452,12 +474,23 @@ fun DashboardScreen(
     val habitos = viewModel.habitos
     val habitosPre = viewModel.habitosPre
     val cargando = viewModel.cargando
+    val mensajeValidacion by viewModel.mensajeValidacion
+
+    if (mensajeValidacion != null) {
+        ValidacionesDialogoAnimado(
+            mensaje = mensajeValidacion!!,
+            onDismiss = {
+                viewModel.mensajeValidacion.value = null
+            }
+        )
+    }
+
 
     Log.d("HABITOS_DEBUG", "Cantidad de hábitos personalizados ${habitos.size}")
     Log.d("HABITOS_DEBUG", "Cantidad de hábitos predeterminados: ${habitosPre.size}")
 
     var tipoSeleccionado by remember { mutableStateOf("todos") }
-    val tipos = listOf("todos", "personalizado", "físico", "mental")
+    val tipos = listOf("todos", "personalizado", "fisico", "mental")
 
     // Cargar los hábitos
     LaunchedEffect(usuarioEmail, userId) {
@@ -539,7 +572,8 @@ fun DashboardScreen(
                     progreso = viewModel.progresosPre[habito.id],
                     onIncrementar = { valor ->
                         viewModel.incrementarProgresoPre(usuarioEmail, habito, valor)
-                    }
+                    },
+                    logrosPrefs = logrosPrefs
                 )
             }
         } else {
@@ -752,7 +786,8 @@ fun HabitoCardPersonalizado(
 fun HabitoCardPredeterminado(
     habito: Habito,
     progreso: ProgresoDiario?,
-    onIncrementar: (Int) -> Unit
+    onIncrementar: (Int) -> Unit,
+    logrosPrefs: LogrosPreferences
 ) {
     val realizados = progreso?.realizados ?: 0
     val completado = progreso?.completado ?: false
@@ -760,66 +795,127 @@ fun HabitoCardPredeterminado(
     var mostrarDialogo by remember { mutableStateOf(false) }
     var valorInput by remember { mutableStateOf("") }
 
-    // Diálogo para ingresar el progreso
-    if (mostrarDialogo) {
-        AlertDialog(
-            onDismissRequest = { mostrarDialogo = false },
-            title = {
-                Text(
-                    when (habito.tipo) {
-                        TipoHabito.LECTURA -> "¿Cuántas páginas leíste?"
-                        TipoHabito.ESCRITURA -> "¿Cuántas páginas escribiste?"
-                        TipoHabito.MEDITACION -> "¿Cuántos minutos meditaste?"
-                        TipoHabito.DESCONEXION_DIGITAL -> "¿Cuántos minutos estuviste desconectado?"
-                        //TipoHabito.SUEÑO -> "¿Cuántas horas dormiste?"
-                        else -> "Ingresa el progreso"
-                    }
-                )
-            },
-            text = {
-                OutlinedTextField(
-                    value = valorInput,
-                    onValueChange = { valorInput = it.filter { char -> char.isDigit() || char == '.' } },
-                    label = {
-                        Text(
-                            when (habito.tipo) {
-                                TipoHabito.LECTURA -> "Páginas"
-                                TipoHabito.ESCRITURA -> "Páginas"
-                                TipoHabito.MEDITACION -> "Minutos"
-                                TipoHabito.DESCONEXION_DIGITAL -> "Minutos"
-                                //TipoHabito.SUEÑO -> "Horas"
-                                else -> "Cantidad"
-                            }
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = if (habito.tipo == TipoHabito.SUEÑO) KeyboardType.Decimal else KeyboardType.Number)
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val valor = if (habito.tipo == TipoHabito.SUEÑO) {
-                            valorInput.toFloatOrNull()?.toInt() ?: 0
-                        } else {
-                            valorInput.toIntOrNull() ?: 0
-                        }
-                        if (valor > 0) {
-                            onIncrementar(valor)
-                            mostrarDialogo = false
-                            valorInput = ""
-                        }
-                    }
-                ) {
-                    Text("Confirmar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarDialogo = false }) {
-                    Text("Cancelar")
-                }
-            }
+    var mostrarDialogoLogro by remember { mutableStateOf(false) }
+
+    LaunchedEffect(completado) {
+        if (completado && !logrosPrefs.fueMostrado(habito.id)) {
+            mostrarDialogoLogro = true
+            logrosPrefs.marcarComoMostrado(habito.id)
+        }
+    }
+
+    if (mostrarDialogoLogro) {
+        LogroDialogoAnimado(
+            mensaje = "¡Has completado el objetivo diario de tu hábito!",
+            onDismiss = { mostrarDialogoLogro = false }
         )
     }
+
+   // Dialogo para ingresar el progreso
+    if (mostrarDialogo) {
+        Dialog(
+            onDismissRequest = { mostrarDialogo = false },
+            properties = DialogProperties(dismissOnClickOutside = false, dismissOnBackPress = false)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .wrapContentSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = when (habito.tipo) {
+                            TipoHabito.LECTURA -> "¿Cuántas páginas leíste?"
+                            TipoHabito.ESCRITURA -> "¿Cuántas páginas escribiste?"
+                            TipoHabito.MEDITACION -> "¿Cuántos minutos meditaste?"
+                            TipoHabito.DESCONEXION_DIGITAL -> "¿Cuántos minutos estuviste desconectado?"
+                            TipoHabito.SUEÑO -> "¿Cuántas horas dormiste?"
+                            TipoHabito.ALIMENTACION -> "¿Cuántas comidas hiciste?"
+                            TipoHabito.HIDRATACION -> "¿Cuántos litros de agua tomaste?"
+                            else -> "Ingresa el progreso"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = valorInput,
+                        onValueChange = {
+                            valorInput = it.filter { char -> char.isDigit() || char == '.' }
+                        },
+                        label = {
+                            Text(
+                                when (habito.tipo) {
+                                    TipoHabito.LECTURA -> "Páginas"
+                                    TipoHabito.ESCRITURA -> "Páginas"
+                                    TipoHabito.MEDITACION -> "Minutos"
+                                    TipoHabito.DESCONEXION_DIGITAL -> "Minutos"
+                                    TipoHabito.SUEÑO -> "Horas"
+                                    TipoHabito.ALIMENTACION -> "Cantidad"
+                                    TipoHabito.HIDRATACION -> "Litros"
+                                    else -> "Cantidad"
+                                }
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (habito.tipo == TipoHabito.SUEÑO) KeyboardType.Decimal else KeyboardType.Number
+                        ),
+                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(0.6f)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            modifier = Modifier.weight(1f),
+                            onClick = { mostrarDialogo = false },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC615B))
+                        ) {
+                            Text("Cancelar", color = MaterialTheme.colorScheme.onPrimary)
+                        }
+
+                        Button(
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                val valor = if (habito.tipo == TipoHabito.SUEÑO) {
+                                    valorInput.toFloatOrNull()?.toInt() ?: 0
+                                } else {
+                                    valorInput.toIntOrNull() ?: 0
+                                }
+                                if (valor > 0) {
+                                    onIncrementar(valor)
+                                    mostrarDialogo = false
+                                    valorInput = ""
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text("Confirmar")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 
     // Progreso del hábito visualmente
     val progresoPorcentaje = if (totalRecordatoriosxDia == 1) {
@@ -868,11 +964,11 @@ fun HabitoCardPredeterminado(
 
         TipoHabito.ALIMENTACION -> {
             val comidasRealizadas = realizados
-            if (completado) "Completado: $comidasRealizadas comidas" else "Pendientes: ${totalRecordatoriosxDia - comidasRealizadas} comidas"
+            if (completado) "Completado: $comidasRealizadas comidas" else "Objetivo: $comidasRealizadas/${habito.objetivoPaginas} comidas"
         }
         TipoHabito.HIDRATACION -> {
             val vasosAgua = realizados
-            if (completado) "Completado: $vasosAgua vasos" else "Objetivo: $vasosAgua/$totalRecordatoriosxDia vasos"
+            if (completado) "Completado: $vasosAgua litros" else "Objetivo: $vasosAgua/${habito.objetivoPaginas} litros"
         }
     }
 
@@ -896,9 +992,9 @@ fun HabitoCardPredeterminado(
                         TipoHabito.LECTURA -> Icons.Default.MenuBook
                         TipoHabito.DESCONEXION_DIGITAL -> Icons.Default.PhoneDisabled
                         TipoHabito.ESCRITURA -> Icons.Default.Edit
-                        TipoHabito.SUEÑO -> Icons.Default.SelfImprovement
-                        TipoHabito.ALIMENTACION -> Icons.Default.MenuBook
-                        TipoHabito.HIDRATACION -> Icons.Default.SelfImprovement
+                        TipoHabito.SUEÑO -> Icons.Default.Nightlight
+                        TipoHabito.ALIMENTACION -> Icons.Default.Restaurant
+                        TipoHabito.HIDRATACION -> Icons.Default.LocalDrink
                     },
                     contentDescription = "Icono del Hábito",
                     tint = MaterialTheme.colorScheme.primary,

@@ -160,11 +160,16 @@ class DashboardViewModel : ViewModel() {
         }
     }
 
+    val mensajeValidacion = mutableStateOf<String?>(null)
 
     fun incrementarProgresoPre(email: String, habito: Habito, valor: Int) {
         viewModelScope.launch {
             try {
-                incrementarProgresoHabitoPre(email, habito, valor)
+                val resultado = incrementarProgresoHabitoPre(email, habito, valor)
+                if (resultado != null) {
+                    mensajeValidacion.value = resultado
+                    return@launch
+                }
                 cargarProgresosPre(email, habitosPre)
                 cargarRachaSemanal(email)
             } catch (e: Exception) {
@@ -172,6 +177,7 @@ class DashboardViewModel : ViewModel() {
             }
         }
     }
+
 
     private fun obtenerProgresoRef(email: String, habito: HabitoPersonalizado): DocumentReference {
         return FirebaseFirestore.getInstance()

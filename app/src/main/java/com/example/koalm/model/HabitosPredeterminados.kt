@@ -25,7 +25,7 @@ data class Habito(
     val metricasEspecificas: MetricasHabito = MetricasHabito(),
     // Objetivos específicos por tipo de hábito
     val objetivoPaginas: Int = 0, // Objetivo de páginas para hábitos de escritura/lectura
-    val objetivoHorasSueno: Float = 8f // Objetivo de horas para hábitos de sueño
+    val objetivoHorasSueno: Int = 0 // Objetivo de horas para hábitos de sueño
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "id" to id,

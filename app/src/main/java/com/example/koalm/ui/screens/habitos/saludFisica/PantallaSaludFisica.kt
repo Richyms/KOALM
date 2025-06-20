@@ -34,6 +34,8 @@ import com.example.koalm.services.notifications.AlimentationNotificationService
 
 import com.google.firebase.auth.FirebaseAuth
 import com.example.koalm.services.notifications.NotificationBase
+import com.example.koalm.ui.components.ExitoDialogoGuardadoAnimado
+import com.example.koalm.ui.screens.habitos.saludMental.ConfirmacionDialogoEliminarAnimado
 
 private const val TAG = "PantallaSaludFisica"
 
@@ -124,7 +126,7 @@ fun PantallaSaludFisica(navController: NavHostController) {
         ),
         Habito(
             titulo = "Hidratación",
-            descripcion = "Recuerda hidratarte cada día",
+            descripcion = "Recuerda hidratarte cada día.",
             clase = ClaseHabito.FISICO,
             tipo = TipoHabito.HIDRATACION
         )
@@ -171,6 +173,8 @@ fun PantallaSaludFisica(navController: NavHostController) {
                 HabitoPlantillaCardFisico(habito, navController)
             }
 
+            HorizontalDivider()
+
             // Sección de hábitos activos
             if (isLoading) {
                 Box(
@@ -182,7 +186,7 @@ fun PantallaSaludFisica(navController: NavHostController) {
             } else {
                 if (habitosActivos.isNotEmpty()) {
                     Text(
-                        text = "Mis hábitos físicos",
+                        text = "Mis hábitos",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -308,6 +312,19 @@ fun HabitoActivoCardFisico(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    var mostrarDialogoConfirmacion by remember { mutableStateOf(false) }
+
+    //Mensaje de exito
+    var mostrarDialogoExito by remember{ mutableStateOf(false) }
+    if (mostrarDialogoExito) {
+        ExitoDialogoGuardadoAnimado(
+            mensaje = "¡Hábito eliminado con éxito!",
+            onDismiss = {
+                mostrarDialogoExito = false
+                onHabitDeleted()
+            }
+        )
+    }
 
     // Calcular la hora de despertar para hábitos de sueño
     val horaDespertar = if (habito.tipo == TipoHabito.SUEÑO) {
@@ -332,37 +349,7 @@ fun HabitoActivoCardFisico(
     } else null
 
     Card(
-        onClick = {
-            try {
-                when (habito.tipo) {
-                    TipoHabito.SUEÑO -> navController.navigate("ritmo-cardiaco") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-
-                    TipoHabito.ALIMENTACION -> navController.navigate("configurar_habito_alimentacion/${habito.id}") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-
-                    TipoHabito.HIDRATACION -> navController.navigate("configurar_habito_hidratacion/${habito.id}") {
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    else -> {
-                        // Manejar otros tipos o no hacer nada
-                        Log.w(TAG, "Tipo de hábito no manejado en salud física: ${habito.tipo}")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error al navegar: ${e.message}", e)
-                Toast.makeText(
-                    context,
-                    "Error al abrir la configuración: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        },
+        onClick = {},
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, VerdeBorde, RoundedCornerShape(16.dp)),
@@ -408,33 +395,40 @@ fun HabitoActivoCardFisico(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Mostrar horario
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+
                     if (habito.tipo == TipoHabito.SUEÑO) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "${habito.hora} - $horaDespertar",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                    } else if (habito.tipo == TipoHabito.ALIMENTACION && habito.horarios.isNotEmpty()) {
+                        Text(
+                            text = habito.horarios.joinToString(separator = " | "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                    } else if (habito.tipo == TipoHabito.HIDRATACION && habito.horarios.isNotEmpty()) {
+                        Text(
+                            text = habito.horarios.joinToString(separator = " | "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
                         Text(
                             text = habito.hora,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+
 
                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -474,96 +468,103 @@ fun HabitoActivoCardFisico(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+
+                    // Mostrar objetivo de hidratación para hábitos de hidratación
+                    if (habito.tipo == TipoHabito.HIDRATACION) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "tomar ${habito.objetivoPaginas} litros",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
-            IconButton(
-                onClick = { showMenu = true }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Más opciones",
-                    tint = GrisMedio
-                )
+            // Menú de opciones
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Opciones")
+                }
+
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    if (habito.tipo == TipoHabito.SUEÑO) {
+                        DropdownMenuItem(
+                            text = { Text("Sueño de anoche") },
+                            onClick = {
+                                showMenu = false
+                                navController.navigate("sueño-de-anoche")
+                            }
+                        )
+                        Divider()
+                    }
+
+                    DropdownMenuItem(
+                        text = { Text("Editar") },
+                        onClick = {
+                            showMenu = false
+                            when (habito.tipo) {
+                                TipoHabito.SUEÑO -> {
+                                    navController.navigate("configurar_habito_sueno/${habito.id}")
+                                }
+                                TipoHabito.ALIMENTACION -> {
+                                    navController.navigate("configurar_habito_alimentacion/${habito.id}")
+                                }
+                                TipoHabito.HIDRATACION -> {
+                                    navController.navigate("configurar_habito_hidratacion/${habito.id}")
+                                }
+                                else -> {
+                                    Log.w("EditarHabito", "Tipo no soportado: ${habito.tipo}")
+                                }
+                            }
+                        }
+                    )
+
+                    DropdownMenuItem(
+                        text = { Text("Eliminar") },
+                        onClick = {
+                            showMenu = false
+                            mostrarDialogoConfirmacion = true
+                        }
+                    )
+                }
+
+
             }
         }
     }
-
-    if (showMenu) {
-        AlertDialog(
-            onDismissRequest = { showMenu = false },
-            title = { Text("Opciones del hábito") },
-            text = {
-                Column {
-                    TextButton(
-                        onClick = {
-                            showMenu = false
-                            showDeleteDialog = true
+    // Diálogo de confirmación
+    if (mostrarDialogoConfirmacion) {
+        ConfirmacionDialogoEliminarAnimado(
+            onCancelar = { mostrarDialogoConfirmacion = false },
+            onConfirmar = {
+                mostrarDialogoConfirmacion = false
+                scope.launch {
+                    try {
+                        val result = habitosRepository.eliminarHabito(habito.id)
+                        result.onSuccess {
+                            mostrarDialogoExito = true
+                        }.onFailure { e ->
+                            Log.e("PantallaSaludMental", "Error al eliminar hábito: ${e.message}", e)
+                            Toast.makeText(
+                                context,
+                                "Error al eliminar hábito: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                    ) {
-                        Text("Eliminar hábito")
+                    } catch (e: Exception) {
+                        Log.e("PantallaSaludMental", "Error inesperado: ${e.message}", e)
+                        Toast.makeText(
+                            context,
+                            "Error inesperado: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } finally {
+                        isProcessing = false
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { showMenu = false }
-                ) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
-
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Eliminar hábito") },
-            text = { Text("¿Estás seguro de que deseas eliminar este hábito?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        isProcessing = true
-                        scope.launch {
-                            try {
-                                val result = habitosRepository.eliminarHabito(habito.id)
-                                result.onSuccess {
-                                    Toast.makeText(
-                                        context,
-                                        "Hábito eliminado exitosamente",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    onHabitDeleted()
-                                }.onFailure { e ->
-                                    Log.e(TAG, "Error al eliminar hábito: ${e.message}", e)
-                                    Toast.makeText(
-                                        context,
-                                        "Error al eliminar hábito: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error inesperado: ${e.message}", e)
-                                Toast.makeText(
-                                    context,
-                                    "Error inesperado: ${e.message}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } finally {
-                                isProcessing = false
-                            }
-                        }
-                    }
-                ) {
-                    Text("Eliminar")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
-                ) {
-                    Text("Cancelar")
                 }
             }
         )

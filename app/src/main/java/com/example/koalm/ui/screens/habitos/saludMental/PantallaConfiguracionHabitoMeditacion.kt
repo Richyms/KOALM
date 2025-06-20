@@ -457,7 +457,7 @@ fun PantallaConfiguracionHabitoMeditacion(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            text = "Selecciona el tiempo que quieres que dure tu hábito de meditación.",
+                            text = "Selecciona el tiempo que quieres que dure tu meditación.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

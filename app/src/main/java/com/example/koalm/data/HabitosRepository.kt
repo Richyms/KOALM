@@ -2,10 +2,15 @@ package com.example.koalm.data
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.example.koalm.model.Habito
 import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
+import com.example.koalm.ui.components.ValidacionesDialogoAnimado
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
@@ -118,7 +123,11 @@ object HabitosRepository {
         Log.d("Firestore", "Progreso actualizado para el hábito: $idDocumento")
     }
 
-    suspend fun incrementarProgresoHabitoPre(email: String, habito: Habito, valor: Int) {
+    suspend fun incrementarProgresoHabitoPre(
+        email: String,
+        habito: Habito,
+        valor: Int
+    ): String? { // ← Devuelve null si todo está bien, o mensaje si hay error
         val progresoRef = db.collection("habitos")
             .document(email)
             .collection("predeterminados")
@@ -130,17 +139,23 @@ object HabitosRepository {
         val progresoActual = snapshot.toObject(ProgresoDiario::class.java)
 
         val totalObjetivo = when (habito.tipo) {
-            TipoHabito.LECTURA, TipoHabito.ESCRITURA -> habito.objetivoPaginas
+            TipoHabito.LECTURA, TipoHabito.ESCRITURA, TipoHabito.ALIMENTACION, TipoHabito.HIDRATACION -> habito.objetivoPaginas
             TipoHabito.MEDITACION, TipoHabito.DESCONEXION_DIGITAL -> habito.duracionMinutos
+            TipoHabito.SUEÑO -> habito.objetivoHorasSueno
             else -> 1
         }
 
         val realizadosPrevios = progresoActual?.realizados ?: 0
-        val nuevosRealizados = (realizadosPrevios + valor).coerceAtMost(totalObjetivo)
-        val completado = nuevosRealizados >= totalObjetivo
+        val suma = realizadosPrevios + valor
+
+        if (suma > totalObjetivo) {
+            return "No puedes ingresar un valor que exceda el objetivo diario."
+        }
+
+        val completado = suma >= totalObjetivo
 
         val nuevoProgreso = ProgresoDiario(
-            realizados = nuevosRealizados,
+            realizados = suma,
             completado = completado,
             totalObjetivoDiario = totalObjetivo,
             fecha = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
@@ -148,7 +163,10 @@ object HabitosRepository {
         )
 
         progresoRef.set(nuevoProgreso).await()
+        return null // éxito, no hay error
     }
+
+
 
 
 

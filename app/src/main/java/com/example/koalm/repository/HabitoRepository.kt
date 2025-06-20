@@ -87,12 +87,13 @@ class HabitoRepository {
                         },
                         diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
                         hora = data["hora"] as? String ?: "",
+                        horarios = (data["horarios"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
                         duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
                         userId = data["userId"] as? String,
                         fechaCreacion = data["fechaCreacion"] as? String,
                         fechaModificacion = data["fechaModificacion"] as? String,
                         objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
-                        objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: 8f,
+                        objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
                         metricasEspecificas = MetricasHabito()
                     )
                 } else {
@@ -156,12 +157,13 @@ class HabitoRepository {
                         },
                         diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
                         hora = data["hora"] as? String ?: "",
+                        horarios = (data["horarios"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
                         duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
                         userId = data["userId"] as? String,
                         fechaCreacion = data["fechaCreacion"] as? String,
                         fechaModificacion = data["fechaModificacion"] as? String,
                         objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
-                        objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: 8f,
+                        objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
                         metricasEspecificas = MetricasHabito()
                     )
                 } catch (e: Exception) {
@@ -258,12 +260,13 @@ class HabitoRepository {
                 },
                 diasSeleccionados = (data["diasSeleccionados"] as? List<*>)?.map { it as Boolean } ?: List(7) { false },
                 hora = data["hora"] as? String ?: "",
+                horarios = (data["horarios"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
                 duracionMinutos = (data["duracionMinutos"] as? Number)?.toInt() ?: 15,
                 userId = data["userId"] as? String,
                 fechaCreacion = data["fechaCreacion"] as? String,
                 fechaModificacion = data["fechaModificacion"] as? String,
                 objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
-                objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toFloat() ?: 8f,
+                objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
                 metricasEspecificas = MetricasHabito()
             )
 

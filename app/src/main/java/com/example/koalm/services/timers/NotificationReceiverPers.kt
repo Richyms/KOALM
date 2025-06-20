@@ -113,7 +113,6 @@ class NotificationReceiverPers : BroadcastReceiver() {
 
 
     /**
-     * Si quieres poner esta función aquí para reutilizarla en otro lado:
      * frecuencia: lista de 7 booleanos (0=domingo, 1=lunes... 6=sábado)
      * currentDayOfWeek: Calendar.DAY_OF_WEEK (1=domingo,... 7=sábado)
      * Retorna días a sumar para siguiente día activo (incluye hoy si aplica)

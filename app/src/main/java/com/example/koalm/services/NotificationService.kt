@@ -18,9 +18,10 @@ import com.example.koalm.services.notifications.MeditationNotificationService
 import com.example.koalm.services.notifications.NotificationBase
 import com.example.koalm.services.notifications.ReadingNotificationService
 import com.example.koalm.services.notifications.WritingNotificationService
-import com.example.koalm.services.notifications.SuenoNotificationService
+import com.example.koalm.services.notifications.suenoNotificationService
 import com.example.koalm.services.notifications.NotificationConstants
 import com.example.koalm.services.notifications.AlimentationNotificationService
+import com.example.koalm.services.notifications.HydrationNotificationService
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,8 +44,9 @@ class NotificationService : Service() {
         "meditacion" to MeditationNotificationService(),
         "lectura" to ReadingNotificationService(),
         "desconexion" to DigitalDisconnectNotificationService(),
-        "sueno" to SuenoNotificationService(),
-        "alimentation" to AlimentationNotificationService()
+        "sueno" to suenoNotificationService(),
+        "alimentation" to AlimentationNotificationService(),
+        "hydration" to HydrationNotificationService()
     )
 
     private val habitosRepository = HabitoRepository()
@@ -92,7 +94,7 @@ class NotificationService : Service() {
         isReading: Boolean = false,
         isSleeping: Boolean = false,
         isAlimentation: Boolean = false,
-        isHidratation: Boolean = false,
+        isHydration: Boolean = false,
         isDigitalDisconnect: Boolean = false
 
 
@@ -124,6 +126,8 @@ class NotificationService : Service() {
                             putExtra("notas_habilitadas", notasHabilitadas)
                             putExtra("is_sleeping", isSleeping)
                             putExtra("is_alimentation", isAlimentation)
+                            putExtra("is_hydration", isHydration)
+
                         }
 
                         // Generar un ID único para la alarma basado en el ID del hábito
