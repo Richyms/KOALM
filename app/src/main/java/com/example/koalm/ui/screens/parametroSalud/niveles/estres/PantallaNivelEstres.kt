@@ -1,5 +1,6 @@
 package com.example.koalm.ui.screens.parametroSalud.niveles.estres
 
+import android.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +24,10 @@ import com.example.koalm.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.tasks.await
+import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,9 +40,18 @@ fun PantallaEstres(
     val ansiedad = remember(correo) {
         Firebase.firestore.collection("resultadosAnsiedad")
             .document(correo ?: "")
-            .collection("historial")
-            .document("Resultado 1")
     }
+    val promedio = remember { mutableStateOf(0.0) }
+
+    LaunchedEffect(correo) {
+        if (!correo.isNullOrBlank()) {
+            val puntajes = ObtenerPuntajes(correo)
+            promedio.value = if (puntajes.isNotEmpty()) puntajes.average() else 0.0
+        }
+    }
+
+    val Nivel = obtenerResultadoAnsiedad(promedio.value.toInt())
+
     val ResAnsiedad by ansiedad.snapshotsAsState { it?.getString("nivel")?.toString()}
     Scaffold(
         topBar = {
@@ -132,7 +146,7 @@ fun PantallaEstres(
                                         .background(VerdePrincipal, CircleShape)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Medio")
+                                Text("$Nivel")
                             }
                         }
 
@@ -161,5 +175,28 @@ fun PantallaEstres(
     }
 }
 
+suspend fun ObtenerPuntajes(userEmail: String): List<Int> {
+    val firestore = Firebase.firestore
+    return try {
+        val snapshot = firestore
+            .collection("resultadosAnsiedad")
+            .document(userEmail)
+            .collection("historial")
+            .get()
+            .await()
 
+        snapshot.documents.mapNotNull { it.getLong("puntaje")?.toInt()}
+    } catch (e: Exception) {
+        Log.e("Firebase", "Error al obtener puntuación")
+        emptyList()
+    }
+}
 
+fun obtenerResultadoAnsiedad(puntaje: Int): String {
+    return when (puntaje) {
+        in 0..4 -> ("Ansiedad Mínima")
+        in 5..9 -> ("Ansiedad Leve")
+        in 10..14 -> ("Ansiedad Moderada")
+        else -> ("Ansiedad Severa")
+    }
+}
