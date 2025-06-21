@@ -76,6 +76,28 @@ fun PantallaResultadoAnsiedad(
     LaunchedEffect(Unit) {
         if (userEmail != null) {
             try {
+                val fechaId = java.time.LocalDate.now().toString()  // e.g. "2024-06-15"
+
+                val datos = mapOf(
+                    "nivel" to resultado.nivel,
+                    "puntaje" to puntaje,
+                    "timestamp" to com.google.firebase.Timestamp.now()
+                )
+
+                firestore.collection("resultadosAnsiedad")
+                    .document(userEmail)
+                    .set(datos)
+
+                Log.d("Firebase", "Resultado guardado correctamente")
+            } catch (e: Exception) {
+                Log.e("Firebase", "Error al guardar resultado: ${e.message}")
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (userEmail != null) {
+            try {
                 val datos = mapOf(
                     "nivel" to resultado.nivel,
                     "puntaje" to puntaje,
@@ -91,8 +113,7 @@ fun PantallaResultadoAnsiedad(
                     val conteo = Anteriores.size() + 1
                     val IdPerso = "Resultado $conteo"
 
-                    Guardado.document(IdPerso) // Genera ID automático
-                        .set(datos)
+                    Guardado.document(IdPerso).set(datos).await()
                     Log.d("Firebase", "Resultado guardado con éxito con Id:$IdPerso")
                 } catch (e: Exception) {
                     Log.e("Firebase", "Error al guardar resultado: ${e.message}")
