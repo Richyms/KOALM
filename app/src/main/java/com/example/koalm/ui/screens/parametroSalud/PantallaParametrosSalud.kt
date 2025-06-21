@@ -53,8 +53,6 @@ fun PantallaParametrosSalud(
     val ansiedad = remember(correo) {
         Firebase.firestore.collection("resultadosAnsiedad")
             .document(correo ?: "")
-            .collection("historial")
-            .document("Resultado 1")
     }
     val metas = remember(correo) {
         Firebase.firestore.collection("usuarios")
@@ -169,7 +167,7 @@ fun PantallaParametrosSalud(
             InfoCard("Estrés", "${ResAnsiedad}", Icons.Default.PsychologyAlt, 0.6f) {
                 navController.navigate("nivel-de-estres")
             }
-            InfoCard("Peso", "-2.5 kg", Icons.Default.MonitorWeight, 0.5f) {
+            InfoCard("Peso", "${peso.value} Kg", Icons.Default.MonitorWeight, 0.5f) {
                 navController.navigate("control-peso")
             }
             InfoCard("Actividad diaria", "Completada", Icons.AutoMirrored.Filled.DirectionsRun) {
