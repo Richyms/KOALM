@@ -38,20 +38,16 @@ class HabitoRepository {
         Log.d(TAG, "Iniciando creación de hábito: ${habito.titulo}")
         Log.d(TAG, "Datos del hábito: userId=${habito.userId}, tipo=${habito.tipo}, clase=${habito.clase}")
 
-        val habitoConFechas = habito.copy(
-            fechaCreacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
-            fechaModificacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-        )
+        Log.d(TAG, "Datos a guardar en Firebase: ${habito.toMap()}")
 
-        Log.d(TAG, "Datos a guardar en Firebase: ${habitoConFechas.toMap()}")
-
-        val docRef = habitosCollection.add(habitoConFechas.toMap()).await()
+        val docRef = habitosCollection.add(habito.toMap()).await()
         Log.d(TAG, "Hábito creado exitosamente con ID: ${docRef.id}")
         Result.success(docRef.id)
     } catch (e: Exception) {
         Log.e(TAG, "Error al crear hábito: ${e.message}", e)
         Result.failure(e)
     }
+
 
     suspend fun obtenerHabitosActivos(userId: String): Result<List<Habito>> = try {
         Log.d(TAG, "Iniciando búsqueda de hábitos para userId: $userId")
@@ -94,8 +90,10 @@ class HabitoRepository {
                         fechaModificacion = data["fechaModificacion"] as? String,
                         objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
                         objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
-                        metricasEspecificas = MetricasHabito()
-                    )
+                        metricasEspecificas = MetricasHabito(),
+                        rachaActual = (data["rachaActual"] as? Number)?.toInt() ?: 0,
+                        rachaMaxima = (data["rachaMaxima"] as? Number)?.toInt() ?: 0
+                        )
                 } else {
                     Log.w(TAG, "Documento ${doc.id} tiene datos nulos")
                     null
@@ -158,8 +156,10 @@ class HabitoRepository {
                             fechaModificacion = data["fechaModificacion"] as? String,
                             objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
                             objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
-                            metricasEspecificas = MetricasHabito()
-                        )
+                            metricasEspecificas = MetricasHabito(),
+                            rachaActual = (data["rachaActual"] as? Number)?.toInt() ?: 0,
+                            rachaMaxima = (data["rachaMaxima"] as? Number)?.toInt() ?: 0
+                            )
 
                         // Filtro explícito por clase mental
                         if (habito.clase == ClaseHabito.MENTAL) {
@@ -215,8 +215,10 @@ class HabitoRepository {
                             fechaModificacion = data["fechaModificacion"] as? String,
                             objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
                             objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
-                            metricasEspecificas = MetricasHabito()
-                        )
+                            metricasEspecificas = MetricasHabito(),
+                            rachaActual = (data["rachaActual"] as? Number)?.toInt() ?: 0,
+                            rachaMaxima = (data["rachaMaxima"] as? Number)?.toInt() ?: 0
+                            )
 
                         // Filtro explícito por clase mental
                         if (habito.clase == ClaseHabito.FISICO) {
@@ -278,8 +280,10 @@ class HabitoRepository {
                         fechaModificacion = data["fechaModificacion"] as? String,
                         objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
                         objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
-                        metricasEspecificas = MetricasHabito()
-                    )
+                        metricasEspecificas = MetricasHabito(),
+                        rachaActual = (data["rachaActual"] as? Number)?.toInt() ?: 0,
+                        rachaMaxima = (data["rachaMaxima"] as? Number)?.toInt() ?: 0
+                        )
                 } catch (e: Exception) {
                     Log.e(TAG, "Error al procesar documento ${doc.id}: ${e.message}", e)
                     null
@@ -381,8 +385,10 @@ class HabitoRepository {
                 fechaModificacion = data["fechaModificacion"] as? String,
                 objetivoPaginas = (data["objetivoPaginas"] as? Number)?.toInt() ?: 0,
                 objetivoHorasSueno = (data["objetivoHorasSueno"] as? Number)?.toInt() ?: 8,
-                metricasEspecificas = MetricasHabito()
-            )
+                metricasEspecificas = MetricasHabito(),
+                rachaActual = (data["rachaActual"] as? Number)?.toInt() ?: 0,
+                rachaMaxima = (data["rachaMaxima"] as? Number)?.toInt() ?: 0
+                )
 
             Log.d(TAG, "Hábito obtenido exitosamente: ${habito.titulo}")
             Result.success(habito)

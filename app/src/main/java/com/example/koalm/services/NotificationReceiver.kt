@@ -211,10 +211,16 @@ class NotificationReceiver : BroadcastReceiver() {
             "timestamp" to System.currentTimeMillis(),
             "leido" to false
         )
-        db.collection("usuarios")
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
     }
 
     private fun showHydrationNotification(
@@ -297,10 +303,16 @@ class NotificationReceiver : BroadcastReceiver() {
             "timestamp" to System.currentTimeMillis(),
             "leido" to false
         )
-        db.collection("usuarios")
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
     }
 
     private fun showSleepNotification(
@@ -357,10 +369,18 @@ class NotificationReceiver : BroadcastReceiver() {
             "timestamp" to System.currentTimeMillis(),
             "leido" to false
         )
-        db.collection("usuarios")
+
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
+
     }
 
     // Mostrar notificaciones de hábitos se salud mental
@@ -452,10 +472,16 @@ class NotificationReceiver : BroadcastReceiver() {
             "timestamp" to System.currentTimeMillis(),
             "leido" to false
         )
-        db.collection("usuarios")
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
     }
 
     private fun showReadingNotification(
@@ -545,10 +571,16 @@ class NotificationReceiver : BroadcastReceiver() {
             "timestamp" to System.currentTimeMillis(),
             "leido" to false
         )
-        db.collection("usuarios")
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
     }
 
     private fun showWritingNotification(
@@ -628,10 +660,16 @@ class NotificationReceiver : BroadcastReceiver() {
             "leido" to false
         )
 
-        db.collection("usuarios")
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
     }
 
 
@@ -723,10 +761,16 @@ class NotificationReceiver : BroadcastReceiver() {
             "timestamp" to System.currentTimeMillis(),
             "leido" to false
         )
-        db.collection("usuarios")
+        val notificacionesRef = db.collection("usuarios")
             .document(userEmail)
             .collection("notificaciones")
-            .add(notificacion)
+
+        val docRef = notificacionesRef.document() // Genera el ID manualmente
+        val id = docRef.id
+
+        notificacion["id"] = id // Agrega el campo ID
+
+        docRef.set(notificacion) // Guarda con el ID incluido
     }
 
     private fun startDigitalDisconnectTimer(context: Context, duration: Long) {

@@ -292,6 +292,7 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
                             val snapshot = db.collection("habitos")
                                 .document(userEmail)
                                 .collection("predeterminados")
+                                .whereEqualTo("clase", "FISICO")
                                 .get()
                                 .await()
 
@@ -308,6 +309,7 @@ fun DrawerContenido(navController: NavHostController, userEmail: String) {
                             val snapshot = db.collection("habitos")
                                 .document(userEmail)
                                 .collection("predeterminados")
+                                .whereEqualTo("clase", "MENTAL")
                                 .get()
                                 .await()
 

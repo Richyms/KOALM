@@ -53,6 +53,7 @@ import com.example.koalm.ui.screens.habitos.personalizados.TooltipDialogAyuda
 import com.example.koalm.ui.screens.habitos.saludMental.TimePickerDialog
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.LocalDateTime
 private const val TAG = "PantallaConfigAlimentacion" // Unique tag for this file
@@ -123,6 +124,8 @@ fun PantallaConfiguracionHabitoAlimentacion(
     var isLoading by remember { mutableStateOf(false) }
 
     val habitoEditando = remember { mutableStateOf<Habito?>(null) }
+    var habitoExistente by remember { mutableStateOf<Habito?>(null) }
+    val currentUser = auth.currentUser
 
     LaunchedEffect(habitoId) {
         if (habitoId != null) {
@@ -146,6 +149,19 @@ fun PantallaConfiguracionHabitoAlimentacion(
         }
     }
 
+    LaunchedEffect(esEdicion, habitoId) {
+        if (esEdicion && habitoId != null && currentUser != null) {
+            val snapshot = FirebaseFirestore.getInstance()
+                .collection("habitos")
+                .document(currentUser.uid)
+                .collection("predeterminados")
+                .document(habitoId)
+                .get()
+                .await()
+
+            habitoExistente = snapshot.toObject(Habito::class.java)
+        }
+    }
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -177,7 +193,19 @@ fun PantallaConfiguracionHabitoAlimentacion(
                         },
                         objetivoPaginas = horarios.size,
                         userId = currentUser.uid,
-                        metricasEspecificas = MetricasHabito()
+                        fechaCreacion = if (esEdicion) habitoExistente?.fechaCreacion else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        metricasEspecificas = MetricasHabito(),
+                        rachaActual = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaActual ?: 0
+                        },
+                        rachaMaxima = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaMaxima ?: 0
+                        },
+                        ultimoDiaCompletado = if (esEdicion) habitoExistente?.ultimoDiaCompletado else null
                     )
 
                     if (habitoId != null) {

@@ -114,7 +114,6 @@ fun PantallaEstadisticasSaludFisica(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            //navController?.navigate("salud_mental")
             Text("No hay hábitos físicos disponibles")
         }
         return
@@ -273,11 +272,11 @@ fun PantallaEstadisticasSaludFisica(
             Spacer(modifier = Modifier.height(15.dp))
 
             Button(
-                onClick = { navController.navigate("gestion_habitos_personalizados") },
+                onClick = { navController.navigate("salud_fisica") },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF478D4F))
             ) {
-                Text("Gestionar hábito")
+                Text("Gestionar hábitos")
             }
         }
 

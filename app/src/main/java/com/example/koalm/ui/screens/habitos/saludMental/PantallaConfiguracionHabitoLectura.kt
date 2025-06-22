@@ -55,6 +55,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import com.example.koalm.utils.TimeUtils
+import kotlinx.coroutines.tasks.await
 
 private const val TAG = "PantallaConfiguracionHabitoLectura"
 
@@ -116,6 +117,8 @@ fun PantallaConfiguracionHabitoLectura(
 
     var mostrarTimePicker by remember { mutableStateOf(false) }
     val habitoEditando = remember { mutableStateOf<Habito?>(null) }
+    var habitoExistente by remember { mutableStateOf<Habito?>(null) }
+    val currentUser = auth.currentUser
 
     LaunchedEffect(habitoId) {
         if (habitoId != null) {
@@ -141,26 +144,18 @@ fun PantallaConfiguracionHabitoLectura(
         }
     }
 
-    fun scheduleNotification(habito: Habito) {
-        Log.d(TAG, "Programando notificación para hábito de lectura")
-        Log.d(TAG, "Tipo de hábito: ${habito.tipo}")
-        
-        val horaLocalDateTime = LocalDateTime.parse(
-            LocalDate.now().toString() + "T" + habito.hora,
-            DateTimeFormatter.ISO_LOCAL_DATE_TIME
-        )
-        
-        val notificationService = NotificationService()
-        notificationService.scheduleNotification(
-            context = context,
-            habitoId = habito.id,
-            diasSeleccionados = habito.diasSeleccionados,
-            hora = horaLocalDateTime,
-            descripcion = habito.descripcion,
-            durationMinutes = habito.duracionMinutos.toLong(),
-            isReading = true
-        )
-        Log.d(TAG, "Notificación programada exitosamente")
+    LaunchedEffect(esEdicion, habitoId) {
+        if (esEdicion && habitoId != null && currentUser != null) {
+            val snapshot = FirebaseFirestore.getInstance()
+                .collection("habitos")
+                .document(currentUser.uid)
+                .collection("predeterminados")
+                .document(habitoId)
+                .get()
+                .await()
+
+            habitoExistente = snapshot.toObject(Habito::class.java)
+        }
     }
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
@@ -191,7 +186,19 @@ fun PantallaConfiguracionHabitoLectura(
                         hora = horaRecordatorio.format(DateTimeFormatter.ofPattern("HH:mm")),
                         duracionMinutos = duracionMin.toInt(),
                         objetivoPaginas = objetivoPaginas,
-                        userId = currentUser.uid
+                        userId = currentUser.uid,
+                        fechaCreacion = if (esEdicion) habitoExistente?.fechaCreacion else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        rachaActual = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaActual ?: 0
+                        },
+                        rachaMaxima = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaMaxima ?: 0
+                        },
+                        ultimoDiaCompletado = if (esEdicion) habitoExistente?.ultimoDiaCompletado else null
                     )
 
                     if (habitoId != null) {

@@ -119,9 +119,9 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            //verticalArrangement = Arrangement.spacedBy(16.dp),
             //horizontalAlignment = Alignment.CenterHorizontally,
-            //verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center
         ) {
             //Variables para habitos activos y finalizados
             val habitosActivos = habitos.value.filter { it.estaActivo }
@@ -130,49 +130,50 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
             if (isLoading.value) {
                 CircularProgressIndicator(modifier = Modifier.size(40.dp))
             } else if (habitos.value.isEmpty()) {
-                // Si no hay hábitos, muestra el mensaje y el botón de agregar
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.koala_triste),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(200.dp)
-                            .padding(bottom = 16.dp)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.koala_triste),
+                            contentDescription = null,
+                            modifier = Modifier.size(200.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = stringResource(R.string.mensaje_no_habitos),
+                            style = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = stringResource(R.string.mensaje_no_habitos_subtexto),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        Button(
+                            onClick = { navController.navigate("configurar_habito_personalizado") },
+                            modifier = Modifier.width(150.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = stringResource(R.string.boton_agregar))
+                        }
+                    }
                 }
 
-                Text(
-                    text = stringResource(R.string.mensaje_no_habitos),
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(R.string.mensaje_no_habitos_subtexto),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Button(
-                    onClick = { navController.navigate("configurar_habito_personalizado") },
-                    modifier = Modifier
-                        .width(150.dp)
-                        .align(Alignment.CenterHorizontally)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = stringResource(R.string.boton_agregar))
-                }
             } else {
                 val coroutineScope = rememberCoroutineScope()
 
@@ -186,6 +187,8 @@ fun PantallaGestionHabitosPersonalizados(navController: NavHostController) {
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 } else {
+
+                    Spacer(modifier = Modifier.height(12.dp))
                     habitosActivos.forEach { habito ->
                         HabitoCardExpandible(
                             habito = habito,

@@ -127,7 +127,7 @@ object HabitosRepository {
         email: String,
         habito: Habito,
         valor: Int
-    ): String? { // ← Devuelve null si todo está bien, o mensaje si hay error
+    ): String? { // ← Cambiado a String? (nullable)
         val progresoRef = db.collection("habitos")
             .document(email)
             .collection("predeterminados")
@@ -162,16 +162,49 @@ object HabitosRepository {
             frecuencia = habito.diasSeleccionados
         )
 
-        progresoRef.set(nuevoProgreso).await()
-        return null // éxito, no hay error
+        // Si ya está completo, no sumar más
+        // nuevoProgreso.realizados += valor <- esto ya lo hiciste arriba (suma = realizadosPrevios + valor)
+
+        // Actualizamos la racha si se completó hoy
+        if (nuevoProgreso.completado) {
+            actualizarRachaPre(habito, nuevoProgreso)
+        }
+
+        progresoRef.set(nuevoProgreso, SetOptions.merge()).await()
+
+        // ¡Ojo! Aquí estás guardando el hábito en "personalizados", pero venías de "predeterminados"
+        db.collection("habitos")
+            .document(email)
+            .collection("predeterminados") // corregido aquí
+            .document(habito.id)
+            .set(habito, SetOptions.merge())
+            .await()
+
+        return null // <- retorno correcto
     }
 
 
 
-
-
-    //Actualizar la racha con días activos
+    //Actualizar la racha con días activos(personalizados)
     private fun actualizarRacha(habito: HabitoPersonalizado, progreso: ProgresoDiario) {
+        val hoy = LocalDate.now()
+        val ultimoDia = habito.ultimoDiaCompletado?.let { LocalDate.parse(it) }
+
+        if (ultimoDia == null || !ultimoDia.plusDays(1).isEqual(hoy)) {
+            habito.rachaActual = 1
+        } else {
+            habito.rachaActual += 1
+        }
+
+        if (habito.rachaActual > habito.rachaMaxima) {
+            habito.rachaMaxima = habito.rachaActual
+        }
+
+        habito.ultimoDiaCompletado = hoy.toString()
+    }
+
+    //PREDETERMINADOS
+    private fun actualizarRachaPre(habito: Habito, progreso: ProgresoDiario) {
         val hoy = LocalDate.now()
         val ultimoDia = habito.ultimoDiaCompletado?.let { LocalDate.parse(it) }
 

@@ -52,6 +52,7 @@ import androidx.navigation.NavHostController
 import com.example.koalm.R
 import com.example.koalm.model.ClaseHabito
 import com.example.koalm.model.Habito
+import com.example.koalm.model.HabitoPersonalizado
 import com.example.koalm.model.MetricasHabito
 import com.example.koalm.model.ProgresoDiario
 import com.example.koalm.model.TipoHabito
@@ -73,6 +74,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,6 +148,8 @@ fun PantallaConfiguracionHabitoEscritura(
     var mostrarTimePicker by remember { mutableStateOf(false) }
 
     val habitoEditando = remember { mutableStateOf<Habito?>(null) }
+    var habitoExistente by remember { mutableStateOf<Habito?>(null) }
+
 
     LaunchedEffect(habitoId) {
         if (habitoId != null) {
@@ -171,6 +175,20 @@ fun PantallaConfiguracionHabitoEscritura(
         }
     }
 
+    LaunchedEffect(esEdicion, habitoId) {
+        if (esEdicion && habitoId != null && currentUser != null) {
+            val snapshot = FirebaseFirestore.getInstance()
+                .collection("habitos")
+                .document(currentUser.uid)
+                .collection("predeterminados")
+                .document(habitoId)
+                .get()
+                .await()
+
+            habitoExistente = snapshot.toObject(Habito::class.java)
+        }
+    }
+
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -179,6 +197,31 @@ fun PantallaConfiguracionHabitoEscritura(
         if (isGranted) {
             scope.launch {
                 try {
+
+                    /*
+                    // Obtener la referencia al usuario actual en Firebase Authentication
+                    val userEmail = FirebaseAuth.getInstance().currentUser?.email
+                    val db = FirebaseFirestore.getInstance()
+
+                        // Referencia a la colección de hábitos del usuario
+                        val userHabitsRef = db.collection("habitos").document(userEmail)
+                            .collection("personalizados")
+
+                        //Control de racha
+                        if (esEdicion && modificoObjetivo && progresoHabitoOriginal.value?.completado != false) {
+                            habitoOriginal.value = habitoOriginal.value?.copy(
+                                rachaActual = maxOf(0, (habitoOriginal.value?.rachaActual ?: 1) - 1)
+                            )
+                        }
+
+                        if (esEdicion && modificoObjetivo && progresoHabitoOriginal.value?.completado != false) {
+                            habitoOriginal.value = habitoOriginal.value?.copy(
+                                rachaMaxima = maxOf(0, (habitoOriginal.value?.rachaMaxima ?: 1) - 1)
+                            )
+                        }
+
+                     */
+
                     val habito = Habito(
                         id = habitoId ?: "", // Si hay habitoId, es edición
                         titulo = "Escritura",
@@ -190,7 +233,19 @@ fun PantallaConfiguracionHabitoEscritura(
                         duracionMinutos = duracionMin.toInt(),
                         userId = currentUser?.uid,
                         objetivoPaginas = objetivoPaginas,
-                        metricasEspecificas = MetricasHabito()
+                        metricasEspecificas = MetricasHabito(),
+                        fechaCreacion = if (esEdicion) habitoExistente?.fechaCreacion else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        rachaActual = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaActual ?: 0
+                        },
+                        rachaMaxima = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaMaxima ?: 0
+                        },
+                        ultimoDiaCompletado = if (esEdicion) habitoExistente?.ultimoDiaCompletado else null
                     )
 
                     if (habitoId != null) {

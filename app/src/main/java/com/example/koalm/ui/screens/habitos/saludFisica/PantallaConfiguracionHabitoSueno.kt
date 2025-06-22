@@ -185,6 +185,8 @@ fun PantallaConfiguracionHabitoSueno(
     }
 
     val habitoEditando = remember { mutableStateOf<Habito?>(null) }
+    var habitoExistente by remember { mutableStateOf<Habito?>(null) }
+    val currentUser = auth.currentUser
 
     LaunchedEffect(habitoId) {
         if (habitoId != null) {
@@ -208,6 +210,19 @@ fun PantallaConfiguracionHabitoSueno(
         }
     }
 
+    LaunchedEffect(esEdicion, habitoId) {
+        if (esEdicion && habitoId != null && currentUser != null) {
+            val snapshot = FirebaseFirestore.getInstance()
+                .collection("habitos")
+                .document(currentUser.uid)
+                .collection("predeterminados")
+                .document(habitoId)
+                .get()
+                .await()
+
+            habitoExistente = snapshot.toObject(Habito::class.java)
+        }
+    }
 
 
     /* --------------------  Permission launcher (POST_NOTIFICATIONS)  -------------------- */
@@ -235,7 +250,19 @@ fun PantallaConfiguracionHabitoSueno(
                         duracionMinutos = duracionHoras * 60,
                         userId = currentUser.uid,
                         objetivoHorasSueno = duracionHoras,
-                        metricasEspecificas = MetricasHabito()
+                        fechaCreacion = if (esEdicion) habitoExistente?.fechaCreacion else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        metricasEspecificas = MetricasHabito(),
+                        rachaActual = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaActual ?: 0
+                        },
+                        rachaMaxima = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaMaxima ?: 0
+                        },
+                        ultimoDiaCompletado = if (esEdicion) habitoExistente?.ultimoDiaCompletado else null
                     )
 
                     if (habitoId != null) {

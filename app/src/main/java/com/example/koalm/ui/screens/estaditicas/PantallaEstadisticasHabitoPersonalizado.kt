@@ -131,7 +131,7 @@ fun PantallaEstadisticasHabitoPersonalizado(
             Text("Cargando hábitos...")
         }
         return
-        }
+    }
 
     val habitoActual = habitos.getOrNull(selectedIndex.value) ?: habitos.first()
     val progresoActual = progresoPorHabito[habitoActual.nombre] ?: emptyMap()
@@ -289,7 +289,7 @@ fun PantallaEstadisticasHabitoPersonalizado(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF478D4F))
                 ) {
-                    Text("Gestionar hábito")
+                    Text("Gestionar hábitos")
                 }
             }
 

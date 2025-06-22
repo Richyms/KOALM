@@ -60,6 +60,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import com.example.koalm.utils.TimeUtils
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 
 private const val TAG = "PantallaConfiguracionDesconexion"
@@ -124,6 +125,8 @@ fun PantallaConfigurarDesconexionDigital(
     var mostrarTimePicker by remember { mutableStateOf(false) }
 
     val habitoEditando = remember { mutableStateOf<Habito?>(null) }
+    var habitoExistente by remember { mutableStateOf<Habito?>(null) }
+    val currentUser = auth.currentUser
 
     LaunchedEffect(habitoId) {
         if (habitoId != null) {
@@ -145,6 +148,20 @@ fun PantallaConfigurarDesconexionDigital(
                     Log.e("PantallaConfig", "No se pudo cargar el hábito con ID: $habitoId")
                 }
             )
+        }
+    }
+
+    LaunchedEffect(esEdicion, habitoId) {
+        if (esEdicion && habitoId != null && currentUser != null) {
+            val snapshot = FirebaseFirestore.getInstance()
+                .collection("habitos")
+                .document(currentUser.uid)
+                .collection("predeterminados")
+                .document(habitoId)
+                .get()
+                .await()
+
+            habitoExistente = snapshot.toObject(Habito::class.java)
         }
     }
 
@@ -171,7 +188,19 @@ fun PantallaConfigurarDesconexionDigital(
                         hora = hora.format(DateTimeFormatter.ofPattern("HH:mm")),
                         diasSeleccionados = diasSeleccionados,
                         duracionMinutos = duracionMin.roundToInt(),
-                        userId = currentUser.uid
+                        userId = currentUser.uid,
+                        fechaCreacion = if (esEdicion) habitoExistente?.fechaCreacion else LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                        rachaActual = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaActual ?: 0
+                        },
+                        rachaMaxima = if (!esEdicion) {
+                            0
+                        } else {
+                            habitoExistente?.rachaMaxima ?: 0
+                        },
+                        ultimoDiaCompletado = if (esEdicion) habitoExistente?.ultimoDiaCompletado else null
                     )
 
                     if (habitoId != null) {
